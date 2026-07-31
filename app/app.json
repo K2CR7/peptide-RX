@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "PeptideRX",
+    "slug": "peptide-rx",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#F4F7F8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.peptiderx.app"
+    },
+    "android": {
+      "package": "com.peptiderx.app"
+    }
+  }
+}

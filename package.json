@@ -1,0 +1,8 @@
+{
+  "name": "peptide-rx",
+  "private": true,
+  "workspaces": [
+    "app",
+    "server"
+  ]
+}

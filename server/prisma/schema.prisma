@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Experience {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  sex          String?
+  experience   Experience?
+  createdAt    DateTime @default(now())
+
+  refreshTokens  RefreshToken[]
+  stackItems     StackItem[]
+  checkins       Checkin[]
+  nutritionPlans NutritionPlan[]
+  nutritionLogs  NutritionLog[]
+}
+
+// Allows logging out of a single device and rotating refresh tokens without
+// invalidating every session — a bare "one secret in the JWT" approach can't do that.
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model StackItem {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  peptideName  String
+  dose         Float
+  unit         String
+  frequency    String
+  scheduleDays Int[]
+  route        String?
+  startedAt    DateTime  @default(now())
+  cycleOnDays  Int?
+  cycleOffDays Int?
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  injectionLogs InjectionLog[]
+
+  @@index([userId])
+}
+
+model InjectionLog {
+  id          String    @id @default(cuid())
+  stackItemId String
+  stackItem   StackItem @relation(fields: [stackItemId], references: [id], onDelete: Cascade)
+  site        String
+  takenAt     DateTime  @default(now())
+  notes       String?
+
+  @@index([stackItemId])
+}
+
+model Checkin {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg     Float?
+  bodyFatPct   Float?
+  energy       Int?
+  mood         Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  photos CheckinPhoto[]
+
+  @@index([userId])
+}
+
+model CheckinPhoto {
+  id        String  @id @default(cuid())
+  checkinId String
+  checkin   Checkin @relation(fields: [checkinId], references: [id], onDelete: Cascade)
+  angle     String // "front" | "side" | "back"
+  url       String
+
+  @@index([checkinId])
+}
+
+model NutritionPlan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      String
+  title     String
+  content   Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model NutritionLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meal      String
+  notes     String?
+  loggedAt  DateTime @default(now())
+
+  @@index([userId])
+}

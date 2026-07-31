@@ -1,0 +1,106 @@
+// Ported from legacy/peptide_rx.jsx (ROUTE_SITES, INJECT_STEPS, getRouteKey,
+// getNextSite). Body-diagram (x,y) coordinates from the old SVG are dropped —
+// the RN injection picker uses a list instead; everything else is unchanged.
+
+export interface InjectionSite {
+  id: string;
+  label: string;
+  short: string;
+  desc: string;
+}
+
+export type RouteKey = "SubQ" | "IM" | "SubQ or IM" | "Nasal spray" | "Oral";
+
+export const ROUTE_SITES: Record<RouteKey, InjectionSite[]> = {
+  SubQ: [
+    { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone" },
+    { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone" },
+    { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone" },
+    { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone" },
+    { id: "flank-l", label: "Left Flank", short: "Flank L", desc: "Left love handle / lateral hip" },
+    { id: "flank-r", label: "Right Flank", short: "Flank R", desc: "Right love handle / lateral hip" },
+    { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh" },
+    { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh" },
+  ],
+  IM: [
+    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc: "Outer upper arm, 3 fingers below shoulder" },
+    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc: "Outer upper arm, 3 fingers below shoulder" },
+    { id: "glute-l", label: "Left Glute", short: "Glute L", desc: "Upper outer quadrant of left buttock" },
+    { id: "glute-r", label: "Right Glute", short: "Glute R", desc: "Upper outer quadrant of right buttock" },
+    { id: "lat-l", label: "Left Lateral Thigh", short: "Lat L", desc: "Outer middle of left thigh, relaxed" },
+    { id: "lat-r", label: "Right Lateral Thigh", short: "Lat R", desc: "Outer middle of right thigh, relaxed" },
+  ],
+  "SubQ or IM": [
+    { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone" },
+    { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone" },
+    { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone" },
+    { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone" },
+    { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh" },
+    { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh" },
+    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc: "Outer upper arm — if going IM" },
+    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc: "Outer upper arm — if going IM" },
+  ],
+  "Nasal spray": [],
+  Oral: [],
+};
+
+export interface InjectStep {
+  icon: string;
+  title: string;
+  body: string;
+}
+
+const SUBQ_STEPS: InjectStep[] = [
+  { icon: "🧼", title: "Wash hands", body: "Wash thoroughly with soap and water for 20 seconds. Dry completely." },
+  { icon: "🧴", title: "Prep the site", body: "Swab the injection site with an alcohol wipe. Wait 30 seconds for it to fully dry." },
+  { icon: "💉", title: "Pinch & angle", body: "Pinch 1–2 inches of skin firmly. Insert the needle at a 45° angle (90° if you have more body fat at the site)." },
+  { icon: "⏱️", title: "Inject slowly", body: "Push the plunger steadily over 5–10 seconds. Do not rush — slow delivery reduces discomfort." },
+  { icon: "🩹", title: "Remove & press", body: "Pull the needle out at the same angle it entered. Apply gentle pressure with a cotton ball. Do not rub." },
+  { icon: "🗑️", title: "Dispose safely", body: "Cap the needle immediately and place in a sharps container. Never reuse needles." },
+];
+
+export const INJECT_STEPS: Record<RouteKey, InjectStep[]> = {
+  "SubQ or IM": SUBQ_STEPS,
+  SubQ: SUBQ_STEPS,
+  IM: [
+    { icon: "🧼", title: "Wash hands", body: "Wash thoroughly with soap and water for 20 seconds. Dry completely." },
+    { icon: "🧴", title: "Prep the site", body: "Swab the muscle site with an alcohol wipe. Wait 30 seconds to fully dry." },
+    { icon: "💪", title: "Relax the muscle", body: "Completely relax the target muscle. Tensing it makes injection more painful and harder." },
+    { icon: "💉", title: "Insert at 90°", body: "Insert the needle in one smooth, confident motion at 90°. Hesitation causes more discomfort." },
+    { icon: "🔍", title: "Aspirate", body: "Pull the plunger back slightly. If no blood appears, proceed. If you see blood, withdraw and choose a new site." },
+    { icon: "⏱️", title: "Inject slowly", body: "Depress the plunger slowly over 10 seconds. Slow delivery into muscle reduces soreness." },
+    { icon: "🩹", title: "Remove & press", body: "Withdraw smoothly. Apply firm pressure for 30 seconds. Gently massage to disperse the solution." },
+    { icon: "🗑️", title: "Dispose safely", body: "Cap the needle and dispose in a sharps container immediately." },
+  ],
+  "Nasal spray": [
+    { icon: "🤧", title: "Clear passages", body: "Blow your nose gently to clear any congestion. Breathe normally." },
+    { icon: "💉", title: "Prime if new", body: "If first use, pump the spray 3–4 times into the air until an even mist appears." },
+    { icon: "👃", title: "Position", body: "Tilt your head slightly forward. Insert the tip gently into one nostril, aiming slightly outward (away from the septum)." },
+    { icon: "🫁", title: "Spray & breathe", body: "Press the pump firmly once while breathing in slowly through your nose. Breathe out through your mouth." },
+    { icon: "🔄", title: "Other nostril", body: "Repeat for the second nostril if your dose calls for it. Alternate nostrils each session." },
+    { icon: "⏸️", title: "Don't blow", body: "Avoid blowing your nose or sneezing for at least 15 minutes to allow absorption." },
+  ],
+  Oral: [
+    { icon: "⏰", title: "Timing matters", body: "Take at the same time each day to keep your cycle tracker accurate." },
+    { icon: "💊", title: "Dose", body: "Swallow the capsule or measure the liquid dose with the provided syringe. No injection required." },
+    { icon: "🥛", title: "With or without food", body: "Can be taken with or without food. Some users prefer a small snack to reduce nausea in early weeks." },
+    { icon: "📝", title: "Log it", body: "Mark as taken so your schedule stays accurate." },
+  ],
+};
+
+export function getRouteKey(route: string | undefined | null): RouteKey {
+  if (!route) return "SubQ";
+  if (route.includes("Nasal")) return "Nasal spray";
+  if (route.includes("Oral")) return "Oral";
+  if (route.includes("IM") && !route.includes("SubQ")) return "IM";
+  return route.includes("or IM") ? "SubQ or IM" : "SubQ";
+}
+
+/** Recommends the least-recently-used site to encourage rotation and avoid lipohypertrophy. */
+export function getNextSite(routeKey: RouteKey, history: string[] = []): InjectionSite | null {
+  const sites = ROUTE_SITES[routeKey];
+  if (!sites || !sites.length) return null;
+  const recent = history.slice(-sites.length);
+  const unused = sites.find((s) => !recent.includes(s.id));
+  return unused ?? sites[0];
+}
