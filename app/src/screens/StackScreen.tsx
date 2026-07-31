@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ChipSelect } from "../components/ChipSelect";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
@@ -12,6 +13,17 @@ import {
 import { colors, radii } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
+const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
+const DOSE_OPTIONS = [
+  "0.25", "0.5", "1", "2", "2.5", "5", "10", "15", "20", "25",
+  "50", "75", "100", "150", "200", "250", "300", "400", "500",
+  "600", "750", "1000", "1500", "2000", "2500", "5000", "10000",
+];
+const FREQUENCY_OPTIONS = [
+  "Once daily", "Twice daily", "3x daily",
+  "Once weekly", "Twice weekly", "3x weekly",
+  "Every other day", "Every 3 days", "As needed",
+];
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function StackScreen() {
@@ -102,7 +114,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   const [dose, setDose] = useState("");
   const [unit, setUnit] = useState("mcg");
   const [frequency, setFrequency] = useState("");
-  const [route, setRoute] = useState<string | null>(null);
+  const [route, setRoute] = useState("");
   const [days, setDays] = useState<number[]>([]);
 
   const suggestions = peptideName.length > 1
@@ -124,7 +136,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   }
 
   function reset() {
-    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(null); setDays([]);
+    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]);
   }
 
   async function handleSubmit() {
@@ -136,7 +148,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
       unit,
       frequency: frequency.trim(),
       scheduleDays: days,
-      route,
+      route: route.trim() || null,
       cycleOnDays: null,
       cycleOffDays: null,
     });
@@ -156,30 +168,17 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
           </Pressable>
         ))}
 
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <TextInput placeholder="Dose" keyboardType="numeric" value={dose} onChangeText={setDose} style={[inputStyle, { flex: 1 }]} />
-          <TextInput placeholder="Unit (mcg/mg)" value={unit} onChangeText={setUnit} style={[inputStyle, { flex: 1 }]} />
-        </View>
+        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Dose</Text>
+        <ChipSelect options={DOSE_OPTIONS} value={dose} onChange={setDose} customPlaceholder="Enter dose" keyboardType="decimal-pad" />
+
+        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Unit</Text>
+        <ChipSelect options={UNIT_OPTIONS} value={unit} onChange={setUnit} customPlaceholder="Enter unit" />
 
         <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Frequency</Text>
-        <TextInput placeholder="e.g. Once daily" value={frequency} onChangeText={setFrequency} style={inputStyle} />
+        <ChipSelect options={FREQUENCY_OPTIONS} value={frequency} onChange={setFrequency} customPlaceholder="Enter frequency" />
 
         <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Route</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {ROUTE_OPTIONS.map((r) => (
-            <Pressable
-              key={r}
-              onPress={() => setRoute(r)}
-              style={{
-                paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-                borderWidth: 1.5, borderColor: route === r ? colors.teal : colors.border2,
-                backgroundColor: route === r ? colors.tealLight : colors.white,
-              }}
-            >
-              <Text style={{ color: route === r ? colors.tealDark : colors.ink2, fontWeight: "600", fontSize: 13 }}>{r}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <ChipSelect options={ROUTE_OPTIONS} value={route} onChange={setRoute} customPlaceholder="Enter route" />
 
         <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Schedule days</Text>
         <View style={{ flexDirection: "row", gap: 6 }}>
