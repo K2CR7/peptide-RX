@@ -1,6 +1,6 @@
-import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 import { API_BASE_URL } from "../lib/api";
+import { secureStorage } from "../lib/secureStorage";
 
 const REFRESH_TOKEN_KEY = "peptiderx.refreshToken";
 
@@ -44,38 +44,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   hydrated: false,
 
+  // Wrapped in try/finally so any unexpected failure here (storage, network)
+  // still clears the loading state instead of leaving the app stuck on its
+  // splash screen forever — this is exactly the class of bug that made the
+  // web build hang before secureStorage existed.
   hydrate: async () => {
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-    if (refreshToken) {
-      try {
-        const tokens: AuthTokens = await authFetch("/auth/refresh", { refreshToken });
-        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken);
-        const user: AuthUser = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${tokens.accessToken}` },
-        }).then((r) => r.json());
-        set({ accessToken: tokens.accessToken, user });
-      } catch {
-        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    try {
+      const refreshToken = await secureStorage.getItem(REFRESH_TOKEN_KEY);
+      if (refreshToken) {
+        try {
+          const tokens: AuthTokens = await authFetch("/auth/refresh", { refreshToken });
+          await secureStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+          const user: AuthUser = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${tokens.accessToken}` },
+          }).then((r) => r.json());
+          set({ accessToken: tokens.accessToken, user });
+        } catch {
+          await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
+        }
       }
+    } finally {
+      set({ hydrated: true });
     }
-    set({ hydrated: true });
   },
 
   signUp: async (email, password, name) => {
     const data = await authFetch("/auth/signup", { email, password, name });
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
+    await secureStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
     set({ user: data.user, accessToken: data.accessToken });
   },
 
   signIn: async (email, password) => {
     const data = await authFetch("/auth/login", { email, password });
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
+    await secureStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
     set({ user: data.user, accessToken: data.accessToken });
   },
 
   signOut: async () => {
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    const refreshToken = await secureStorage.getItem(REFRESH_TOKEN_KEY);
+    await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
     set({ user: null, accessToken: null });
     if (refreshToken) {
       fetch(`${API_BASE_URL}/auth/logout`, {
@@ -87,15 +94,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   refresh: async () => {
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    const refreshToken = await secureStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) return false;
     try {
       const tokens: AuthTokens = await authFetch("/auth/refresh", { refreshToken });
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken);
+      await secureStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
       set({ accessToken: tokens.accessToken });
       return true;
     } catch {
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
       set({ user: null, accessToken: null });
       return false;
     }

@@ -1,7 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
@@ -38,14 +38,39 @@ function AuthGate() {
   return <MainTabs />;
 }
 
+// The web build is for local iteration, not a real target platform — without
+// this it stretches edge-to-edge across a desktop browser window instead of
+// looking like the phone app it actually is. Native builds are untouched.
+function WebPhoneFrame({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== "web") return <>{children}</>;
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0A1919" }}>
+      <View
+        style={{
+          width: 430,
+          height: "95vh" as unknown as number,
+          maxHeight: 932,
+          borderRadius: 40,
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <AuthGate />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <WebPhoneFrame>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <AuthGate />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </WebPhoneFrame>
   );
 }
