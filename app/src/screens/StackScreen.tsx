@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { ChipSelect } from "../components/ChipSelect";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
@@ -117,15 +117,15 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   const [route, setRoute] = useState("");
   const [days, setDays] = useState<number[]>([]);
 
-  const suggestions = peptideName.length > 1
-    ? Object.keys(PEPTIDE_REFERENCE).filter((n) => n.toLowerCase().includes(peptideName.toLowerCase())).slice(0, 5)
-    : [];
-
   function toggleDay(day: number) {
     setDays((d) => (d.includes(day) ? d.filter((x) => x !== day) : [...d, day].sort()));
   }
 
-  function applySuggestion(name: string) {
+  // Picking a known peptide from the reference list autofills the fields
+  // below with its typical values — still fully editable, just a starting
+  // point. Typing a custom name (something not in our reference data) skips
+  // the autofill since we have nothing to fill in from.
+  function handlePeptideChange(name: string) {
     setPeptideName(name);
     const ref = PEPTIDE_REFERENCE[name];
     if (ref) {
@@ -161,12 +161,12 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
       <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 10 }}>
         <Text style={{ fontSize: 22, fontWeight: "800", color: colors.ink, marginBottom: 8 }}>Add to your stack</Text>
         <Text style={{ fontSize: 13, color: colors.ink3, marginBottom: 4 }}>Peptide</Text>
-        <TextInput placeholder="e.g. BPC-157" value={peptideName} onChangeText={setPeptideName} style={inputStyle} />
-        {suggestions.map((s) => (
-          <Pressable key={s} onPress={() => applySuggestion(s)} style={{ paddingVertical: 6 }}>
-            <Text style={{ color: colors.teal, fontWeight: "600" }}>{s}</Text>
-          </Pressable>
-        ))}
+        <ChipSelect
+          options={Object.keys(PEPTIDE_REFERENCE)}
+          value={peptideName}
+          onChange={handlePeptideChange}
+          customPlaceholder="Enter peptide name"
+        />
 
         <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Dose</Text>
         <ChipSelect options={DOSE_OPTIONS} value={dose} onChange={setDose} customPlaceholder="Enter dose" keyboardType="decimal-pad" />
@@ -214,13 +214,3 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
     </Modal>
   );
 }
-
-const inputStyle = {
-  backgroundColor: colors.white,
-  borderWidth: 1.5,
-  borderColor: colors.border2,
-  borderRadius: radii.md,
-  padding: 13,
-  fontSize: 15,
-  color: colors.ink,
-};
