@@ -12,10 +12,62 @@ import {
 
 export const authRouter = Router();
 
+function serializeUser(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  sex: string | null;
+  experience: string | null;
+  weightKg: number | null;
+  heightCm: number | null;
+  age: number | null;
+  activityLevel: string | null;
+  nutritionGoal: string | null;
+  wellnessGoals: string[];
+}) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    sex: user.sex,
+    experience: user.experience,
+    weightKg: user.weightKg,
+    heightCm: user.heightCm,
+    age: user.age,
+    activityLevel: user.activityLevel,
+    nutritionGoal: user.nutritionGoal,
+    wellnessGoals: user.wellnessGoals,
+  };
+}
+
 authRouter.get("/me", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });
   if (!user) return res.status(404).json({ error: "Not found" });
-  res.json({ id: user.id, email: user.email, name: user.name });
+  res.json(serializeUser(user));
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().optional(),
+  sex: z.enum(["Male", "Female"]).optional(),
+  experience: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional(),
+  weightKg: z.number().positive().optional(),
+  heightCm: z.number().positive().optional(),
+  age: z.number().int().positive().optional(),
+  activityLevel: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"]).optional(),
+  nutritionGoal: z.enum(["CUT", "MAINTAIN", "BULK"]).optional(),
+  wellnessGoals: z.array(z.string()).optional(),
+});
+
+authRouter.patch("/me", requireAuth, async (req, res) => {
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const user = await prisma.user.update({
+    where: { id: req.userId! },
+    data: parsed.data,
+  });
+  res.json(serializeUser(user));
 });
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;

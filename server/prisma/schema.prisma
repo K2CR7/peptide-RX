@@ -13,6 +13,20 @@ enum Experience {
   ADVANCED
 }
 
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum NutritionGoal {
+  CUT
+  MAINTAIN
+  BULK
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -21,6 +35,15 @@ model User {
   sex          String?
   experience   Experience?
   createdAt    DateTime @default(now())
+
+  // Nutrition profile inputs — feed the macro calculator, not a body-comp
+  // history (Checkin.weightKg is the tracked-over-time version of weight).
+  weightKg      Float?
+  heightCm      Float?
+  age           Int?
+  activityLevel ActivityLevel?
+  nutritionGoal NutritionGoal?
+  wellnessGoals String[]       @default([])
 
   refreshTokens  RefreshToken[]
   stackItems     StackItem[]

@@ -4,10 +4,18 @@ import { secureStorage } from "../lib/secureStorage";
 
 const REFRESH_TOKEN_KEY = "peptiderx.refreshToken";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   email: string;
   name?: string | null;
+  sex?: "Male" | "Female" | null;
+  experience?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | null;
+  weightKg?: number | null;
+  heightCm?: number | null;
+  age?: number | null;
+  activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE" | null;
+  nutritionGoal?: "CUT" | "MAINTAIN" | "BULK" | null;
+  wellnessGoals?: string[];
 }
 
 interface AuthTokens {
@@ -24,6 +32,7 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<boolean>;
+  setUser: (user: AuthUser) => void;
 }
 
 async function authFetch(path: string, body: unknown) {
@@ -107,4 +116,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return false;
     }
   },
+
+  setUser: (user) => set({ user }),
 }));

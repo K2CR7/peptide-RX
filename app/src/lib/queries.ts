@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
+import { type AuthUser, useAuthStore } from "../store/authStore";
 
 export interface StackItem {
   id: string;
@@ -98,5 +99,13 @@ export function useNutritionPlans() {
   return useQuery({
     queryKey: ["nutritionPlans"],
     queryFn: () => api.get("/nutrition/plans"),
+  });
+}
+
+export function useUpdateProfile() {
+  const setUser = useAuthStore((s) => s.setUser);
+  return useMutation({
+    mutationFn: (data: Partial<AuthUser>) => api.patch<AuthUser>("/auth/me", data),
+    onSuccess: (user) => setUser(user),
   });
 }
