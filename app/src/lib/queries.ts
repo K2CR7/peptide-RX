@@ -110,6 +110,8 @@ export function useUpdateProfile() {
   });
 }
 
+export type MacroConstraint = "max" | "min";
+
 export interface MealIngredient {
   item: string;
   amount: string;
@@ -127,6 +129,10 @@ export interface BuildMealInput {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  caloriesConstraint: MacroConstraint;
+  proteinConstraint: MacroConstraint;
+  carbsConstraint: MacroConstraint;
+  fatConstraint: MacroConstraint;
   priorityNutrients: string[];
   previousMeal?: { title: string; ingredients: MealIngredient[] };
   feedback?: string;

@@ -1,8 +1,8 @@
 import Slider from "@react-native-community/slider";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
-import { type BuiltMeal, useBuildMeal } from "../lib/queries";
+import { type BuiltMeal, type MacroConstraint, useBuildMeal } from "../lib/queries";
 import { colors, radii } from "../theme";
 
 interface Props {
@@ -26,6 +26,10 @@ export function MealBuilderModal({
   const [proteinG, setProteinG] = useState(initialProteinG);
   const [carbsG, setCarbsG] = useState(initialCarbsG);
   const [fatG, setFatG] = useState(initialFatG);
+  const [caloriesMode, setCaloriesMode] = useState<MacroConstraint>("max");
+  const [proteinMode, setProteinMode] = useState<MacroConstraint>("max");
+  const [carbsMode, setCarbsMode] = useState<MacroConstraint>("max");
+  const [fatMode, setFatMode] = useState<MacroConstraint>("max");
   const [priority, setPriority] = useState<string[]>([]);
   const [meal, setMeal] = useState<BuiltMeal | null>(null);
   const [feedback, setFeedback] = useState("");
@@ -34,6 +38,10 @@ export function MealBuilderModal({
 
   function togglePriority(nutrient: string) {
     setPriority((p) => (p.includes(nutrient) ? p.filter((n) => n !== nutrient) : [...p, nutrient]));
+  }
+
+  function flip(mode: MacroConstraint): MacroConstraint {
+    return mode === "max" ? "min" : "max";
   }
 
   function reset() {
@@ -50,6 +58,10 @@ export function MealBuilderModal({
         proteinG: Math.round(proteinG),
         carbsG: Math.round(carbsG),
         fatG: Math.round(fatG),
+        caloriesConstraint: caloriesMode,
+        proteinConstraint: proteinMode,
+        carbsConstraint: carbsMode,
+        fatConstraint: fatMode,
         priorityNutrients: priority,
       });
       setMeal(result);
@@ -67,6 +79,10 @@ export function MealBuilderModal({
         proteinG: Math.round(proteinG),
         carbsG: Math.round(carbsG),
         fatG: Math.round(fatG),
+        caloriesConstraint: caloriesMode,
+        proteinConstraint: proteinMode,
+        carbsConstraint: carbsMode,
+        fatConstraint: fatMode,
         priorityNutrients: priority,
         previousMeal: { title: meal.title, ingredients: meal.ingredients },
         feedback: feedback.trim(),
@@ -90,10 +106,22 @@ export function MealBuilderModal({
 
         {!meal && (
           <>
-            <SliderField label="Calories left" value={calories} onChange={setCalories} min={200} max={1500} step={25} unit="kcal" />
-            <SliderField label="Max Protein" value={proteinG} onChange={setProteinG} min={0} max={100} step={5} unit="g" />
-            <SliderField label="Max Carbs" value={carbsG} onChange={setCarbsG} min={0} max={150} step={5} unit="g" />
-            <SliderField label="Max Fat" value={fatG} onChange={setFatG} min={0} max={80} step={5} unit="g" />
+            <SliderField
+              label={<ModeToggle name="Calories" mode={caloriesMode} onPress={() => setCaloriesMode(flip)} />}
+              value={calories} onChange={setCalories} min={200} max={1500} step={25} unit="kcal"
+            />
+            <SliderField
+              label={<ModeToggle name="Protein" mode={proteinMode} onPress={() => setProteinMode(flip)} />}
+              value={proteinG} onChange={setProteinG} min={0} max={100} step={5} unit="g"
+            />
+            <SliderField
+              label={<ModeToggle name="Carbs" mode={carbsMode} onPress={() => setCarbsMode(flip)} />}
+              value={carbsG} onChange={setCarbsG} min={0} max={150} step={5} unit="g"
+            />
+            <SliderField
+              label={<ModeToggle name="Fat" mode={fatMode} onPress={() => setFatMode(flip)} />}
+              value={fatG} onChange={setFatG} min={0} max={80} step={5} unit="g"
+            />
 
             <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Prioritize any nutrients (optional)</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -189,11 +217,11 @@ export function MealBuilderModal({
 
 function SliderField({
   label, value, onChange, min, max, step, unit,
-}: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string }) {
+}: { label: ReactNode; value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string }) {
   return (
     <View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 13, color: colors.ink3 }}>{label}</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        {label}
         <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink }}>{Math.round(value)} {unit}</Text>
       </View>
       <Slider
@@ -207,6 +235,17 @@ function SliderField({
         thumbTintColor={colors.teal}
       />
     </View>
+  );
+}
+
+function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstraint; onPress: () => void }) {
+  const isMax = mode === "max";
+  return (
+    <Pressable onPress={onPress} hitSlop={8}>
+      <Text style={{ fontSize: 13, fontWeight: "700", color: isMax ? colors.red : colors.green }}>
+        {isMax ? "Max" : "Min"} {name}
+      </Text>
+    </Pressable>
   );
 }
 

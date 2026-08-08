@@ -62,28 +62,44 @@ const previousMealSchema = z.object({
   ingredients: z.array(ingredientSchema),
 });
 
+const constraintSchema = z.enum(["max", "min"]);
+
 const generateSchema = z.object({
   calories: z.number().positive(),
   proteinG: z.number().nonnegative(),
   carbsG: z.number().nonnegative(),
   fatG: z.number().nonnegative(),
+  caloriesConstraint: constraintSchema.default("max"),
+  proteinConstraint: constraintSchema.default("max"),
+  carbsConstraint: constraintSchema.default("max"),
+  fatConstraint: constraintSchema.default("max"),
   priorityNutrients: z.array(z.string()).default([]),
   previousMeal: previousMealSchema.optional(),
   feedback: z.string().optional(),
 });
+
+function macroLine(name: string, value: number, unit: string, constraint: "max" | "min"): string {
+  return constraint === "min"
+    ? `${name}: at least ${value}${unit}`
+    : `${name}: no more than ${value}${unit}`;
+}
 
 mealBuilderRouter.post("/generate", async (req, res) => {
   const parsed = generateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { calories, proteinG, carbsG, fatG, priorityNutrients, previousMeal, feedback } = parsed.data;
+  const {
+    calories, proteinG, carbsG, fatG,
+    caloriesConstraint, proteinConstraint, carbsConstraint, fatConstraint,
+    priorityNutrients, previousMeal, feedback,
+  } = parsed.data;
 
   const targetLines = [
-    `Calories: ~${calories} kcal`,
-    `Protein: ~${proteinG}g`,
-    `Carbs: ~${carbsG}g`,
-    `Fat: ~${fatG}g`,
+    macroLine("Calories", calories, " kcal", caloriesConstraint),
+    macroLine("Protein", proteinG, "g", proteinConstraint),
+    macroLine("Carbs", carbsG, "g", carbsConstraint),
+    macroLine("Fat", fatG, "g", fatConstraint),
   ];
   if (priorityNutrients.length > 0) {
     targetLines.push(`Prioritize these micronutrients where practical: ${priorityNutrients.join(", ")}`);
