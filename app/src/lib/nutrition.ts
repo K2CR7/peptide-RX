@@ -32,6 +32,12 @@ const GOAL_CALORIE_ADJUSTMENT: Record<NutritionGoal, number> = {
   BULK: 300,
 };
 
+export const GOAL_CONTEXT: Record<NutritionGoal, string> = {
+  CUT: "A moderate deficit to lose fat while keeping protein high enough to preserve muscle.",
+  MAINTAIN: "Eating at maintenance to hold your current weight and body composition steady.",
+  BULK: "A moderate surplus with enough protein to support muscle growth.",
+};
+
 export interface MacroTargets {
   bmr: number;
   tdee: number;

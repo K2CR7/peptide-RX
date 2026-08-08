@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { GOAL_NUTRITION_GUIDANCE, WELLNESS_GOALS } from "../data/wellnessGoals";
+import { GOAL_TO_NUTRIENTS, NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
 import { useStackItems, useUpdateProfile } from "../lib/queries";
 import {
   ACTIVITY_LABELS,
   calculateMacros,
+  GOAL_CONTEXT,
   GOAL_LABELS,
   goalsFromStack,
   type ActivityLevel,
@@ -64,21 +65,24 @@ function PlanView() {
     });
   }, [user]);
 
-  // No goal picker — every category is shown for everyone (general "eat
-  // clean, cover your bases" guidance). Peptides in the stack still get
-  // highlighted since that's a genuinely relevant signal, just not a filter.
-  const stackGoals = useMemo(
-    () => goalsFromStack((stackItems ?? []).map((i) => i.peptideName)),
-    [stackItems],
-  );
+  // Peptides in the stack highlight relevant nutrients (via each peptide's
+  // reference goals → GOAL_TO_NUTRIENTS), but the list below is always the
+  // full nutrient set for everyone — not filtered or grouped by goal.
+  const stackNutrients = useMemo(() => {
+    const goalIds = goalsFromStack((stackItems ?? []).map((i) => i.peptideName));
+    const names = new Set<string>();
+    goalIds.forEach((id) => GOAL_TO_NUTRIENTS[id]?.forEach((n) => names.add(n)));
+    return names;
+  }, [stackItems]);
 
   if (!macros) return null;
+  const goal = user!.nutritionGoal as NutritionGoal;
 
   return (
     <View style={{ gap: 16 }}>
       <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
         <Text style={{ fontSize: 12, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Daily target · {GOAL_LABELS[user!.nutritionGoal as NutritionGoal]}
+          Daily target · {GOAL_LABELS[goal]}
         </Text>
         <Text style={{ fontSize: 36, fontWeight: "800", color: colors.ink, marginTop: 4 }}>{macros.calories} kcal</Text>
         <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
@@ -86,38 +90,30 @@ function PlanView() {
           <MacroChip label="Carbs" grams={macros.carbsG} color={colors.amber} />
           <MacroChip label="Fat" grams={macros.fatG} color={colors.red} />
         </View>
-        <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 12 }}>
+        <Text style={{ color: colors.ink2, fontSize: 12, marginTop: 12, lineHeight: 17 }}>{GOAL_CONTEXT[goal]}</Text>
+        <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 8 }}>
           BMR {macros.bmr} kcal · TDEE {macros.tdee} kcal
         </Text>
       </View>
 
-      <View style={{ gap: 12 }}>
+      <View style={{ gap: 10 }}>
         <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Eat clean — full nutrient coverage
+          Eat clean — by nutrient
         </Text>
-        {WELLNESS_GOALS.map((goal) => {
-          const guidance = GOAL_NUTRITION_GUIDANCE[goal.id];
-          if (!guidance) return null;
-          const fromStack = stackGoals.includes(goal.id);
+        {NUTRIENT_GUIDANCE.map((n) => {
+          const fromStack = stackNutrients.has(n.nutrient);
           return (
-            <View key={goal.id} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>
-                  {goal.icon} {goal.label}
-                </Text>
+            <View key={n.nutrient} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>{n.nutrient}</Text>
                 {fromStack && (
                   <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9 }}>
                     <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
                   </View>
                 )}
               </View>
-              {guidance.map((g) => (
-                <View key={g.nutrient} style={{ marginBottom: 10 }}>
-                  <Text style={{ fontWeight: "700", color: colors.tealDark, fontSize: 13 }}>{g.nutrient}</Text>
-                  <Text style={{ color: colors.ink3, fontSize: 11, marginBottom: 4 }}>{g.why}</Text>
-                  <Text style={{ color: colors.ink2, fontSize: 13 }}>{g.foods.join(" · ")}</Text>
-                </View>
-              ))}
+              <Text style={{ color: colors.ink3, fontSize: 12, marginBottom: 8, lineHeight: 17 }}>{n.benefits}</Text>
+              <Text style={{ color: colors.ink2, fontSize: 13, fontWeight: "600" }}>{n.foods.join(" · ")}</Text>
             </View>
           );
         })}
