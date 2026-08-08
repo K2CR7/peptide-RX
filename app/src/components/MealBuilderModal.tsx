@@ -91,9 +91,9 @@ export function MealBuilderModal({
         {!meal && (
           <>
             <SliderField label="Calories left" value={calories} onChange={setCalories} min={200} max={1500} step={25} unit="kcal" />
-            <SliderField label="Protein" value={proteinG} onChange={setProteinG} min={0} max={100} step={5} unit="g" />
-            <SliderField label="Carbs" value={carbsG} onChange={setCarbsG} min={0} max={150} step={5} unit="g" />
-            <SliderField label="Fat" value={fatG} onChange={setFatG} min={0} max={80} step={5} unit="g" />
+            <SliderField label="Protein" value={proteinG} onChange={setProteinG} min={0} max={100} step={5} unit="g" showMax />
+            <SliderField label="Carbs" value={carbsG} onChange={setCarbsG} min={0} max={150} step={5} unit="g" showMax />
+            <SliderField label="Fat" value={fatG} onChange={setFatG} min={0} max={80} step={5} unit="g" showMax />
 
             <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Prioritize any nutrients (optional)</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -188,13 +188,26 @@ export function MealBuilderModal({
 }
 
 function SliderField({
-  label, value, onChange, min, max, step, unit,
-}: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string }) {
+  label, value, onChange, min, max, step, unit, showMax,
+}: { label: string; value: number; onChange: (v: number) => void; min: number; max: number; step: number; unit: string; showMax?: boolean }) {
   return (
     <View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text style={{ fontSize: 13, color: colors.ink3 }}>{label}</Text>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink }}>{Math.round(value)} {unit}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink }}>{Math.round(value)} {unit}</Text>
+          {showMax && (
+            <Pressable
+              onPress={() => onChange(max)}
+              style={{
+                borderRadius: 20, borderWidth: 1.5, borderColor: colors.border2,
+                paddingVertical: 3, paddingHorizontal: 9,
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: "700", color: colors.tealDark }}>MAX</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
       <Slider
         minimumValue={min}
