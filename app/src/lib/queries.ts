@@ -109,3 +109,31 @@ export function useUpdateProfile() {
     onSuccess: (user) => setUser(user),
   });
 }
+
+export interface MealIngredient {
+  item: string;
+  amount: string;
+}
+
+export interface BuiltMeal {
+  title: string;
+  ingredients: MealIngredient[];
+  estimatedMacros: { calories: number; protein: number; carbs: number; fat: number };
+  notes: string;
+}
+
+export interface BuildMealInput {
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  priorityNutrients: string[];
+  previousMeal?: { title: string; ingredients: MealIngredient[] };
+  feedback?: string;
+}
+
+export function useBuildMeal() {
+  return useMutation({
+    mutationFn: (data: BuildMealInput) => api.post<BuiltMeal>("/meal-builder/generate", data),
+  });
+}

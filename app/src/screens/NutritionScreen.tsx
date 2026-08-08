@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { MealBuilderModal } from "../components/MealBuilderModal";
 import { GOAL_TO_NUTRIENTS, NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
 import { useStackItems, useUpdateProfile } from "../lib/queries";
 import {
@@ -52,6 +53,7 @@ export function NutritionScreen() {
 function PlanView() {
   const user = useAuthStore((s) => s.user);
   const { data: stackItems } = useStackItems();
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   const macros = useMemo(() => {
     if (!hasCompleteProfile(user)) return null;
@@ -95,6 +97,22 @@ function PlanView() {
           BMR {macros.bmr} kcal · TDEE {macros.tdee} kcal
         </Text>
       </View>
+
+      <Pressable
+        onPress={() => setBuilderOpen(true)}
+        style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center" }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "700" }}>🍽 Build a meal</Text>
+      </Pressable>
+
+      <MealBuilderModal
+        visible={builderOpen}
+        onClose={() => setBuilderOpen(false)}
+        initialCalories={macros.calories}
+        initialProteinG={macros.proteinG}
+        initialCarbsG={macros.carbsG}
+        initialFatG={macros.fatG}
+      />
 
       <View style={{ gap: 10 }}>
         <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>

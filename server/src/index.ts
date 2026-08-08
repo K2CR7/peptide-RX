@@ -9,6 +9,7 @@ import type { NextFunction, Request, Response } from "express";
 import { authRouter } from "./routes/auth.js";
 import { checkinsRouter } from "./routes/checkins.js";
 import { injectionLogsRouter } from "./routes/injectionLogs.js";
+import { mealBuilderRouter } from "./routes/mealBuilder.js";
 import { nutritionRouter } from "./routes/nutrition.js";
 import { stackItemsRouter } from "./routes/stackItems.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -24,6 +25,7 @@ app.use("/stack-items", requireAuth, stackItemsRouter);
 app.use("/injection-logs", requireAuth, injectionLogsRouter);
 app.use("/checkins", requireAuth, checkinsRouter);
 app.use("/nutrition", requireAuth, nutritionRouter);
+app.use("/meal-builder", requireAuth, mealBuilderRouter);
 
 // Must be registered after all routes. Catches anything thrown/rejected in a
 // route handler (e.g. a dropped DB connection) so it returns a 500 instead
