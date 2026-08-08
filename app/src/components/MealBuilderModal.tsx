@@ -106,6 +106,10 @@ export function MealBuilderModal({
 
         {!meal && (
           <>
+            <Text style={{ fontSize: 12, color: colors.ink3, marginTop: -6 }}>
+              Tap a label below to switch it between a max (red) and a min (green) limit.
+            </Text>
+
             <SliderField
               label={<ModeToggle name="Calories" mode={caloriesMode} onPress={() => setCaloriesMode(flip)} />}
               value={calories} onChange={setCalories} min={200} max={1500} step={25} unit="kcal"
@@ -240,11 +244,27 @@ function SliderField({
 
 function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstraint; onPress: () => void }) {
   const isMax = mode === "max";
+  const tint = isMax ? colors.red : colors.green;
   return (
-    <Pressable onPress={onPress} hitSlop={8}>
-      <Text style={{ fontSize: 13, fontWeight: "700", color: isMax ? colors.red : colors.green }}>
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        borderRadius: 20,
+        borderWidth: 1.5,
+        borderColor: `${tint}55`,
+        backgroundColor: `${tint}1A`,
+        paddingVertical: 5,
+        paddingHorizontal: 12,
+      }}
+    >
+      <Text style={{ fontSize: 13, fontWeight: "700", color: tint }}>
         {isMax ? "Max" : "Min"} {name}
       </Text>
+      <Text style={{ fontSize: 11, color: tint, opacity: 0.7 }}>⇅</Text>
     </Pressable>
   );
 }
