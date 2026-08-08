@@ -1,3 +1,6 @@
+import { PEPTIDE_REFERENCE } from "../data/peptideReference";
+import { WELLNESS_GOALS } from "../data/wellnessGoals";
+
 export type ActivityLevel = "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE";
 export type NutritionGoal = "CUT" | "MAINTAIN" | "BULK";
 
@@ -68,4 +71,26 @@ export function calculateMacros(profile: ProfileInput): MacroTargets {
   const carbsG = Math.max(0, Math.round((calories - proteinG * 4 - fatG * 9) / 4));
 
   return { bmr: Math.round(bmr), tdee: Math.round(tdee), calories, proteinG, fatG, carbsG };
+}
+
+const GOAL_LABEL_TO_ID: Record<string, string> = Object.fromEntries(
+  WELLNESS_GOALS.map((g) => [g.label, g.id]),
+);
+
+/**
+ * Derives wellness-goal ids from whatever peptides are currently in the
+ * user's stack (via each peptide's reference `goals`), so nutrition guidance
+ * updates automatically as the stack changes instead of requiring a
+ * duplicate manual pick in the nutrition profile.
+ */
+export function goalsFromStack(peptideNames: string[]): string[] {
+  const ids = new Set<string>();
+  for (const name of peptideNames) {
+    const ref = PEPTIDE_REFERENCE[name];
+    ref?.goals.forEach((label) => {
+      const id = GOAL_LABEL_TO_ID[label];
+      if (id) ids.add(id);
+    });
+  }
+  return [...ids];
 }

@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { GOAL_NUTRITION_GUIDANCE, WELLNESS_GOALS } from "../data/wellnessGoals";
-import { useUpdateProfile } from "../lib/queries";
+import { useStackItems, useUpdateProfile } from "../lib/queries";
 import {
   ACTIVITY_LABELS,
   calculateMacros,
   GOAL_LABELS,
+  goalsFromStack,
   type ActivityLevel,
   type NutritionGoal,
 } from "../lib/nutrition";
@@ -49,6 +50,7 @@ export function NutritionScreen() {
 
 function PlanView() {
   const user = useAuthStore((s) => s.user);
+  const { data: stackItems } = useStackItems();
 
   const macros = useMemo(() => {
     if (!hasCompleteProfile(user)) return null;
@@ -62,9 +64,20 @@ function PlanView() {
     });
   }, [user]);
 
-  if (!macros) return null;
+  const manualGoals = user?.wellnessGoals ?? [];
+  const stackGoals = useMemo(
+    () => goalsFromStack((stackItems ?? []).map((i) => i.peptideName)),
+    [stackItems],
+  );
+  // Union, but remember which ones came from the stack so the UI can label
+  // them — this is what keeps guidance in sync as the stack changes without
+  // the user having to re-visit their nutrition profile every time.
+  const goals = useMemo(
+    () => [...new Set([...manualGoals, ...stackGoals])],
+    [manualGoals, stackGoals],
+  );
 
-  const goals = user?.wellnessGoals ?? [];
+  if (!macros) return null;
 
   return (
     <View style={{ gap: 16 }}>
@@ -92,11 +105,19 @@ function PlanView() {
             const goal = WELLNESS_GOALS.find((g) => g.id === goalId);
             const guidance = GOAL_NUTRITION_GUIDANCE[goalId];
             if (!goal || !guidance) return null;
+            const fromStack = stackGoals.includes(goalId) && !manualGoals.includes(goalId);
             return (
               <View key={goalId} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-                <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15, marginBottom: 10 }}>
-                  {goal.icon} {goal.label}
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>
+                    {goal.icon} {goal.label}
+                  </Text>
+                  {fromStack && (
+                    <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9 }}>
+                      <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
+                    </View>
+                  )}
+                </View>
                 {guidance.map((g) => (
                   <View key={g.nutrient} style={{ marginBottom: 10 }}>
                     <Text style={{ fontWeight: "700", color: colors.tealDark, fontSize: 13 }}>{g.nutrient}</Text>

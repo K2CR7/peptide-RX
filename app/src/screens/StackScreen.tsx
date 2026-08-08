@@ -116,6 +116,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   const [frequency, setFrequency] = useState("");
   const [route, setRoute] = useState("");
   const [days, setDays] = useState<number[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   function toggleDay(day: number) {
     setDays((d) => (d.includes(day) ? d.filter((x) => x !== day) : [...d, day].sort()));
@@ -136,24 +137,31 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   }
 
   function reset() {
-    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]);
+    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]); setError(null);
   }
 
   async function handleSubmit() {
+    setError(null);
     const doseNum = Number(dose);
-    if (!peptideName.trim() || !doseNum || !frequency.trim()) return;
-    await createItem.mutateAsync({
-      peptideName: peptideName.trim(),
-      dose: doseNum,
-      unit,
-      frequency: frequency.trim(),
-      scheduleDays: days,
-      route: route.trim() || null,
-      cycleOnDays: null,
-      cycleOffDays: null,
-    });
-    reset();
-    onClose();
+    if (!peptideName.trim()) return setError("Pick or enter a peptide name.");
+    if (!dose || !doseNum) return setError("Pick or enter a dose.");
+    if (!frequency.trim()) return setError("Pick or enter a frequency.");
+    try {
+      await createItem.mutateAsync({
+        peptideName: peptideName.trim(),
+        dose: doseNum,
+        unit,
+        frequency: frequency.trim(),
+        scheduleDays: days,
+        route: route.trim() || null,
+        cycleOnDays: null,
+        cycleOffDays: null,
+      });
+      reset();
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to add to stack — try again.");
+    }
   }
 
   return (
@@ -200,12 +208,14 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
           })}
         </View>
 
+        {error && <Text style={{ color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
+
         <Pressable
           onPress={handleSubmit}
           disabled={createItem.isPending}
-          style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center", marginTop: 20 }}
+          style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center", marginTop: 12, opacity: createItem.isPending ? 0.6 : 1 }}
         >
-          <Text style={{ color: "#fff", fontWeight: "700" }}>Add to stack</Text>
+          <Text style={{ color: "#fff", fontWeight: "700" }}>{createItem.isPending ? "Adding…" : "Add to stack"}</Text>
         </Pressable>
         <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
           <Text style={{ color: colors.ink3 }}>Cancel</Text>
