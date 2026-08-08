@@ -104,10 +104,13 @@ function PlanView() {
           const fromStack = stackNutrients.has(n.nutrient);
           return (
             <View key={n.nutrient} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>{n.nutrient}</Text>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>{n.nutrient}</Text>
+                  <Text style={{ color: colors.tealDark, fontSize: 12, fontWeight: "600", marginTop: 2 }}>{n.amount}</Text>
+                </View>
                 {fromStack && (
-                  <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9 }}>
+                  <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9, flexShrink: 0 }}>
                     <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
                   </View>
                 )}

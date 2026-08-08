@@ -23,6 +23,7 @@ export const WELLNESS_GOALS: WellnessGoal[] = [
 
 export interface NutrientGuidance {
   nutrient: string;
+  amount: string;
   benefits: string;
   foods: string[];
 }
@@ -30,23 +31,27 @@ export interface NutrientGuidance {
 // One entry per nutrient, benefits consolidated across every goal it used to
 // be duplicated under (e.g. Zinc no longer appears separately in Skin,
 // Sleep, Libido, and Immune sections — it appears once, covering all of it).
+// `amount` is a general adult daily reference (US/EU dietary guidelines) —
+// not personalized beyond what the profile form already captures for
+// calories/protein above; a few nutrients (polyphenols, probiotics) have no
+// formal RDA, which is noted rather than inventing a number.
 export const NUTRIENT_GUIDANCE: NutrientGuidance[] = [
-  { nutrient: "Protein", benefits: "Muscle repair & growth, keeps you full during a deficit, tissue recovery.", foods: ["Chicken breast", "Eggs", "Greek yogurt", "Fish", "Lean beef", "Cottage cheese", "Tofu"] },
-  { nutrient: "Fiber", benefits: "Satiety, feeds gut bacteria, supports metabolic and heart health.", foods: ["Oats", "Beans", "Vegetables", "Berries", "Chia seeds", "Whole grains"] },
-  { nutrient: "Omega-3", benefits: "Reduces inflammation, supports skin barrier, brain function, and cardiovascular health.", foods: ["Salmon", "Sardines", "Walnuts", "Flaxseed", "Algae oil"] },
-  { nutrient: "Vitamin C", benefits: "Collagen synthesis for skin & connective tissue repair, immune cell function.", foods: ["Citrus", "Bell peppers", "Strawberries", "Kiwi", "Broccoli"] },
-  { nutrient: "Zinc", benefits: "Skin and tissue repair, immune signaling, hormone production, sleep quality.", foods: ["Oysters", "Beef", "Pumpkin seeds", "Chickpeas", "Cashews"] },
-  { nutrient: "Vitamin D", benefits: "Immune regulation, hormonal balance.", foods: ["Fatty fish", "Egg yolks", "Fortified milk", "Sunlight"] },
-  { nutrient: "Magnesium", benefits: "Nervous system relaxation, sleep quality, muscle function.", foods: ["Pumpkin seeds", "Almonds", "Spinach", "Dark chocolate"] },
-  { nutrient: "Calcium", benefits: "Bone density, especially under training load.", foods: ["Dairy", "Fortified plant milk", "Sardines", "Leafy greens"] },
-  { nutrient: "B Vitamins", benefits: "Energy metabolism, neuron function.", foods: ["Whole grains", "Leafy greens", "Eggs", "Legumes"] },
-  { nutrient: "Choline", benefits: "Neurotransmitter production, cognitive function.", foods: ["Eggs", "Liver", "Soybeans"] },
-  { nutrient: "Polyphenols / Antioxidants", benefits: "Combats cellular aging, anti-inflammatory.", foods: ["Berries", "Green tea", "Dark chocolate", "Olive oil"] },
-  { nutrient: "Probiotics", benefits: "Gut microbiome diversity.", foods: ["Yogurt", "Kefir", "Sauerkraut", "Kimchi"] },
-  { nutrient: "Prebiotic Fiber", benefits: "Feeds the probiotic bacteria above.", foods: ["Garlic", "Onion", "Leeks", "Asparagus"] },
-  { nutrient: "Creatine-Rich Foods", benefits: "Strength & power output.", foods: ["Red meat", "Salmon", "Herring"] },
-  { nutrient: "Healthy Fats", benefits: "Steroid hormone synthesis.", foods: ["Avocado", "Olive oil", "Nuts", "Egg yolks"] },
-  { nutrient: "Tryptophan", benefits: "Precursor to melatonin/serotonin — supports sleep onset.", foods: ["Turkey", "Oats", "Milk", "Bananas"] },
+  { nutrient: "Protein", amount: "0.8-1g/kg (see personalized target above)", benefits: "Muscle repair & growth, keeps you full during a deficit, tissue recovery.", foods: ["Chicken breast", "Eggs", "Greek yogurt", "Fish", "Lean beef", "Cottage cheese", "Tofu"] },
+  { nutrient: "Fiber", amount: "25-38g", benefits: "Satiety, feeds gut bacteria, supports metabolic and heart health.", foods: ["Oats", "Beans", "Vegetables", "Berries", "Chia seeds", "Whole grains"] },
+  { nutrient: "Omega-3", amount: "250-500mg EPA+DHA", benefits: "Reduces inflammation, supports skin barrier, brain function, and cardiovascular health.", foods: ["Salmon", "Sardines", "Walnuts", "Flaxseed", "Algae oil"] },
+  { nutrient: "Vitamin C", amount: "75-90mg", benefits: "Collagen synthesis for skin & connective tissue repair, immune cell function.", foods: ["Citrus", "Bell peppers", "Strawberries", "Kiwi", "Broccoli"] },
+  { nutrient: "Zinc", amount: "8-11mg", benefits: "Skin and tissue repair, immune signaling, hormone production, sleep quality.", foods: ["Oysters", "Beef", "Pumpkin seeds", "Chickpeas", "Cashews"] },
+  { nutrient: "Vitamin D", amount: "600-800 IU", benefits: "Immune regulation, hormonal balance.", foods: ["Fatty fish", "Egg yolks", "Fortified milk", "Sunlight"] },
+  { nutrient: "Magnesium", amount: "310-420mg", benefits: "Nervous system relaxation, sleep quality, muscle function.", foods: ["Pumpkin seeds", "Almonds", "Spinach", "Dark chocolate"] },
+  { nutrient: "Calcium", amount: "1000-1200mg", benefits: "Bone density, especially under training load.", foods: ["Dairy", "Fortified plant milk", "Sardines", "Leafy greens"] },
+  { nutrient: "B Vitamins", amount: "Varies by type (e.g. B12: 2.4mcg, B6: 1.3-1.7mg)", benefits: "Energy metabolism, neuron function.", foods: ["Whole grains", "Leafy greens", "Eggs", "Legumes"] },
+  { nutrient: "Choline", amount: "425-550mg", benefits: "Neurotransmitter production, cognitive function.", foods: ["Eggs", "Liver", "Soybeans"] },
+  { nutrient: "Polyphenols / Antioxidants", amount: "No formal RDA — aim for variety daily", benefits: "Combats cellular aging, anti-inflammatory.", foods: ["Berries", "Green tea", "Dark chocolate", "Olive oil"] },
+  { nutrient: "Probiotics", amount: "No formal RDA — aim for regular intake", benefits: "Gut microbiome diversity.", foods: ["Yogurt", "Kefir", "Sauerkraut", "Kimchi"] },
+  { nutrient: "Prebiotic Fiber", amount: "Counts toward total fiber (25-38g)", benefits: "Feeds the probiotic bacteria above.", foods: ["Garlic", "Onion", "Leeks", "Asparagus"] },
+  { nutrient: "Creatine-Rich Foods", amount: "~3-5g/day (supplemental reference)", benefits: "Strength & power output.", foods: ["Red meat", "Salmon", "Herring"] },
+  { nutrient: "Healthy Fats", amount: "20-35% of daily calories", benefits: "Steroid hormone synthesis.", foods: ["Avocado", "Olive oil", "Nuts", "Egg yolks"] },
+  { nutrient: "Tryptophan", amount: "~250-425mg", benefits: "Precursor to melatonin/serotonin — supports sleep onset.", foods: ["Turkey", "Oats", "Milk", "Bananas"] },
 ];
 
 // Which nutrients matter most for each wellness goal — used only to flag
