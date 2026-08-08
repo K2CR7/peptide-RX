@@ -22,9 +22,9 @@ const createSchema = z.object({
   unit: z.string().min(1),
   frequency: z.string().min(1),
   scheduleDays: z.array(z.number().int().min(1).max(7)).default([]),
-  route: z.string().optional(),
-  cycleOnDays: z.number().int().positive().optional(),
-  cycleOffDays: z.number().int().positive().optional(),
+  route: z.string().nullable().optional(),
+  cycleOnDays: z.number().int().positive().nullable().optional(),
+  cycleOffDays: z.number().int().positive().nullable().optional(),
 });
 
 stackItemsRouter.post("/", async (req, res) => {
