@@ -64,17 +64,12 @@ function PlanView() {
     });
   }, [user]);
 
-  const manualGoals = user?.wellnessGoals ?? [];
+  // No goal picker — every category is shown for everyone (general "eat
+  // clean, cover your bases" guidance). Peptides in the stack still get
+  // highlighted since that's a genuinely relevant signal, just not a filter.
   const stackGoals = useMemo(
     () => goalsFromStack((stackItems ?? []).map((i) => i.peptideName)),
     [stackItems],
-  );
-  // Union, but remember which ones came from the stack so the UI can label
-  // them — this is what keeps guidance in sync as the stack changes without
-  // the user having to re-visit their nutrition profile every time.
-  const goals = useMemo(
-    () => [...new Set([...manualGoals, ...stackGoals])],
-    [manualGoals, stackGoals],
   );
 
   if (!macros) return null;
@@ -96,40 +91,37 @@ function PlanView() {
         </Text>
       </View>
 
-      {goals.length > 0 && (
-        <View style={{ gap: 12 }}>
-          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-            Food guidance for your goals
-          </Text>
-          {goals.map((goalId) => {
-            const goal = WELLNESS_GOALS.find((g) => g.id === goalId);
-            const guidance = GOAL_NUTRITION_GUIDANCE[goalId];
-            if (!goal || !guidance) return null;
-            const fromStack = stackGoals.includes(goalId) && !manualGoals.includes(goalId);
-            return (
-              <View key={goalId} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                  <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>
-                    {goal.icon} {goal.label}
-                  </Text>
-                  {fromStack && (
-                    <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9 }}>
-                      <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
-                    </View>
-                  )}
-                </View>
-                {guidance.map((g) => (
-                  <View key={g.nutrient} style={{ marginBottom: 10 }}>
-                    <Text style={{ fontWeight: "700", color: colors.tealDark, fontSize: 13 }}>{g.nutrient}</Text>
-                    <Text style={{ color: colors.ink3, fontSize: 11, marginBottom: 4 }}>{g.why}</Text>
-                    <Text style={{ color: colors.ink2, fontSize: 13 }}>{g.foods.join(" · ")}</Text>
+      <View style={{ gap: 12 }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
+          Eat clean — full nutrient coverage
+        </Text>
+        {WELLNESS_GOALS.map((goal) => {
+          const guidance = GOAL_NUTRITION_GUIDANCE[goal.id];
+          if (!guidance) return null;
+          const fromStack = stackGoals.includes(goal.id);
+          return (
+            <View key={goal.id} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>
+                  {goal.icon} {goal.label}
+                </Text>
+                {fromStack && (
+                  <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9 }}>
+                    <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
                   </View>
-                ))}
+                )}
               </View>
-            );
-          })}
-        </View>
-      )}
+              {guidance.map((g) => (
+                <View key={g.nutrient} style={{ marginBottom: 10 }}>
+                  <Text style={{ fontWeight: "700", color: colors.tealDark, fontSize: 13 }}>{g.nutrient}</Text>
+                  <Text style={{ color: colors.ink3, fontSize: 11, marginBottom: 4 }}>{g.why}</Text>
+                  <Text style={{ color: colors.ink2, fontSize: 13 }}>{g.foods.join(" · ")}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -154,11 +146,6 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
   const [sex, setSex] = useState<"Male" | "Female" | "">(user?.sex ?? "");
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | "">(user?.activityLevel ?? "");
   const [nutritionGoal, setNutritionGoal] = useState<NutritionGoal | "">(user?.nutritionGoal ?? "");
-  const [goals, setGoals] = useState<string[]>(user?.wellnessGoals ?? []);
-
-  function toggleGoal(id: string) {
-    setGoals((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]));
-  }
 
   const valid = weightLb && heightIn && age && sex && activityLevel && nutritionGoal;
 
@@ -171,7 +158,6 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       sex: sex as "Male" | "Female",
       activityLevel: activityLevel as ActivityLevel,
       nutritionGoal: nutritionGoal as NutritionGoal,
-      wellnessGoals: goals,
     });
     onDone();
   }
@@ -206,15 +192,6 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {(Object.keys(GOAL_LABELS) as NutritionGoal[]).map((g) => (
           <Chip key={g} label={GOAL_LABELS[g]} on={nutritionGoal === g} onPress={() => setNutritionGoal(g)} />
-        ))}
-      </View>
-
-      <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>
-        Wellness goals <Text style={{ color: colors.ink3 }}>(for food guidance — pick any)</Text>
-      </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {WELLNESS_GOALS.map((g) => (
-          <Chip key={g.id} label={`${g.icon} ${g.label}`} on={goals.includes(g.id)} onPress={() => toggleGoal(g.id)} />
         ))}
       </View>
 

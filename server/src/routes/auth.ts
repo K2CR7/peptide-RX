@@ -23,7 +23,6 @@ function serializeUser(user: {
   age: number | null;
   activityLevel: string | null;
   nutritionGoal: string | null;
-  wellnessGoals: string[];
 }) {
   return {
     id: user.id,
@@ -36,7 +35,6 @@ function serializeUser(user: {
     age: user.age,
     activityLevel: user.activityLevel,
     nutritionGoal: user.nutritionGoal,
-    wellnessGoals: user.wellnessGoals,
   };
 }
 
@@ -55,7 +53,6 @@ const updateProfileSchema = z.object({
   age: z.number().int().positive().optional(),
   activityLevel: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"]).optional(),
   nutritionGoal: z.enum(["CUT", "MAINTAIN", "BULK"]).optional(),
-  wellnessGoals: z.array(z.string()).optional(),
 });
 
 authRouter.patch("/me", requireAuth, async (req, res) => {

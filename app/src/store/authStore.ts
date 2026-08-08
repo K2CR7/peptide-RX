@@ -15,7 +15,6 @@ export interface AuthUser {
   age?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE" | null;
   nutritionGoal?: "CUT" | "MAINTAIN" | "BULK" | null;
-  wellnessGoals?: string[];
 }
 
 interface AuthTokens {

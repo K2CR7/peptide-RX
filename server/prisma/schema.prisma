@@ -43,7 +43,6 @@ model User {
   age           Int?
   activityLevel ActivityLevel?
   nutritionGoal NutritionGoal?
-  wellnessGoals String[]       @default([])
 
   refreshTokens  RefreshToken[]
   stackItems     StackItem[]
