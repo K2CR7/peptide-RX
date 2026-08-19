@@ -95,6 +95,21 @@ export function useCreateCheckin() {
   });
 }
 
+export function useDeleteCheckin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/checkins/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checkins"] }),
+  });
+}
+
+export function useCheckinUploadUrl() {
+  return useMutation({
+    mutationFn: (data: { angle: "front" | "side" | "back"; contentType?: string }) =>
+      api.post<{ uploadUrl: string; publicUrl: string }>("/checkins/upload-url", data),
+  });
+}
+
 export function useNutritionPlans() {
   return useQuery({
     queryKey: ["nutritionPlans"],

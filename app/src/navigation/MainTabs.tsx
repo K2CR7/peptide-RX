@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Text } from "react-native";
+import { CheckinScreen } from "../screens/CheckinScreen";
 import { HomeScreen } from "../screens/HomeScreen";
 import { LearnScreen } from "../screens/LearnScreen";
 import { NutritionScreen } from "../screens/NutritionScreen";
@@ -13,6 +14,7 @@ const ICONS: Record<string, string> = {
   Home: "🏠",
   Schedule: "📅",
   Stack: "💉",
+  Progress: "📈",
   Nutrition: "🥗",
   Learn: "📖",
 };
@@ -30,6 +32,7 @@ export function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Schedule" component={ScheduleScreen} />
       <Tab.Screen name="Stack" component={StackScreen} />
+      <Tab.Screen name="Progress" component={CheckinScreen} />
       <Tab.Screen name="Nutrition" component={NutritionScreen} />
       <Tab.Screen name="Learn" component={LearnScreen} />
     </Tab.Navigator>
