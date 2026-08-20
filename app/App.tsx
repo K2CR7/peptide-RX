@@ -1,5 +1,16 @@
+import {
+  Barlow_400Regular,
+  Barlow_500Medium,
+  Barlow_600SemiBold,
+  Barlow_700Bold,
+} from "@expo-google-fonts/barlow";
+import {
+  BarlowSemiCondensed_300Light,
+  BarlowSemiCondensed_500Medium,
+} from "@expo-google-fonts/barlow-semi-condensed";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -22,7 +33,7 @@ function AuthGate() {
   if (!hydrated) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.teal} />
+        <ActivityIndicator color={colors.signal} />
       </View>
     );
   }
@@ -44,7 +55,7 @@ function AuthGate() {
 function WebPhoneFrame({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0A1919" }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
       <View
         style={{
           width: 430,
@@ -52,7 +63,9 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
           maxHeight: 932,
           borderRadius: 40,
           overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          borderWidth: 1,
+          borderColor: "#1E242B",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
         }}
       >
         {children}
@@ -62,6 +75,19 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Barlow_400Regular,
+    Barlow_500Medium,
+    Barlow_600SemiBold,
+    Barlow_700Bold,
+    BarlowSemiCondensed_300Light,
+    BarlowSemiCondensed_500Medium,
+  });
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
   return (
     <WebPhoneFrame>
       <QueryClientProvider client={queryClient}>

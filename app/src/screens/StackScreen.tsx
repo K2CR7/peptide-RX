@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { ChipSelect } from "../components/ChipSelect";
+import { PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
@@ -10,7 +11,7 @@ import {
   useLogInjection,
   useStackItems,
 } from "../lib/queries";
-import { colors, radii } from "../theme";
+import { colors, font, panel, radii, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
 const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
@@ -33,20 +34,32 @@ export function StackScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 12 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink }}>My Stack</Text>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 12 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <Text style={type.title}>My stack</Text>
           <Pressable
             onPress={() => setAddOpen(true)}
-            style={{ backgroundColor: colors.teal, borderRadius: radii.md, paddingVertical: 10, paddingHorizontal: 16 }}
+            style={({ pressed }) => ({
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              backgroundColor: colors.signal,
+              borderRadius: radii.md,
+              paddingVertical: 9,
+              paddingHorizontal: 14,
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>+ Add</Text>
+            <PlusMark size={13} color={colors.onSignal} />
+            <Text style={{ fontFamily: font.bold, fontSize: 13.5, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
           </Pressable>
         </View>
 
-        {isLoading && <Text style={{ color: colors.ink3 }}>Loading…</Text>}
+        {isLoading && <Text style={type.body}>Loading…</Text>}
         {!isLoading && items?.length === 0 && (
-          <Text style={{ color: colors.ink3 }}>Nothing in your stack yet. Add what you're already taking.</Text>
+          <View style={[panel, { padding: 18 }]}>
+            <Text style={type.body}>Nothing in your stack yet. Add what you're already taking.</Text>
+          </View>
         )}
 
         {items?.map((item) => (
@@ -69,21 +82,32 @@ export function StackScreen() {
 
 function StackItemCard({ item, onLog }: { item: StackItem; onLog: () => void }) {
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
+    <View style={[panel, { padding: 16 }]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink }}>{item.peptideName}</Text>
-          <Text style={{ color: colors.ink3, fontSize: 12, marginTop: 2 }}>{item.frequency} · {item.route ?? "—"}</Text>
+          <Text style={type.heading}>{item.peptideName}</Text>
+          <Text style={[type.meta, { marginTop: 3 }]}>{item.frequency} · {item.route ?? "—"}</Text>
         </View>
-        <View style={{ backgroundColor: colors.teal, borderRadius: radii.sm, paddingVertical: 6, paddingHorizontal: 12 }}>
-          <Text style={{ color: "#fff", fontWeight: "800" }}>{item.dose} {item.unit}</Text>
-        </View>
+        <Text style={{ fontFamily: font.numeralMedium, fontSize: 22, color: colors.ink, letterSpacing: 0.3 }}>
+          {item.dose}
+          <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
+        </Text>
       </View>
       <Pressable
         onPress={onLog}
-        style={{ marginTop: 12, borderWidth: 1.5, borderColor: colors.border2, borderRadius: radii.md, padding: 10, alignItems: "center" }}
+        style={({ pressed }) => ({
+          marginTop: 14,
+          borderWidth: 1,
+          borderColor: colors.hairline2,
+          borderRadius: radii.md,
+          padding: 11,
+          alignItems: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: colors.tealDark, fontWeight: "700" }}>Log injection</Text>
+        <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.signal, letterSpacing: 0.4 }}>
+          Log injection
+        </Text>
       </Pressable>
     </View>
   );
@@ -166,9 +190,10 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 10 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.ink, marginBottom: 8 }}>Add to your stack</Text>
-        <Text style={{ fontSize: 13, color: colors.ink3, marginBottom: 4 }}>Peptide</Text>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 10 }}>
+        <Text style={[type.title, { marginBottom: 10 }]}>Add to your stack</Text>
+
+        <Text style={type.label}>Peptide</Text>
         <ChipSelect
           options={Object.keys(PEPTIDE_REFERENCE)}
           value={peptideName}
@@ -176,19 +201,19 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
           customPlaceholder="Enter peptide name"
         />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Dose</Text>
+        <Text style={[type.label, { marginTop: 10 }]}>Dose</Text>
         <ChipSelect options={DOSE_OPTIONS} value={dose} onChange={setDose} customPlaceholder="Enter dose" keyboardType="decimal-pad" />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Unit</Text>
+        <Text style={[type.label, { marginTop: 10 }]}>Unit</Text>
         <ChipSelect options={UNIT_OPTIONS} value={unit} onChange={setUnit} customPlaceholder="Enter unit" />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Frequency</Text>
+        <Text style={[type.label, { marginTop: 10 }]}>Frequency</Text>
         <ChipSelect options={FREQUENCY_OPTIONS} value={frequency} onChange={setFrequency} customPlaceholder="Enter frequency" />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Route</Text>
+        <Text style={[type.label, { marginTop: 10 }]}>Route</Text>
         <ChipSelect options={ROUTE_OPTIONS} value={route} onChange={setRoute} customPlaceholder="Enter route" />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Schedule days</Text>
+        <Text style={[type.label, { marginTop: 10 }]}>Schedule days</Text>
         <View style={{ flexDirection: "row", gap: 6 }}>
           {DAY_LABELS.map((label, i) => {
             const day = i + 1;
@@ -199,26 +224,37 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
                 onPress={() => toggleDay(day)}
                 style={{
                   width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
-                  backgroundColor: on ? colors.teal : colors.white, borderWidth: 1.5, borderColor: on ? colors.teal : colors.border2,
+                  backgroundColor: on ? colors.signal : colors.panel,
+                  borderWidth: 1,
+                  borderColor: on ? colors.signal : colors.hairline2,
                 }}
               >
-                <Text style={{ color: on ? "#fff" : colors.ink2, fontWeight: "700", fontSize: 12 }}>{label}</Text>
+                <Text style={{ fontFamily: font.bold, fontSize: 12.5, color: on ? colors.onSignal : colors.ink2 }}>{label}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {error && <Text style={{ color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
+        {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
 
         <Pressable
           onPress={handleSubmit}
           disabled={createItem.isPending}
-          style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center", marginTop: 12, opacity: createItem.isPending ? 0.6 : 1 }}
+          style={({ pressed }) => ({
+            backgroundColor: colors.signal,
+            borderRadius: radii.md,
+            padding: 15,
+            alignItems: "center",
+            marginTop: 14,
+            opacity: createItem.isPending || pressed ? 0.7 : 1,
+          })}
         >
-          <Text style={{ color: "#fff", fontWeight: "700" }}>{createItem.isPending ? "Adding…" : "Add to stack"}</Text>
+          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+            {createItem.isPending ? "Adding…" : "Add to stack"}
+          </Text>
         </Pressable>
         <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
-          <Text style={{ color: colors.ink3 }}>Cancel</Text>
+          <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
         </Pressable>
       </ScrollView>
     </Modal>

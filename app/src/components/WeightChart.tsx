@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { LayoutChangeEvent, GestureResponderEvent } from "react-native";
 import { Text, View } from "react-native";
-import Svg, { Circle, Line, Path } from "react-native-svg";
-import { colors, radii } from "../theme";
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from "react-native-svg";
+import { colors, font, panel, type } from "../theme";
 
 const KG_TO_LB = 2.20462;
-const HEIGHT = 160;
+const HEIGHT = 170;
 const PAD_X = 16;
-const PAD_Y = 20;
+const PAD_Y = 22;
+const GRID_ROWS = 4;
 
 interface Point {
   date: string;
@@ -25,8 +26,8 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
 
   if (points.length < 2) {
     return (
-      <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 20, alignItems: "center" }}>
-        <Text style={{ color: colors.ink3, fontSize: 13, textAlign: "center" }}>
+      <View style={[panel, { padding: 20, alignItems: "center" }]}>
+        <Text style={[type.body, { textAlign: "center" }]}>
           Log a couple check-ins to see your weight trend.
         </Text>
       </View>
@@ -42,6 +43,7 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
   const yAt = (w: number) => PAD_Y + (1 - (w - min) / range) * (HEIGHT - PAD_Y * 2);
 
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${xAt(i).toFixed(1)} ${yAt(p.weightLb).toFixed(1)}`).join(" ");
+  const areaPath = `${path} L ${xAt(points.length - 1).toFixed(1)} ${HEIGHT - PAD_Y} L ${PAD_X} ${HEIGHT - PAD_Y} Z`;
 
   function handleTouch(e: GestureResponderEvent) {
     if (width === 0) return;
@@ -56,21 +58,20 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
   const delta = active.weightLb - first.weightLb;
 
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 18 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Weight trend
-        </Text>
-        <Text style={{ fontSize: 12, color: colors.ink3 }}>
+    <View style={[panel, { padding: 18 }]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+        <Text style={type.label}>Weight trend</Text>
+        <Text style={type.meta}>
           {new Date(active.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-        <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink }}>
-          {Math.round(active.weightLb)} <Text style={{ fontSize: 14, color: colors.ink3, fontWeight: "600" }}>lb</Text>
+      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+        <Text style={{ fontFamily: font.numeral, fontSize: 40, color: colors.ink, letterSpacing: -0.5 }}>
+          {Math.round(active.weightLb)}
+          <Text style={{ fontSize: 16, color: colors.ink3 }}> lb</Text>
         </Text>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: delta <= 0 ? colors.green : colors.amber }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: delta <= 0 ? colors.signal : colors.amber }}>
           {delta === 0 ? "—" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)} lb`}
         </Text>
       </View>
@@ -86,19 +87,43 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
       >
         {width > 0 && (
           <Svg width={width} height={HEIGHT}>
-            <Line x1={PAD_X} y1={HEIGHT - PAD_Y} x2={width - PAD_X} y2={HEIGHT - PAD_Y} stroke={colors.border} strokeWidth={1} />
+            <Defs>
+              <LinearGradient id="traceFill" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={colors.trace} stopOpacity={0.22} />
+                <Stop offset="1" stopColor={colors.trace} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+
+            {Array.from({ length: GRID_ROWS + 1 }, (_, r) => {
+              const y = PAD_Y + (r / GRID_ROWS) * (HEIGHT - PAD_Y * 2);
+              return (
+                <Line
+                  key={r}
+                  x1={PAD_X}
+                  y1={y}
+                  x2={width - PAD_X}
+                  y2={y}
+                  stroke={colors.hairline}
+                  strokeWidth={1}
+                />
+              );
+            })}
+
             {activeIndex != null && (
-              <Line x1={xAt(activeIdx)} y1={PAD_Y} x2={xAt(activeIdx)} y2={HEIGHT - PAD_Y} stroke={colors.border2} strokeWidth={1} />
+              <Line x1={xAt(activeIdx)} y1={PAD_Y} x2={xAt(activeIdx)} y2={HEIGHT - PAD_Y} stroke={colors.hairline2} strokeWidth={1} />
             )}
-            <Path d={path} stroke={colors.teal} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+
+            <Path d={areaPath} fill="url(#traceFill)" />
+            <Path d={path} stroke={colors.trace} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+
             {points.map((p, i) => (
               <Circle
                 key={i}
                 cx={xAt(i)}
                 cy={yAt(p.weightLb)}
                 r={i === activeIdx ? 5 : 3}
-                fill={colors.white}
-                stroke={colors.teal}
+                fill={colors.bg}
+                stroke={colors.trace}
                 strokeWidth={2}
               />
             ))}

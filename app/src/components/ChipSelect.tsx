@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { colors, radii } from "../theme";
+import { colors, font, radii } from "../theme";
 
 interface Props {
   options: string[];
@@ -30,6 +30,21 @@ export function ChipSelect({ options, value, onChange, customPlaceholder, keyboa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  const chipStyle = (on: boolean) => ({
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: on ? colors.signal : colors.hairline2,
+    backgroundColor: on ? colors.signalFaint : "transparent",
+  });
+
+  const chipText = (on: boolean) => ({
+    fontFamily: font.semibold,
+    color: on ? colors.signal : colors.ink2,
+    fontSize: 13,
+  });
+
   return (
     <View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -42,16 +57,9 @@ export function ChipSelect({ options, value, onChange, customPlaceholder, keyboa
                 setCustomMode(false);
                 onChange(opt);
               }}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 14,
-                borderRadius: 20,
-                borderWidth: 1.5,
-                borderColor: on ? colors.teal : colors.border2,
-                backgroundColor: on ? colors.tealLight : colors.white,
-              }}
+              style={chipStyle(on)}
             >
-              <Text style={{ color: on ? colors.tealDark : colors.ink2, fontWeight: "600", fontSize: 13 }}>{opt}</Text>
+              <Text style={chipText(on)}>{opt}</Text>
             </Pressable>
           );
         })}
@@ -60,32 +68,27 @@ export function ChipSelect({ options, value, onChange, customPlaceholder, keyboa
             setCustomMode(true);
             if (isPreset) onChange("");
           }}
-          style={{
-            paddingVertical: 8,
-            paddingHorizontal: 14,
-            borderRadius: 20,
-            borderWidth: 1.5,
-            borderColor: customMode ? colors.teal : colors.border2,
-            backgroundColor: customMode ? colors.tealLight : colors.white,
-          }}
+          style={chipStyle(customMode)}
         >
-          <Text style={{ color: customMode ? colors.tealDark : colors.ink2, fontWeight: "600", fontSize: 13 }}>Custom</Text>
+          <Text style={chipText(customMode)}>Custom</Text>
         </Pressable>
       </View>
       {customMode && (
         <TextInput
           placeholder={customPlaceholder}
+          placeholderTextColor={colors.ink3}
           value={value}
           onChangeText={onChange}
           keyboardType={keyboardType}
           autoFocus
           style={{
             marginTop: 8,
-            backgroundColor: colors.white,
-            borderWidth: 1.5,
-            borderColor: colors.border2,
+            backgroundColor: colors.panel,
+            borderWidth: 1,
+            borderColor: colors.hairline2,
             borderRadius: radii.md,
             padding: 13,
+            fontFamily: font.regular,
             fontSize: 15,
             color: colors.ink,
           }}

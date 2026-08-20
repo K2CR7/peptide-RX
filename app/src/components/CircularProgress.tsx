@@ -1,6 +1,9 @@
-import { Text, View } from "react-native";
-import Svg, { Circle } from "react-native-svg";
-import { colors } from "../theme";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, Text, View } from "react-native";
+import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
+import { colors, font } from "../theme";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
   size?: number;
@@ -10,37 +13,96 @@ interface Props {
   sublabel: string;
 }
 
-export function CircularProgress({ size = 168, strokeWidth = 14, progress, label, sublabel }: Props) {
+/**
+ * Signature motion: the instrument powers on. The ring sweeps from empty to
+ * its reading once on mount and on every change, exponential ease-out, and
+ * the readout fades up under it. Native driver is off because
+ * strokeDashoffset is an SVG prop, not a transform.
+ */
+export function CircularProgress({ size = 190, strokeWidth = 11, progress, label, sublabel }: Props) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(1, progress));
-  const offset = circumference * (1 - clamped);
+
+  const sweep = useRef(new Animated.Value(0)).current;
+  const readout = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(sweep, {
+      toValue: clamped,
+      duration: 950,
+      easing: Easing.out(Easing.exp),
+      useNativeDriver: false,
+    }).start();
+  }, [clamped, sweep]);
+
+  useEffect(() => {
+    Animated.timing(readout, {
+      toValue: 1,
+      duration: 600,
+      delay: 120,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [readout]);
+
+  const dashoffset = sweep.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
 
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
       <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
+        <Defs>
+          <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={colors.signal} />
+            <Stop offset="1" stopColor="#1FBF7E" />
+          </LinearGradient>
+        </Defs>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.tealLight}
+          stroke={colors.panelRaised}
           strokeWidth={strokeWidth}
           fill="none"
         />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={colors.teal}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
+        {clamped > 0 && (
+          <AnimatedCircle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="url(#ringGrad)"
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashoffset}
+            strokeLinecap="round"
+          />
+        )}
       </Svg>
-      <Text style={{ fontSize: 30, fontWeight: "800", color: colors.ink }}>{label}</Text>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: colors.ink3, marginTop: 2 }}>{sublabel}</Text>
+      <Animated.View
+        style={{
+          alignItems: "center",
+          opacity: readout,
+          transform: [{ translateY: readout.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+        }}
+      >
+        <Text style={{ fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -1 }}>{label}</Text>
+        <Text
+          style={{
+            fontFamily: font.semibold,
+            fontSize: 10.5,
+            color: colors.ink3,
+            textTransform: "uppercase",
+            letterSpacing: 1.4,
+            marginTop: 2,
+          }}
+        >
+          {sublabel}
+        </Text>
+      </Animated.View>
     </View>
   );
 }

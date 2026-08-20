@@ -13,7 +13,7 @@ import {
   type NutritionGoal,
 } from "../lib/nutrition";
 import { useAuthStore } from "../store/authStore";
-import { colors, radii } from "../theme";
+import { colors, font, panel, radii, type } from "../theme";
 
 const LB_PER_KG = 2.20462;
 const IN_PER_CM = 0.393701;
@@ -31,12 +31,12 @@ export function NutritionScreen() {
   const showForm = editing || !hasCompleteProfile(user);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink }}>Nutrition</Text>
+        <Text style={type.title}>Fuel</Text>
         {!showForm && (
-          <Pressable onPress={() => setEditing(true)}>
-            <Text style={{ color: colors.teal, fontWeight: "700" }}>Edit</Text>
+          <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 14 }}>Edit</Text>
           </Pressable>
         )}
       </View>
@@ -82,27 +82,36 @@ function PlanView() {
 
   return (
     <View style={{ gap: 16 }}>
-      <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
-        <Text style={{ fontSize: 12, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Daily target · {GOAL_LABELS[goal]}
+      <View style={[panel, { padding: 20 }]}>
+        <Text style={type.label}>Daily target · {GOAL_LABELS[goal]}</Text>
+        <Text style={{ fontFamily: font.numeral, fontSize: 54, color: colors.ink, letterSpacing: -1, marginTop: 6 }}>
+          {macros.calories}
+          <Text style={{ fontSize: 18, color: colors.ink3 }}> kcal</Text>
         </Text>
-        <Text style={{ fontSize: 36, fontWeight: "800", color: colors.ink, marginTop: 4 }}>{macros.calories} kcal</Text>
-        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <MacroChip label="Protein" grams={macros.proteinG} color={colors.teal} />
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+          <MacroChip label="Protein" grams={macros.proteinG} color={colors.signal} />
           <MacroChip label="Carbs" grams={macros.carbsG} color={colors.amber} />
-          <MacroChip label="Fat" grams={macros.fatG} color={colors.red} />
+          <MacroChip label="Fat" grams={macros.fatG} color={colors.trace} />
         </View>
-        <Text style={{ color: colors.ink2, fontSize: 12, marginTop: 12, lineHeight: 17 }}>{GOAL_CONTEXT[goal]}</Text>
-        <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 8 }}>
+        <Text style={[type.body, { fontSize: 12.5, lineHeight: 18, marginTop: 14 }]}>{GOAL_CONTEXT[goal]}</Text>
+        <Text style={[type.meta, { fontSize: 11.5, marginTop: 8 }]}>
           BMR {macros.bmr} kcal · TDEE {macros.tdee} kcal
         </Text>
       </View>
 
       <Pressable
         onPress={() => setBuilderOpen(true)}
-        style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center" }}
+        style={({ pressed }) => ({
+          backgroundColor: colors.signal,
+          borderRadius: radii.md,
+          padding: 15,
+          alignItems: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>🍽 Build a meal</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+          Build a meal
+        </Text>
       </Pressable>
 
       <MealBuilderModal
@@ -115,26 +124,36 @@ function PlanView() {
       />
 
       <View style={{ gap: 10 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Eat clean — by nutrient
-        </Text>
+        <Text style={type.label}>Eat clean — by nutrient</Text>
         {NUTRIENT_GUIDANCE.map((n) => {
           const fromStack = stackNutrients.has(n.nutrient);
           return (
-            <View key={n.nutrient} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
+            <View key={n.nutrient} style={[panel, { borderRadius: radii.lg, padding: 16 }]}>
               <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>{n.nutrient}</Text>
-                  <Text style={{ color: colors.tealDark, fontSize: 12, fontWeight: "600", marginTop: 2 }}>{n.amount}</Text>
+                  <Text style={[type.heading, { fontSize: 15 }]}>{n.nutrient}</Text>
+                  <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 12.5, marginTop: 3 }}>{n.amount}</Text>
                 </View>
                 {fromStack && (
-                  <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9, flexShrink: 0 }}>
-                    <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
+                  <View
+                    style={{
+                      backgroundColor: colors.signalFaint,
+                      borderWidth: 1,
+                      borderColor: colors.signalDim,
+                      borderRadius: 20,
+                      paddingVertical: 3,
+                      paddingHorizontal: 9,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Text style={{ fontFamily: font.bold, color: colors.signal, fontSize: 10, letterSpacing: 0.4 }}>
+                      FROM YOUR STACK
+                    </Text>
                   </View>
                 )}
               </View>
-              <Text style={{ color: colors.ink3, fontSize: 12, marginBottom: 8, lineHeight: 17 }}>{n.benefits}</Text>
-              <Text style={{ color: colors.ink2, fontSize: 13, fontWeight: "600" }}>{n.foods.join(" · ")}</Text>
+              <Text style={[type.body, { fontSize: 12.5, lineHeight: 18, marginBottom: 8 }]}>{n.benefits}</Text>
+              <Text style={{ fontFamily: font.semibold, color: colors.ink2, fontSize: 13 }}>{n.foods.join(" · ")}</Text>
             </View>
           );
         })}
@@ -145,10 +164,21 @@ function PlanView() {
 
 function MacroChip({ label, grams, color }: { label: string; grams: number; color: string }) {
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: radii.md, padding: 12, alignItems: "center" }}>
-      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginBottom: 6 }} />
-      <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 16 }}>{grams}g</Text>
-      <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 1 }}>{label}</Text>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.panelRaised,
+        borderRadius: radii.md,
+        padding: 12,
+        alignItems: "center",
+      }}
+    >
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginBottom: 8 }} />
+      <Text style={{ fontFamily: font.numeralMedium, fontSize: 19, color: colors.ink }}>
+        {grams}
+        <Text style={{ fontSize: 12, color: colors.ink3 }}>g</Text>
+      </Text>
+      <Text style={[type.meta, { fontSize: 11, marginTop: 2 }]}>{label}</Text>
     </View>
   );
 }
@@ -180,8 +210,8 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 18, gap: 12 }}>
-      <Text style={{ color: colors.ink3, fontSize: 13 }}>
+    <View style={[panel, { padding: 18, gap: 14 }]}>
+      <Text style={type.body}>
         Used only to calculate your calorie/macro targets — not medical advice.
       </Text>
 
@@ -191,21 +221,21 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
         <Field label="Age" value={age} onChangeText={setAge} />
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Sex</Text>
+      <Text style={type.label}>Sex</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {(["Male", "Female"] as const).map((s) => (
           <Chip key={s} label={s} on={sex === s} onPress={() => setSex(s)} />
         ))}
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Activity level</Text>
+      <Text style={type.label}>Activity level</Text>
       <View style={{ gap: 8 }}>
         {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((level) => (
           <Chip key={level} label={ACTIVITY_LABELS[level]} on={activityLevel === level} onPress={() => setActivityLevel(level)} fullWidth />
         ))}
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Goal</Text>
+      <Text style={type.label}>Goal</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {(Object.keys(GOAL_LABELS) as NutritionGoal[]).map((g) => (
           <Chip key={g} label={GOAL_LABELS[g]} on={nutritionGoal === g} onPress={() => setNutritionGoal(g)} />
@@ -215,15 +245,25 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <Pressable
         onPress={handleSave}
         disabled={!valid || updateProfile.isPending}
-        style={{
-          backgroundColor: valid ? colors.teal : colors.border2,
+        style={({ pressed }) => ({
+          backgroundColor: valid ? colors.signal : colors.panelRaised,
           borderRadius: radii.md,
           padding: 15,
           alignItems: "center",
           marginTop: 10,
-        }}
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>Save & calculate</Text>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 15,
+            letterSpacing: 0.3,
+            color: valid ? colors.onSignal : colors.ink3,
+          }}
+        >
+          Save & calculate
+        </Text>
       </Pressable>
     </View>
   );
@@ -232,18 +272,19 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 function Field({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 11, color: colors.ink3, marginBottom: 4 }}>{label}</Text>
+      <Text style={[type.label, { fontSize: 10, marginBottom: 6 }]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         keyboardType="numeric"
         style={{
-          backgroundColor: colors.bg,
-          borderWidth: 1.5,
-          borderColor: colors.border2,
+          backgroundColor: colors.panelRaised,
+          borderWidth: 1,
+          borderColor: colors.hairline2,
           borderRadius: radii.md,
           padding: 12,
-          fontSize: 15,
+          fontFamily: font.numeralMedium,
+          fontSize: 16,
           color: colors.ink,
         }}
       />
@@ -256,16 +297,16 @@ function Chip({ label, on, onPress, fullWidth }: { label: string; on: boolean; o
     <Pressable
       onPress={onPress}
       style={{
-        paddingVertical: 8,
+        paddingVertical: 9,
         paddingHorizontal: 14,
         borderRadius: 20,
-        borderWidth: 1.5,
-        borderColor: on ? colors.teal : colors.border2,
-        backgroundColor: on ? colors.tealLight : colors.white,
+        borderWidth: 1,
+        borderColor: on ? colors.signal : colors.hairline2,
+        backgroundColor: on ? colors.signalFaint : "transparent",
         width: fullWidth ? "100%" : undefined,
       }}
     >
-      <Text style={{ color: on ? colors.tealDark : colors.ink2, fontWeight: "600", fontSize: 13 }}>{label}</Text>
+      <Text style={{ fontFamily: font.semibold, color: on ? colors.signal : colors.ink2, fontSize: 13 }}>{label}</Text>
     </Pressable>
   );
 }
