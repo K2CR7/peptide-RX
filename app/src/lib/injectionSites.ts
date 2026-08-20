@@ -2,43 +2,62 @@
 // getNextSite). Body-diagram (x,y) coordinates from the old SVG are dropped —
 // the RN injection picker uses a list instead; everything else is unchanged.
 
+export type BodyView = "front" | "back";
+
 export interface InjectionSite {
   id: string;
   label: string;
   short: string;
   desc: string;
+  /** Which body view the marker is pinned on. */
+  view: BodyView;
+  /**
+   * Marker position in the body diagram's 200x360 viewBox. Left/right in a
+   * site's name is always the USER's own side, so the mapping to screen x
+   * flips between views: facing the front view, the user's left is on the
+   * viewer's right; on the back view it is on the viewer's left.
+   */
+  x: number;
+  y: number;
 }
 
 export type RouteKey = "SubQ" | "IM" | "SubQ or IM" | "Nasal spray" | "Oral";
 
+const ABDOMEN: InjectionSite[] = [
+  { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone", view: "front", x: 116, y: 148 },
+  { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone", view: "front", x: 84, y: 148 },
+  { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone", view: "front", x: 116, y: 174 },
+  { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone", view: "front", x: 84, y: 174 },
+];
+
+const THIGHS: InjectionSite[] = [
+  { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh", view: "front", x: 120, y: 252 },
+  { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh", view: "front", x: 80, y: 252 },
+];
+
+const DELTOIDS = (desc: string): InjectionSite[] => [
+  { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc, view: "front", x: 145, y: 84 },
+  { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc, view: "front", x: 55, y: 84 },
+];
+
 export const ROUTE_SITES: Record<RouteKey, InjectionSite[]> = {
   SubQ: [
-    { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone" },
-    { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone" },
-    { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone" },
-    { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone" },
-    { id: "flank-l", label: "Left Flank", short: "Flank L", desc: "Left love handle / lateral hip" },
-    { id: "flank-r", label: "Right Flank", short: "Flank R", desc: "Right love handle / lateral hip" },
-    { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh" },
-    { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh" },
+    ...ABDOMEN,
+    { id: "flank-l", label: "Left Flank", short: "Flank L", desc: "Left love handle / lateral hip", view: "front", x: 126, y: 186 },
+    { id: "flank-r", label: "Right Flank", short: "Flank R", desc: "Right love handle / lateral hip", view: "front", x: 74, y: 186 },
+    ...THIGHS,
   ],
   IM: [
-    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc: "Outer upper arm, 3 fingers below shoulder" },
-    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc: "Outer upper arm, 3 fingers below shoulder" },
-    { id: "glute-l", label: "Left Glute", short: "Glute L", desc: "Upper outer quadrant of left buttock" },
-    { id: "glute-r", label: "Right Glute", short: "Glute R", desc: "Upper outer quadrant of right buttock" },
-    { id: "lat-l", label: "Left Lateral Thigh", short: "Lat L", desc: "Outer middle of left thigh, relaxed" },
-    { id: "lat-r", label: "Right Lateral Thigh", short: "Lat R", desc: "Outer middle of right thigh, relaxed" },
+    ...DELTOIDS("Outer upper arm, 3 fingers below shoulder"),
+    { id: "glute-l", label: "Left Glute", short: "Glute L", desc: "Upper outer quadrant of left buttock", view: "back", x: 82, y: 216 },
+    { id: "glute-r", label: "Right Glute", short: "Glute R", desc: "Upper outer quadrant of right buttock", view: "back", x: 118, y: 216 },
+    { id: "lat-l", label: "Left Lateral Thigh", short: "Lat L", desc: "Outer middle of left thigh, relaxed", view: "front", x: 124, y: 264 },
+    { id: "lat-r", label: "Right Lateral Thigh", short: "Lat R", desc: "Outer middle of right thigh, relaxed", view: "front", x: 76, y: 264 },
   ],
   "SubQ or IM": [
-    { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone" },
-    { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone" },
-    { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone" },
-    { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone" },
-    { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh" },
-    { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh" },
-    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc: "Outer upper arm — if going IM" },
-    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc: "Outer upper arm — if going IM" },
+    ...ABDOMEN,
+    ...THIGHS,
+    ...DELTOIDS("Outer upper arm — if going IM"),
   ],
   "Nasal spray": [],
   Oral: [],
