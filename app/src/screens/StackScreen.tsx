@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChipSelect } from "../components/ChipSelect";
-import { PlusMark } from "../components/icons";
+import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
+import { LearnScreen } from "../screens/LearnScreen";
 import {
   type StackItem,
   useCreateStackItem,
@@ -28,31 +30,54 @@ const FREQUENCY_OPTIONS = [
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function StackScreen() {
+  const insets = useSafeAreaInsets();
   const { data: items, isLoading } = useStackItems();
   const [addOpen, setAddOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 12 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 14 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={type.title}>My stack</Text>
-          <Pressable
-            onPress={() => setAddOpen(true)}
-            style={({ pressed }) => ({
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-              backgroundColor: colors.signal,
-              borderRadius: radii.md,
-              paddingVertical: 9,
-              paddingHorizontal: 14,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <PlusMark size={13} color={colors.onSignal} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13.5, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Pressable
+              onPress={() => setLearnOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Peptide reference"
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.hairline2,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <BookIcon size={20} color={colors.ink2} />
+            </Pressable>
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                minHeight: 44,
+                backgroundColor: colors.signal,
+                borderRadius: radii.md,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <PlusMark size={13} color={colors.onSignal} />
+              <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
+            </Pressable>
+          </View>
         </View>
 
         {isLoading && <Text style={type.body}>Loading…</Text>}
@@ -62,12 +87,25 @@ export function StackScreen() {
           </View>
         )}
 
-        {items?.map((item) => (
-          <StackItemCard key={item.id} item={item} onLog={() => setInjectFor({ id: item.id, route: item.route })} />
-        ))}
+        {items && items.length > 0 && (
+          <View style={[panel, { overflow: "hidden" }]}>
+            {items.map((item, i) => (
+              <StackItemRow
+                key={item.id}
+                item={item}
+                first={i === 0}
+                onLog={() => setInjectFor({ id: item.id, route: item.route })}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       <AddStackItemModal visible={addOpen} onClose={() => setAddOpen(false)} />
+
+      <Modal visible={learnOpen} animationType="slide" onRequestClose={() => setLearnOpen(false)}>
+        <LearnScreen onClose={() => setLearnOpen(false)} />
+      </Modal>
 
       {injectFor && (
         <InjectionLogger
@@ -80,34 +118,51 @@ export function StackScreen() {
   );
 }
 
-function StackItemCard({ item, onLog }: { item: StackItem; onLog: () => void }) {
+function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean; onLog: () => void }) {
   return (
-    <View style={[panel, { padding: 16 }]}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View style={{ flex: 1 }}>
-          <Text style={type.heading}>{item.peptideName}</Text>
-          <Text style={[type.meta, { marginTop: 3 }]}>{item.frequency} · {item.route ?? "—"}</Text>
-        </View>
-        <Text style={{ fontFamily: font.numeralMedium, fontSize: 22, color: colors.ink, letterSpacing: 0.3 }}>
-          {item.dose}
-          <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 13,
+        paddingLeft: 16,
+        paddingRight: 12,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: colors.hairline,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[type.heading, { fontSize: 15.5 }]}>{item.peptideName}</Text>
+        <Text style={[type.meta, { marginTop: 2 }]}>
+          {item.frequency}
+          {item.route ? ` · ${item.route}` : ""}
         </Text>
       </View>
+
+      <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
+        {item.dose}
+        <Text style={{ fontSize: 12, color: colors.ink3 }}> {item.unit}</Text>
+      </Text>
+
       <Pressable
         onPress={onLog}
+        accessibilityRole="button"
+        accessibilityLabel={`Log ${item.peptideName}`}
         style={({ pressed }) => ({
-          marginTop: 14,
-          borderWidth: 1,
-          borderColor: colors.hairline2,
-          borderRadius: radii.md,
-          padding: 11,
+          minHeight: 44,
+          minWidth: 62,
           alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 12,
+          borderWidth: 1,
+          borderColor: colors.signalDim,
+          backgroundColor: colors.signalFaint,
+          borderRadius: radii.md,
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.signal, letterSpacing: 0.4 }}>
-          Log injection
-        </Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>Log</Text>
       </Pressable>
     </View>
   );
@@ -190,7 +245,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 10 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
         <Text style={[type.title, { marginBottom: 10 }]}>Add to your stack</Text>
 
         <Text style={type.label}>Peptide</Text>

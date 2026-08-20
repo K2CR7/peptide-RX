@@ -1,7 +1,25 @@
-import { useMemo, useState } from "react";
+import { type ReactElement, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
-import { getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES } from "../lib/injectionSites";
+import {
+  StepAspirate, StepDispose, StepMuscle, StepNeedle, StepNose, StepNote,
+  StepPill, StepPress, StepSwab, StepTimer, StepWash,
+} from "./icons";
+import { getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark } from "../lib/injectionSites";
 import { colors, font, radii, type } from "../theme";
+
+const STEP_ICONS: Record<StepMark, (p: { size?: number; color: string }) => ReactElement> = {
+  wash: StepWash,
+  swab: StepSwab,
+  needle: StepNeedle,
+  timer: StepTimer,
+  press: StepPress,
+  dispose: StepDispose,
+  muscle: StepMuscle,
+  aspirate: StepAspirate,
+  nose: StepNose,
+  pill: StepPill,
+  note: StepNote,
+};
 
 interface Props {
   visible: boolean;
@@ -160,7 +178,9 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ fontSize: 40, marginBottom: 12 }}>{steps[step].icon}</Text>
+                <View style={{ marginBottom: 14 }}>
+                  {STEP_ICONS[steps[step].mark]({ size: 38, color: colors.signal })}
+                </View>
                 <Text style={[type.heading, { fontSize: 17, marginBottom: 8, textAlign: "center" }]}>{steps[step].title}</Text>
                 <Text style={[type.body, { textAlign: "center" }]}>{steps[step].body}</Text>
               </View>

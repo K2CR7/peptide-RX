@@ -12,7 +12,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, View } from "react-native";
+import { ActivityIndicator, Platform, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
@@ -51,17 +51,21 @@ function AuthGate() {
 
 // The web build is for local iteration, not a real target platform — without
 // this it stretches edge-to-edge across a desktop browser window instead of
-// looking like the phone app it actually is. Native builds are untouched.
+// looking like the phone app it actually is. At phone-width viewports the
+// decorative frame is dropped: there is nothing to letterbox, and forcing it
+// only introduces overflow. Native builds are untouched.
 function WebPhoneFrame({ children }: { children: React.ReactNode }) {
+  const { width, height } = useWindowDimensions();
   if (Platform.OS !== "web") return <>{children}</>;
+  if (width < 520 || height < 700) return <>{children}</>;
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
       <View
         style={{
           width: 430,
-          height: "95vh" as unknown as number,
+          height: "92vh" as unknown as number,
           maxHeight: 932,
-          borderRadius: 40,
+          borderRadius: 34,
           overflow: "hidden",
           borderWidth: 1,
           borderColor: "#1E242B",

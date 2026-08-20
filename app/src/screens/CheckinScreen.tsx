@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput
 import Slider from "@react-native-community/slider";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PlusMark } from "../components/icons";
 import { WeightChart } from "../components/WeightChart";
 import { type Checkin, useCheckinUploadUrl, useCheckins, useCreateCheckin, useDeleteCheckin } from "../lib/queries";
@@ -13,24 +14,27 @@ const ANGLES = ["front", "side", "back"] as const;
 type Angle = (typeof ANGLES)[number];
 
 export function CheckinScreen() {
+  const insets = useSafeAreaInsets();
   const { data: checkins, isLoading } = useCheckins();
   const [addOpen, setAddOpen] = useState(false);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={type.title}>Progress</Text>
           <Pressable
             onPress={() => setAddOpen(true)}
+            accessibilityRole="button"
             style={({ pressed }) => ({
               flexDirection: "row",
               alignItems: "center",
+              justifyContent: "center",
               gap: 6,
+              minHeight: 44,
               backgroundColor: colors.signal,
               borderRadius: radii.md,
-              paddingVertical: 9,
-              paddingHorizontal: 14,
+              paddingHorizontal: 16,
               opacity: pressed ? 0.7 : 1,
             })}
           >
@@ -77,8 +81,22 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
             {checkin.mood != null && <Stat label="mood" value={`${checkin.mood}/10`} />}
           </View>
         </View>
-        <Pressable onPress={() => deleteCheckin.mutate(checkin.id)} hitSlop={8}>
-          <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 12.5 }}>Delete</Text>
+        <Pressable
+          onPress={() => deleteCheckin.mutate(checkin.id)}
+          accessibilityRole="button"
+          accessibilityLabel="Delete this check-in"
+          style={({ pressed }) => ({
+            minWidth: 56,
+            minHeight: 44,
+            marginTop: -8,
+            marginRight: -6,
+            alignItems: "flex-end",
+            justifyContent: "center",
+            paddingHorizontal: 6,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>Delete</Text>
         </Pressable>
       </View>
       {checkin.notes && <Text style={[type.body, { marginTop: 10 }]}>{checkin.notes}</Text>}

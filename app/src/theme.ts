@@ -34,10 +34,11 @@ export const colors = {
   hairline: "#262D35",
   hairline2: "#39424D",
 
-  // Ink
+  // Ink. ink3 is the dimmest step that still clears 4.5:1 on both the page
+  // ground and the panel — anything quieter belongs to hairline, not to text.
   ink: "#EAEEF2",
   ink2: "#A9B4BF",
-  ink3: "#6E7A86",
+  ink3: "#8A96A3",
 
   // Signal — adherence, success, primary action
   signal: "#35E39B",
@@ -79,7 +80,7 @@ export const type = {
     textTransform: "uppercase" as const,
     letterSpacing: 1.4,
   },
-  meta: { fontFamily: font.medium, fontSize: 12.5, color: colors.ink3, letterSpacing: 0.2 },
+  meta: { fontFamily: font.medium, fontSize: 13, color: colors.ink3, letterSpacing: 0.2 },
 } as const;
 
 export const radii = {

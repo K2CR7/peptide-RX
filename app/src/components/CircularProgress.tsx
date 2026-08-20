@@ -93,8 +93,8 @@ export function CircularProgress({ size = 190, strokeWidth = 11, progress, label
         <Text
           style={{
             fontFamily: font.semibold,
-            fontSize: 10.5,
-            color: colors.ink3,
+            fontSize: 11,
+            color: colors.ink2,
             textTransform: "uppercase",
             letterSpacing: 1.4,
             marginTop: 2,
