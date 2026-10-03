@@ -67,6 +67,20 @@ export function BookIcon({ size = 22, color }: IconProps) {
   );
 }
 
+export function SparkIcon({ size = 20, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3.2 13.7 9l5.8 1.7-5.8 1.7L12 18.2l-1.7-5.8L4.5 10.7 10.3 9Z"
+        stroke={color}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Circle cx={19} cy={5} r={1.3} fill={color} />
+    </Svg>
+  );
+}
+
 export function CheckMark({ size = 14, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

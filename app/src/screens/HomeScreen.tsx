@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CircularProgress } from "../components/CircularProgress";
-import { ChevronRight, MarkLogged } from "../components/icons";
+import { ChevronRight, MarkLogged, SparkIcon } from "../components/icons";
+import { AssistantSheet } from "../components/AssistantSheet";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteLabel } from "../lib/injectionSites";
 import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
@@ -32,6 +33,7 @@ export function HomeScreen() {
   const logInjection = useLogInjection();
   const user = useAuthStore((s) => s.user);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
+  const [askOpen, setAskOpen] = useState(false);
 
   const today = todayDow();
 
@@ -100,14 +102,71 @@ export function HomeScreen() {
     [items, allLogs],
   );
 
+
+  // The assistant answers against what is actually on screen, so it reports the
+  // same numbers the user is looking at instead of re-deriving date math.
+  const assistantContext = useMemo(() => {
+    const lines: string[] = [
+      `Today: ${doneCount} of ${dueToday.length} due doses logged.`,
+    ];
+    if (adherence.pct !== null) {
+      lines.push(
+        `Adherence last 30 days: ${adherence.pct}% (${adherence.done} of ${adherence.due} doses). Current streak: ${adherence.streak} days.`,
+      );
+    }
+    cycles.forEach(({ item, cycle }) => {
+      lines.push(
+        `${item.peptideName} cycle: ${cycle.phase} phase, ${describeCycle(cycle)}, ${describeRemaining(cycle)}.`,
+      );
+    });
+    if (restingToday.length > 0) {
+      lines.push(
+        `Resting today (off cycle): ${restingToday.map((i) => i.peptideName).join(", ")}.`,
+      );
+    }
+    if (rotation?.next) {
+      lines.push(`Next injection site in rotation: ${rotation.next.label}.`);
+    }
+    return lines.join("\n");
+  }, [doneCount, dueToday, adherence, cycles, restingToday, rotation]);
+
+  const assistantSuggestions = useMemo(() => {
+    const out: string[] = [];
+    if (adherence.pct !== null) out.push(`Why is my adherence ${adherence.pct}%?`);
+    if (cycles.length > 0) out.push(`When does my ${cycles[0].item.peptideName} cycle end?`);
+    if (rotation?.next) out.push("Which site should I use next, and why that one?");
+    out.push("What does the rest of my week look like?");
+    return out;
+  }, [adherence, cycles, rotation]);
+
   const dateStamp = new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 20 }}>
-        <View>
-          <Text style={type.title}>{user?.name ? `Hey, ${user.name}` : "Tonight's readout"}</Text>
-          <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <View style={{ flex: 1 }}>
+            <Text style={type.title}>{user?.name ? `Hey, ${user.name}` : "Tonight's readout"}</Text>
+            <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
+          </View>
+          <Pressable
+            onPress={() => setAskOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Ask about your data"
+            style={({ pressed }) => ({
+              width: 44,
+              height: 44,
+              borderRadius: radii.md,
+              borderWidth: 1,
+              borderColor: colors.signalDim,
+              backgroundColor: colors.signalFaint,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <SparkIcon size={20} color={colors.signal} />
+          </Pressable>
         </View>
 
         <View
@@ -385,6 +444,13 @@ export function HomeScreen() {
           </View>
         )}
       </ScrollView>
+
+      <AssistantSheet
+        visible={askOpen}
+        onClose={() => setAskOpen(false)}
+        context={assistantContext}
+        suggestions={assistantSuggestions}
+      />
 
       {injectFor && (
         <InjectionSitePicker

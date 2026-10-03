@@ -158,3 +158,14 @@ export function useBuildMeal() {
     mutationFn: (data: BuildMealInput) => api.post<BuiltMeal>("/meal-builder/generate", data),
   });
 }
+
+export interface AssistantAnswer {
+  answer: string;
+}
+
+export function useAskAssistant() {
+  return useMutation({
+    mutationFn: (data: { question: string; context?: string }) =>
+      api.post<AssistantAnswer>("/assistant/ask", data),
+  });
+}
