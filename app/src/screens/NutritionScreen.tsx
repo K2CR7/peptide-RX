@@ -134,7 +134,7 @@ function PlanView() {
 
         {/* Composition bar: one hue at three values, every segment directly
             labeled, so identity never rests on color alone. */}
-        <View style={{ flexDirection: "row", height: 10, borderRadius: 5, overflow: "hidden", marginTop: 16, gap: 2 }}>
+        <View style={{ flexDirection: "row", height: 10, borderRadius: 0, overflow: "hidden", marginTop: 16, gap: 2 }}>
           {split.map((s) => (
             <View key={s.key} style={{ flex: Math.max(s.share, 0.02), backgroundColor: s.tone }} />
           ))}
@@ -143,7 +143,7 @@ function PlanView() {
         <View style={{ flexDirection: "row", marginTop: 12, gap: 14 }}>
           {split.map((s) => (
             <View key={s.key} style={{ flex: 1, gap: 4 }}>
-              <View style={{ height: 3, borderRadius: 2, backgroundColor: s.tone }} />
+              <View style={{ height: 3, borderRadius: 0, backgroundColor: s.tone }} />
               <Text style={{ fontFamily: font.numeralMedium, fontSize: 19, color: colors.ink }}>
                 {s.grams}
                 <Text style={{ fontSize: 12, color: colors.ink3 }}>g</Text>
@@ -380,7 +380,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
         keyboardType="numeric"
         style={{
           backgroundColor: colors.panelRaised,
-          borderWidth: 1,
+          borderWidth: 2,
           borderColor: colors.hairline2,
           borderRadius: radii.md,
           padding: 12,
@@ -400,8 +400,8 @@ function Chip({ label, on, onPress, fullWidth }: { label: string; on: boolean; o
       style={{
         paddingVertical: 9,
         paddingHorizontal: 14,
-        borderRadius: 20,
-        borderWidth: 1,
+        borderRadius: 0,
+        borderWidth: 2,
         borderColor: on ? colors.signal : colors.hairline2,
         backgroundColor: on ? colors.signalFaint : "transparent",
         width: fullWidth ? "100%" : undefined,

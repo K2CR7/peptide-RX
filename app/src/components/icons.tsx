@@ -67,6 +67,16 @@ export function BookIcon({ size = 22, color }: IconProps) {
   );
 }
 
+/** Half-filled square: the light/dark switch, squared like everything else. */
+export function ThemeIcon({ size = 20, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={3.5} y={3.5} width={17} height={17} stroke={color} strokeWidth={2} />
+      <Path d="M12 3.5h8.5v17H12Z" fill={color} />
+    </Svg>
+  );
+}
+
 export function SparkIcon({ size = 20, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

@@ -138,8 +138,8 @@ export function MealBuilderModal({
                     key={n.nutrient}
                     onPress={() => togglePriority(n.nutrient)}
                     style={{
-                      paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-                      borderWidth: 1, borderColor: on ? colors.signal : colors.hairline2,
+                      paddingVertical: 8, paddingHorizontal: 14, borderRadius: 0,
+                      borderWidth: 2, borderColor: on ? colors.signal : colors.hairline2,
                       backgroundColor: on ? colors.signalFaint : "transparent",
                     }}
                   >
@@ -198,7 +198,7 @@ export function MealBuilderModal({
               value={feedback}
               onChangeText={setFeedback}
               style={{
-                backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.hairline2,
+                backgroundColor: colors.panel, borderWidth: 2, borderColor: colors.hairline2,
                 borderRadius: radii.md, padding: 13, fontFamily: font.regular, fontSize: 15, color: colors.ink,
               }}
             />
@@ -276,8 +276,8 @@ function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstrai
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        borderRadius: 20,
-        borderWidth: 1,
+        borderRadius: 0,
+        borderWidth: 2,
         borderColor: tint,
         backgroundColor: isMax ? colors.amberFaint : colors.signalFaint,
         paddingVertical: 5,

@@ -106,9 +106,9 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
             {
               width: "100%",
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderTopWidth: 1,
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              borderTopWidth: 2,
               borderColor: colors.hairline2,
               maxHeight: "92%",
               paddingTop: 18,
@@ -138,7 +138,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                 <View
                   style={{
                     marginTop: 12,
-                    borderWidth: 1,
+                    borderWidth: 2,
                     borderColor: selectedSite ? colors.signalDim : colors.hairline,
                     backgroundColor: selectedSite ? colors.signalFaint : colors.panelRaised,
                     borderRadius: radii.md,
@@ -178,7 +178,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                 </Pressable>
 
                 {showAll && (
-                  <View style={{ borderWidth: 1, borderColor: colors.hairline, borderRadius: radii.md, overflow: "hidden" }}>
+                  <View style={{ borderWidth: 2, borderColor: colors.hairline, borderRadius: radii.md, overflow: "hidden" }}>
                     {sites.map((site, i) => {
                       const isSel = selected === site.id;
                       const used = usage[site.id] ?? 0;
@@ -338,7 +338,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                     style={{
                       flex: 1,
                       height: 2.5,
-                      borderRadius: 2,
+                      borderRadius: 0,
                       backgroundColor: i <= step ? colors.signal : colors.hairline2,
                     }}
                   />
@@ -349,7 +349,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                 style={{
                   backgroundColor: colors.panelRaised,
                   borderRadius: radii.lg,
-                  borderWidth: 1,
+                  borderWidth: 2,
                   borderColor: colors.hairline,
                   padding: 24,
                   alignItems: "center",
@@ -373,7 +373,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                     onPress={() => setStep((s) => s - 1)}
                     accessibilityRole="button"
                     style={({ pressed }) => ({
-                      borderWidth: 1,
+                      borderWidth: 2,
                       borderColor: colors.hairline2,
                       borderRadius: radii.md,
                       minHeight: 48,
@@ -418,7 +418,7 @@ function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: BodyView
     <View
       style={{
         flexDirection: "row",
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.hairline2,
         borderRadius: radii.md,
         overflow: "hidden",

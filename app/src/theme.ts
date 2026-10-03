@@ -1,64 +1,97 @@
 /*
-DIRECTION CONTRACT — seed 02d0b60b (impeccable, direction scope, operate mode)
+DIRECTION CONTRACT — neo-brutalist clinical instrument
 
-THESIS: A recovery instrument for an active peptide protocol — the readout you
-check like a wearable, not a form you fill like a clinic. Refuses the light
-health-app card grid.
+THESIS: A medical tool, not a wellness app. Reads like a lab requisition
+form or an instrument faceplate: hard rules, no softness, nothing floating.
+Refuses the rounded-card dashboard every health app ships.
 
-OWN-WORLD: Near-black graphite ground; panels split by 1px hairline seams and
-one step of elevation, never shadow stacks. One signal green carries adherence
-and primary action; a luminous trace blue belongs to data lines only. Big
-light-weight semi-condensed numerals; small tracked uppercase labels; drawn
-1.75px stroke icons. State is always a drawn mark plus color, never hue alone.
+OWN-WORLD: 0px radius everywhere. 2px solid borders — black on paper in
+light mode, white on black in dark. No drop shadows, no gradients, no
+pills, no floating cards: panels are regions ruled onto the page, flush to
+the grid, stacked sequentially rather than centered. One saturated signal
+green for state; amber and red are reserved for missed and destructive.
+Barlow Semi-Condensed numerals carry every figure.
 
-STORY: The user opens to tonight's readout, sees at a glance what's due and
-what's logged, acts in under twenty seconds, and trusts the instrument.
+STORY: The user reads their protocol the way they'd read a chart — scan,
+act, done.
 
-FIRST VIEWPORT: Adherence ring dominant top-center with light numerals inside;
-day stamp above; due-dose rows below as panel rows with drawn state marks;
-primary action is the row itself.
+FIRST VIEWPORT: Ruled header, then a segmented dose meter (blocks, not a
+ring), then due doses as grid rows with hard state marks.
 
-FORM: The Recovery Dashboard — wearable-recovery screen language. Rank 1 of 7
-on the grounded list, chosen by the user over the assigned rank-3 direction.
+FORM: Neo-brutalism under a medical-instrument brief, per the standing
+project constraint.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the
-finish review, the verdict, DESIGN.md, and every shipping raster carrying its
-provenance.
+FINISH: unreviewed and undocumented is unfinished.
 */
 
-export const colors = {
-  // Ground & surfaces (one-step elevation, hairline seams)
-  bg: "#0E1114",
-  panel: "#151A1F",
-  panelRaised: "#1B2129",
-  hairline: "#262D35",
-  hairline2: "#39424D",
+export type ThemeMode = "light" | "dark";
 
-  // Ink. ink3 is the dimmest step that still clears 4.5:1 on both the page
-  // ground and the panel — anything quieter belongs to hairline, not to text.
-  ink: "#EAEEF2",
-  ink2: "#A9B4BF",
-  ink3: "#8A96A3",
+interface Palette {
+  bg: string;
+  panel: string;
+  panelRaised: string;
+  hairline: string;
+  hairline2: string;
+  ink: string;
+  ink2: string;
+  ink3: string;
+  signal: string;
+  signalDim: string;
+  signalFaint: string;
+  onSignal: string;
+  trace: string;
+  traceFaint: string;
+  amber: string;
+  amberFaint: string;
+  red: string;
+  redFaint: string;
+}
 
-  // Signal — adherence, success, primary action
-  signal: "#35E39B",
-  signalDim: "#1D5C43",
-  signalFaint: "#12281F",
-  onSignal: "#04140C",
+// Paper and ink. Borders are literally black, per the project constraint.
+const LIGHT: Palette = {
+  bg: "#FFFFFF",
+  panel: "#FFFFFF",
+  panelRaised: "#EDEDEA",
+  hairline: "#000000",
+  hairline2: "#000000",
+  ink: "#000000",
+  ink2: "#2B2B2B",
+  ink3: "#595959",
+  signal: "#00913A",
+  signalDim: "#000000",
+  signalFaint: "#CFF3DD",
+  onSignal: "#FFFFFF",
+  trace: "#0B46D9",
+  traceFaint: "#D8E2FF",
+  amber: "#9A5B00",
+  amberFaint: "#FFEBC7",
+  red: "#C21B12",
+  redFaint: "#FFDCD9",
+};
 
-  // Trace — data lines and charts only
-  trace: "#52C4FF",
-  traceFaint: "#12232E",
-
-  // Semantic
-  amber: "#F5B84A",
-  amberFaint: "#2A2113",
-  red: "#F27070",
-  redFaint: "#2B1717",
-} as const;
+// Black ground. Borders invert to white — black-on-black is not a border.
+const DARK: Palette = {
+  bg: "#000000",
+  panel: "#000000",
+  panelRaised: "#141414",
+  hairline: "#FFFFFF",
+  hairline2: "#FFFFFF",
+  ink: "#FFFFFF",
+  ink2: "#D6D6D6",
+  ink3: "#9E9E9E",
+  signal: "#00E35C",
+  signalDim: "#FFFFFF",
+  signalFaint: "#06301A",
+  onSignal: "#000000",
+  trace: "#5AA2FF",
+  traceFaint: "#081A2E",
+  amber: "#FFB020",
+  amberFaint: "#2B1D00",
+  red: "#FF6056",
+  redFaint: "#330C09",
+};
 
 export const font = {
-  // Barlow: UI voice. BarlowSemiCondensed: instrument numerals.
   regular: "Barlow_400Regular",
   medium: "Barlow_500Medium",
   semibold: "Barlow_600SemiBold",
@@ -67,34 +100,63 @@ export const font = {
   numeralMedium: "BarlowSemiCondensed_500Medium",
 } as const;
 
-export const type = {
-  display: { fontFamily: font.numeral, fontSize: 56, color: colors.ink, letterSpacing: -0.5 },
-  displaySm: { fontFamily: font.numeral, fontSize: 40, color: colors.ink, letterSpacing: -0.5 },
-  title: { fontFamily: font.bold, fontSize: 24, color: colors.ink, letterSpacing: 0.2 },
-  heading: { fontFamily: font.semibold, fontSize: 17, color: colors.ink, letterSpacing: 0.2 },
-  body: { fontFamily: font.regular, fontSize: 14.5, color: colors.ink2, lineHeight: 21 },
-  label: {
-    fontFamily: font.semibold,
-    fontSize: 11,
-    color: colors.ink3,
-    textTransform: "uppercase" as const,
-    letterSpacing: 1.4,
-  },
-  meta: { fontFamily: font.medium, fontSize: 13, color: colors.ink3, letterSpacing: 0.2 },
-} as const;
+/** Nothing is rounded. Kept as a token so call sites stay readable. */
+export const radii = { sm: 0, md: 0, lg: 0, xl: 0 } as const;
 
-export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-} as const;
+/** Every rule on screen is this thick. */
+export const BORDER = 2;
 
 export const spacing = (n: number) => n * 4;
 
-export const panel = {
-  backgroundColor: colors.panel,
-  borderWidth: 1,
-  borderColor: colors.hairline,
-  borderRadius: radii.xl,
-} as const;
+function makeType(c: Palette) {
+  return {
+    display: { fontFamily: font.numeral, fontSize: 56, color: c.ink, letterSpacing: -0.5 },
+    displaySm: { fontFamily: font.numeral, fontSize: 40, color: c.ink, letterSpacing: -0.5 },
+    title: {
+      fontFamily: font.bold,
+      fontSize: 22,
+      color: c.ink,
+      letterSpacing: 0.6,
+      textTransform: "uppercase" as const,
+    },
+    heading: { fontFamily: font.semibold, fontSize: 16, color: c.ink, letterSpacing: 0.2 },
+    body: { fontFamily: font.regular, fontSize: 14.5, color: c.ink2, lineHeight: 21 },
+    label: {
+      fontFamily: font.bold,
+      fontSize: 11,
+      color: c.ink2,
+      textTransform: "uppercase" as const,
+      letterSpacing: 1.2,
+    },
+    meta: { fontFamily: font.medium, fontSize: 13, color: c.ink3, letterSpacing: 0.2 },
+  };
+}
+
+function makePanel(c: Palette) {
+  return {
+    backgroundColor: c.bg,
+    borderWidth: BORDER,
+    borderColor: c.hairline,
+    borderRadius: 0,
+  } as const;
+}
+
+/*
+ * Theme is global and changes about once a year, so it lives in module
+ * bindings rather than threading a context through 360 call sites. App.tsx
+ * calls setThemeMode from an event handler (never during render) and remounts
+ * the tree with a key, which guarantees every component re-reads the new
+ * palette. The one rule: never capture these in a module-level constant —
+ * read them inside a component, or the value freezes at import time.
+ */
+export let colors: Palette = DARK;
+export let type = makeType(DARK);
+export let panel = makePanel(DARK);
+export let mode: ThemeMode = "dark";
+
+export function setThemeMode(next: ThemeMode): void {
+  mode = next;
+  colors = next === "light" ? LIGHT : DARK;
+  type = makeType(colors);
+  panel = makePanel(colors);
+}

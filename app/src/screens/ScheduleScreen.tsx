@@ -20,7 +20,7 @@ function StateMark({ state }: { state: CellState }) {
   if (state === "due") return <MarkDue size={16} color={colors.signal} />;
   if (state === "scheduled") return <MarkScheduled size={16} color={colors.ink3} />;
   // Not scheduled — a rule, not a mark, so the eye skips it.
-  return <View style={{ width: 9, height: 1.5, borderRadius: 1, backgroundColor: colors.hairline2 }} />;
+  return <View style={{ width: 9, height: 1.5, borderRadius: 0, backgroundColor: colors.hairline2 }} />;
 }
 
 export function ScheduleScreen() {
@@ -133,7 +133,7 @@ export function ScheduleScreen() {
                       style={{
                         width: 18,
                         height: 2,
-                        borderRadius: 1,
+                        borderRadius: 0,
                         backgroundColor: colors.signal,
                         marginTop: 3,
                       }}
@@ -152,7 +152,7 @@ export function ScheduleScreen() {
                 flexDirection: "row",
                 alignItems: "center",
                 minHeight: ROW_H,
-                borderTopWidth: 1,
+                borderTopWidth: 2,
                 borderTopColor: colors.hairline,
               }}
             >
@@ -191,7 +191,7 @@ export function ScheduleScreen() {
             style={{
               flexDirection: "row",
               alignItems: "center",
-              borderTopWidth: 1,
+              borderTopWidth: 2,
               borderTopColor: colors.hairline2,
               paddingVertical: 9,
             }}

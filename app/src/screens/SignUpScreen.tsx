@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "../store/authStore";
-import { colors, font, radii, type } from "../theme";
+import { BORDER, colors, font, radii, type } from "../theme";
 
 export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => void }) {
   const signUp = useAuthStore((s) => s.signUp);
@@ -37,7 +37,7 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
         placeholderTextColor={colors.ink3}
         value={name}
         onChangeText={setName}
-        style={inputStyle}
+        style={inputStyle()}
       />
       <TextInput
         placeholder="Email"
@@ -46,7 +46,7 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
-        style={inputStyle}
+        style={inputStyle()}
       />
       <TextInput
         placeholder="Password (min 8 characters)"
@@ -54,7 +54,7 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        style={inputStyle}
+        style={inputStyle()}
       />
       {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>{error}</Text>}
       <Pressable
@@ -87,13 +87,17 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
   );
 }
 
-const inputStyle = {
-  backgroundColor: colors.panel,
-  borderWidth: 1,
-  borderColor: colors.hairline2,
-  borderRadius: radii.md,
-  padding: 14,
-  fontFamily: font.regular,
-  fontSize: 15,
-  color: colors.ink,
-};
+
+// Built per render, not at import: the palette swaps when the theme does.
+function inputStyle() {
+  return {
+    backgroundColor: colors.panel,
+    borderWidth: BORDER,
+    borderColor: colors.hairline,
+    borderRadius: 0,
+    padding: 14,
+    fontFamily: font.regular,
+    fontSize: 15,
+    color: colors.ink,
+  };
+}
