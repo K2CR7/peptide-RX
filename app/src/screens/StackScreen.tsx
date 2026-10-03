@@ -13,6 +13,7 @@ import {
 import { LearnScreen } from "../screens/LearnScreen";
 import {
   type StackItem,
+  useArchiveStackItem,
   useCreateStackItem,
   useInjectionLogs,
   useLogInjection,
@@ -40,6 +41,7 @@ export function StackScreen() {
   const [addOpen, setAddOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
+  const [detailFor, setDetailFor] = useState<StackItem | null>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -100,11 +102,22 @@ export function StackScreen() {
                 item={item}
                 first={i === 0}
                 onLog={() => setInjectFor({ id: item.id, route: item.route })}
+                onOpen={() => setDetailFor(item)}
               />
             ))}
           </View>
         )}
+
+        {items && items.length > 0 && (
+          <Text style={[type.meta, { fontSize: 12, paddingHorizontal: 2 }]}>
+            Tap an item to see details or remove it.
+          </Text>
+        )}
       </ScrollView>
+
+      {detailFor && (
+        <StackItemSheet item={detailFor} onClose={() => setDetailFor(null)} />
+      )}
 
       <AddStackItemModal visible={addOpen} onClose={() => setAddOpen(false)} />
 
@@ -125,7 +138,9 @@ export function StackScreen() {
   );
 }
 
-function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean; onLog: () => void }) {
+function StackItemRow({
+  item, first, onLog, onOpen,
+}: { item: StackItem; first: boolean; onLog: () => void; onOpen: () => void }) {
   const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
   const off = cycle?.phase === "off";
 
@@ -142,7 +157,12 @@ function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean;
         borderTopColor: colors.hairline,
       }}
     >
-      <View style={{ flex: 1 }}>
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.peptideName} details`}
+        style={({ pressed }) => ({ flex: 1, minHeight: 44, justifyContent: "center", opacity: pressed ? 0.72 : 1 })}
+      >
         <Text style={[type.heading, { fontSize: 15.5 }]}>{item.peptideName}</Text>
         <Text style={[type.meta, { marginTop: 2 }]}>
           {item.frequency}
@@ -164,7 +184,7 @@ function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean;
             <Text style={[type.meta, { fontSize: 11.5 }]}>· {describeRemaining(cycle)}</Text>
           </View>
         )}
-      </View>
+      </Pressable>
 
       <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
         {item.dose}
@@ -440,6 +460,123 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
           color: colors.ink,
         }}
       />
+    </View>
+  );
+}
+
+/**
+ * Item detail and removal. Removing archives rather than deletes, so the
+ * injection history behind it stays intact and past weeks keep reading
+ * truthfully; the item just stops appearing in the stack and the schedule.
+ */
+function StackItemSheet({ item, onClose }: { item: StackItem; onClose: () => void }) {
+  const archive = useArchiveStackItem();
+  const [confirming, setConfirming] = useState(false);
+  const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
+
+  function handleRemove() {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    archive.mutate(item.id, { onSuccess: onClose });
+  }
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <PhoneModalFrame>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={onClose} />
+          <View
+            style={{
+              backgroundColor: colors.panel,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderColor: colors.hairline2,
+              paddingTop: 18,
+              paddingHorizontal: 20,
+              paddingBottom: 18,
+            }}
+          >
+            <Text style={[type.heading, { fontSize: 19 }]}>{item.peptideName}</Text>
+
+            <View style={{ marginTop: 14, gap: 9 }}>
+              <DetailRow label="Dose" value={`${item.dose} ${item.unit}`} />
+              <DetailRow label="Frequency" value={item.frequency} />
+              <DetailRow label="Route" value={item.route ?? "—"} />
+              <DetailRow
+                label="Cycle"
+                value={cycle ? `${describeCycle(cycle)} · ${describeRemaining(cycle)}` : "Continuous"}
+              />
+              <DetailRow
+                label="Started"
+                value={new Date(item.startedAt).toLocaleDateString(undefined, {
+                  month: "short", day: "numeric", year: "numeric",
+                })}
+              />
+            </View>
+
+            {confirming && (
+              <Text style={{ fontFamily: font.medium, fontSize: 12.5, color: colors.ink2, marginTop: 16, lineHeight: 18 }}>
+                This takes {item.peptideName} out of your stack and schedule. Injections you already
+                logged are kept, so past weeks still read correctly.
+              </Text>
+            )}
+
+            <Pressable
+              onPress={handleRemove}
+              disabled={archive.isPending}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                marginTop: 16,
+                minHeight: 48,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.red,
+                backgroundColor: confirming ? colors.red : colors.redFaint,
+                opacity: archive.isPending || pressed ? 0.7 : 1,
+              })}
+            >
+              <Text
+                style={{
+                  fontFamily: font.bold,
+                  fontSize: 14.5,
+                  letterSpacing: 0.3,
+                  color: confirming ? colors.bg : colors.red,
+                }}
+              >
+                {archive.isPending
+                  ? "Removing…"
+                  : confirming
+                    ? "Yes, remove it"
+                    : "Remove from stack"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={confirming ? () => setConfirming(false) : onClose}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ minHeight: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
+            >
+              <Text style={[type.meta, { fontSize: 14 }]}>{confirming ? "Keep it" : "Close"}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </PhoneModalFrame>
+    </Modal>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+      <Text style={[type.label, { fontSize: 10.5 }]}>{label}</Text>
+      <Text style={{ fontFamily: font.semibold, fontSize: 14, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
+        {value}
+      </Text>
     </View>
   );
 }

@@ -7,6 +7,7 @@ import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteLabel } from "../lib/injectionSites";
 import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
+import { computeAdherence } from "../lib/adherence";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { colors, font, panel, radii, type } from "../theme";
@@ -93,6 +94,11 @@ export function HomeScreen() {
     const next = getNextSite(routeKey, [...recent].reverse().map((l) => l.site));
     return { next, recent: recent.slice(0, 3) };
   }, [items, allLogs]);
+
+  const adherence = useMemo(
+    () => computeAdherence(items ?? [], allLogs ?? [], 30),
+    [items, allLogs],
+  );
 
   const dateStamp = new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
@@ -229,6 +235,68 @@ export function HomeScreen() {
             })}
           </View>
         </View>
+
+        {adherence.pct !== null && (
+          <View style={{ gap: 10 }}>
+            <Text style={type.label}>Consistency</Text>
+            <View style={[panel, { padding: 18 }]}>
+              <View style={{ flexDirection: "row", gap: 24 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 }}>
+                    {adherence.pct}
+                    <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>
+                  </Text>
+                  <Text style={[type.meta, { fontSize: 12 }]}>last 30 days</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: font.numeral,
+                      fontSize: 38,
+                      letterSpacing: -0.5,
+                      color: adherence.streak > 0 ? colors.signal : colors.ink2,
+                    }}
+                  >
+                    {adherence.streak}
+                  </Text>
+                  <Text style={[type.meta, { fontSize: 12 }]}>
+                    day{adherence.streak === 1 ? "" : "s"} in a row
+                  </Text>
+                </View>
+              </View>
+
+              {/* Last 14 days, newest on the right. A day with nothing due
+                  reads as a recessed rule, not a miss. */}
+              <View style={{ flexDirection: "row", gap: 3, marginTop: 16, alignItems: "flex-end" }}>
+                {adherence.days.slice(-14).map((d, i) => {
+                  const complete = d.due > 0 && d.done >= d.due;
+                  const missed = d.due > 0 && d.done < d.due;
+                  const isToday = i === adherence.days.slice(-14).length - 1;
+                  return (
+                    <View
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: d.due === 0 ? 3 : 18,
+                        borderRadius: 2,
+                        backgroundColor: complete
+                          ? colors.signal
+                          : missed && !isToday
+                            ? colors.amber
+                            : d.due === 0
+                              ? colors.hairline2
+                              : colors.panelRaised,
+                      }}
+                    />
+                  );
+                })}
+              </View>
+              <Text style={[type.meta, { fontSize: 11.5, marginTop: 7 }]}>
+                Last 14 days · thin marks are rest days
+              </Text>
+            </View>
+          </View>
+        )}
 
         {cycles.length > 0 && (
           <View style={{ gap: 10 }}>
