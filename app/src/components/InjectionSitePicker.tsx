@@ -1,6 +1,7 @@
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { BodyDiagram } from "./BodyDiagram";
+import { phoneSheet } from "./sheet";
 import {
   StepAspirate, StepDispose, StepMuscle, StepNeedle, StepNose, StepNote,
   StepPill, StepPress, StepSwab, StepTimer, StepWash,
@@ -98,19 +99,23 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => { reset(); onClose(); }}>
-      <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(4,6,8,0.72)" }}>
+      <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "center", backgroundColor: "rgba(4,6,8,0.72)" }}>
         <View
-          style={{
-            backgroundColor: colors.panel,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            borderTopWidth: 1,
-            borderColor: colors.hairline2,
-            maxHeight: "92%",
-            paddingTop: 18,
-            paddingHorizontal: 20,
-            paddingBottom: 18,
-          }}
+          style={[
+            {
+              width: "100%",
+              backgroundColor: colors.panel,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderColor: colors.hairline2,
+              maxHeight: "92%",
+              paddingTop: 18,
+              paddingHorizontal: 20,
+              paddingBottom: 18,
+            },
+            phoneSheet,
+          ]}
         >
           {!showGuide && hasSites && (
             <>

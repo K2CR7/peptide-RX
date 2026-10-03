@@ -3,6 +3,7 @@ import { type ReactNode, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
 import { type BuiltMeal, type MacroConstraint, useBuildMeal } from "../lib/queries";
+import { phoneSheet } from "./sheet";
 import { colors, font, panel, radii, type } from "../theme";
 
 interface Props {
@@ -101,7 +102,8 @@ export function MealBuilderModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center" }}>
+      <ScrollView style={[{ flex: 1, width: "100%" }, phoneSheet]} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
         <Text style={type.title}>Build a meal</Text>
 
         {!meal && (
@@ -232,6 +234,7 @@ export function MealBuilderModal({
           <Text style={[type.meta, { fontSize: 14 }]}>Close</Text>
         </Pressable>
       </ScrollView>
+      </View>
     </Modal>
   );
 }

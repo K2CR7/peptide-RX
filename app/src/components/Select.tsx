@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { CheckMark, ChevronRight } from "./icons";
+import { phoneSheetAbsolute } from "./sheet";
 import { colors, font, radii, type } from "../theme";
 
 interface Props {
@@ -100,20 +101,23 @@ export function Select({
       <Modal visible={open} animationType="slide" transparent onRequestClose={close}>
         <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={close} />
         <View
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            maxHeight: "80%",
-            backgroundColor: colors.panel,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            borderTopWidth: 1,
-            borderColor: colors.hairline2,
-            paddingTop: 16,
-            paddingBottom: 18,
-          }}
+          style={[
+            {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              maxHeight: "80%",
+              backgroundColor: colors.panel,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderColor: colors.hairline2,
+              paddingTop: 16,
+              paddingBottom: 18,
+            },
+            phoneSheetAbsolute,
+          ]}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20 }}>
             <Text style={[type.heading, { fontSize: 17 }]}>{label}</Text>

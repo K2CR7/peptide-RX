@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PlusMark } from "../components/icons";
 import { WeightChart } from "../components/WeightChart";
+import { phoneSheet } from "../components/sheet";
 import { type Checkin, useCheckinUploadUrl, useCheckins, useCreateCheckin, useDeleteCheckin } from "../lib/queries";
 import { colors, font, panel, radii, type } from "../theme";
 
@@ -201,7 +202,8 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center" }}>
+      <ScrollView style={[{ flex: 1, width: "100%" }, phoneSheet]} contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 32, gap: 16 }}>
         <Text style={type.title}>Check in</Text>
 
         <Field label="Weight (lb)" value={weightLb} onChangeText={setWeightLb} />
@@ -287,6 +289,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
           <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
         </Pressable>
       </ScrollView>
+      </View>
     </Modal>
   );
 }

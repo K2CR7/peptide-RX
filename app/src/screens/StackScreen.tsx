@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Select } from "../components/Select";
+import { phoneSheet } from "../components/sheet";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
@@ -104,7 +105,11 @@ export function StackScreen() {
       <AddStackItemModal visible={addOpen} onClose={() => setAddOpen(false)} />
 
       <Modal visible={learnOpen} animationType="slide" onRequestClose={() => setLearnOpen(false)}>
-        <LearnScreen onClose={() => setLearnOpen(false)} />
+        <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center" }}>
+          <View style={[{ flex: 1, width: "100%" }, phoneSheet]}>
+            <LearnScreen onClose={() => setLearnOpen(false)} />
+          </View>
+        </View>
       </Modal>
 
       {injectFor && (
@@ -245,7 +250,8 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center" }}>
+      <ScrollView style={[{ flex: 1, width: "100%" }, phoneSheet]} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
         <Text style={[type.title, { marginBottom: 10 }]}>Add to your stack</Text>
 
         <Select
@@ -348,6 +354,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
           <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
         </Pressable>
       </ScrollView>
+      </View>
     </Modal>
   );
 }
