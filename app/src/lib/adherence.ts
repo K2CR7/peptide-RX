@@ -20,11 +20,11 @@ export interface DayRecord {
 }
 
 export interface AdherenceSummary {
-  /** Oldest to newest, `windowDays` long, ending today. */
+  /** Oldest to newest, `windowDays` long, ending yesterday. */
   days: DayRecord[];
   due: number;
   done: number;
-  /** null when nothing was ever due in the window — don't show 0%. */
+  /** Over exactly `days` — null when nothing was due then, so we don't show 0%. */
   pct: number | null;
   streak: number;
 }
@@ -45,12 +45,16 @@ interface LoggedDose {
 /**
  * Adherence over a trailing window, and the current streak.
  *
- * Three rules make the numbers honest rather than flattering:
+ * The window ends YESTERDAY, not today, and the percentage is computed over
+ * exactly the days returned — so whatever a caller charts is the same set the
+ * percentage describes. Today is deliberately not in either: the day isn't
+ * over, a half-finished day is not a miss, and today's own progress is already
+ * shown elsewhere on the screen.
+ *
+ * Two further rules keep the figure honest rather than flattering:
  *  - A day before an item existed can't be a missed dose for it.
  *  - A day in an item's off phase was never due, so it neither counts
  *    against adherence nor breaks a streak.
- *  - Today is excluded from the percentage and cannot break a streak: the
- *    day isn't over, and a half-finished day is not a miss.
  */
 export function computeAdherence(
   items: ScheduledItem[],
@@ -93,12 +97,13 @@ export function computeAdherence(
     all.push({ date, due, done });
   }
 
-  const days = all.slice(-windowDays);
+  // Drop today, then take the window — so `days` and the percentage below
+  // describe exactly the same stretch.
+  const settled = all.slice(0, -1);
+  const days = settled.slice(-windowDays);
 
-  // Percentage over completed days only.
-  const settled = days.slice(0, -1);
-  const due = settled.reduce((n, d) => n + d.due, 0);
-  const done = settled.reduce((n, d) => n + d.done, 0);
+  const due = days.reduce((n, d) => n + d.due, 0);
+  const done = days.reduce((n, d) => n + d.done, 0);
 
   let streak = 0;
   for (let i = all.length - 1; i >= 0; i--) {

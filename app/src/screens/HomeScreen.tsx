@@ -98,7 +98,7 @@ export function HomeScreen() {
   }, [items, allLogs]);
 
   const adherence = useMemo(
-    () => computeAdherence(items ?? [], allLogs ?? [], 30),
+    () => computeAdherence(items ?? [], allLogs ?? [], 7),
     [items, allLogs],
   );
 
@@ -111,7 +111,7 @@ export function HomeScreen() {
     ];
     if (adherence.pct !== null) {
       lines.push(
-        `Adherence last 30 days: ${adherence.pct}% (${adherence.done} of ${adherence.due} doses). Current streak: ${adherence.streak} days.`,
+        `Adherence last 7 days: ${adherence.pct}% (${adherence.done} of ${adherence.due} doses). Current streak: ${adherence.streak} days.`,
       );
     }
     cycles.forEach(({ item, cycle }) => {
@@ -305,7 +305,7 @@ export function HomeScreen() {
                     {adherence.pct}
                     <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>
                   </Text>
-                  <Text style={[type.meta, { fontSize: 12 }]}>last 30 days</Text>
+                  <Text style={[type.meta, { fontSize: 12 }]}>last 7 days</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -324,13 +324,14 @@ export function HomeScreen() {
                 </View>
               </View>
 
-              {/* Last 14 days, newest on the right. A day with nothing due
+              {/* The same seven days the percentage covers, newest on the
+                  right, ending yesterday. A day with nothing due
                   reads as a recessed rule, not a miss. */}
               <View style={{ flexDirection: "row", gap: 3, marginTop: 16, alignItems: "flex-end" }}>
-                {adherence.days.slice(-14).map((d, i) => {
+                {adherence.days.map((d, i) => {
+                  // Every day here is settled, so a miss is simply a miss.
                   const complete = d.due > 0 && d.done >= d.due;
                   const missed = d.due > 0 && d.done < d.due;
-                  const isToday = i === adherence.days.slice(-14).length - 1;
                   return (
                     <View
                       key={i}
@@ -340,18 +341,16 @@ export function HomeScreen() {
                         borderRadius: 2,
                         backgroundColor: complete
                           ? colors.signal
-                          : missed && !isToday
+                          : missed
                             ? colors.amber
-                            : d.due === 0
-                              ? colors.hairline2
-                              : colors.panelRaised,
+                            : colors.hairline2,
                       }}
                     />
                   );
                 })}
               </View>
               <Text style={[type.meta, { fontSize: 11.5, marginTop: 7 }]}>
-                Last 14 days · thin marks are rest days
+                Last 7 days · thin marks are rest days
               </Text>
             </View>
           </View>
