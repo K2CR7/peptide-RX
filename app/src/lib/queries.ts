@@ -165,7 +165,11 @@ export interface AssistantAnswer {
 
 export function useAskAssistant() {
   return useMutation({
-    mutationFn: (data: { question: string; context?: string }) =>
+    mutationFn: (data: {
+      question: string;
+      context?: string;
+      history?: { role: "user" | "assistant"; text: string }[];
+    }) =>
       api.post<AssistantAnswer>("/assistant/ask", data),
   });
 }

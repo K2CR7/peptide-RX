@@ -14,6 +14,11 @@ const askSchema = z.object({
    * below are still read server-side from the authenticated user's own rows.
    */
   context: z.string().max(4000).optional(),
+  /** Prior turns, so "why?" and "what about last week?" resolve. */
+  history: z
+    .array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) }))
+    .max(10)
+    .optional(),
 });
 
 /**
@@ -41,14 +46,20 @@ You must NOT, under any circumstances:
 
 If the question asks for any of the above, do not partially answer and do not hedge. Reply with one short sentence declining and pointing them to their prescriber or doctor. Never soften this by adding a "but generally..." clause.
 
-Style: answer in 1-3 sentences, plain text, no markdown, no lists unless the user asks for a list. If their data doesn't contain the answer, say exactly that rather than guessing.`;
+Style — this is a chat bubble on a phone, not a report:
+- At most 2 short sentences. One is usually better.
+- Lead with the direct answer or the number. Put the "why" second, and only if it adds something.
+- Never restate the question back.
+- Plain text. No markdown, no bullet lists, no headings.
+- Follow-up questions refer to what you just said — answer them in context, even more briefly.
+- If their data doesn't contain the answer, say exactly that in one sentence rather than guessing.`;
 
 assistantRouter.post("/ask", async (req, res) => {
   const parsed = askSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
-  const { question, context } = parsed.data;
+  const { question, context, history } = parsed.data;
 
   const since = new Date(Date.now() - 90 * 24 * 3600 * 1000);
 
@@ -88,16 +99,19 @@ assistantRouter.post("/ask", async (req, res) => {
     onScreenSummary: context ?? null,
   };
 
+  // The data rides in the system prompt rather than the latest user message so
+  // a multi-turn conversation doesn't resend the whole record set every turn.
   const response = await getAnthropicClient().messages.create({
     model: "claude-opus-5",
-    max_tokens: 2048,
-    system: SYSTEM_PROMPT,
-    output_config: { effort: "medium" },
+    max_tokens: 1024,
+    system: `${SYSTEM_PROMPT}\n\n# The user's data\n\n${JSON.stringify(data, null, 2)}`,
+    output_config: { effort: "low" },
     messages: [
-      {
-        role: "user",
-        content: `Here is my data:\n\n${JSON.stringify(data, null, 2)}\n\nMy question: ${question}`,
-      },
+      ...(history ?? []).map((turn) => ({
+        role: turn.role,
+        content: turn.text,
+      })),
+      { role: "user" as const, content: question },
     ],
   });
 
