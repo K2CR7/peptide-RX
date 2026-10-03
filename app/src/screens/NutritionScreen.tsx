@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MealBuilderModal } from "../components/MealBuilderModal";
 import { GOAL_TO_NUTRIENTS, NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
 import { useStackItems, useUpdateProfile } from "../lib/queries";
@@ -13,7 +14,7 @@ import {
   type NutritionGoal,
 } from "../lib/nutrition";
 import { useAuthStore } from "../store/authStore";
-import { colors, radii } from "../theme";
+import { colors, font, panel, radii, type } from "../theme";
 
 const LB_PER_KG = 2.20462;
 const IN_PER_CM = 0.393701;
@@ -25,18 +26,29 @@ function hasCompleteProfile(user: ReturnType<typeof useAuthStore.getState>["user
 }
 
 export function NutritionScreen() {
+  const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const [editing, setEditing] = useState(false);
 
   const showForm = editing || !hasCompleteProfile(user);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink }}>Nutrition</Text>
+        <Text style={type.title}>Fuel</Text>
         {!showForm && (
-          <Pressable onPress={() => setEditing(true)}>
-            <Text style={{ color: colors.teal, fontWeight: "700" }}>Edit</Text>
+          <Pressable
+            onPress={() => setEditing(true)}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              minHeight: 44,
+              minWidth: 44,
+              alignItems: "flex-end",
+              justifyContent: "center",
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 14 }}>Edit</Text>
           </Pressable>
         )}
       </View>
@@ -80,29 +92,86 @@ function PlanView() {
   if (!macros) return null;
   const goal = user!.nutritionGoal as NutritionGoal;
 
+  // Each macro's real share of the day's calories (4/4/9 kcal per gram) — the
+  // composition bar is measured, not decorative.
+  const kcal = {
+    protein: macros.proteinG * 4,
+    carbs: macros.carbsG * 4,
+    fat: macros.fatG * 9,
+  };
+  const kcalTotal = kcal.protein + kcal.carbs + kcal.fat || 1;
+  const split = [
+    { key: "Protein", grams: macros.proteinG, share: kcal.protein / kcalTotal, tone: colors.signal },
+    { key: "Carbs", grams: macros.carbsG, share: kcal.carbs / kcalTotal, tone: colors.signalDim },
+    { key: "Fat", grams: macros.fatG, share: kcal.fat / kcalTotal, tone: colors.hairline2 },
+  ];
+  const deficit = macros.tdee - macros.calories;
+
   return (
     <View style={{ gap: 16 }}>
-      <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 20 }}>
-        <Text style={{ fontSize: 12, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Daily target · {GOAL_LABELS[goal]}
-        </Text>
-        <Text style={{ fontSize: 36, fontWeight: "800", color: colors.ink, marginTop: 4 }}>{macros.calories} kcal</Text>
-        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <MacroChip label="Protein" grams={macros.proteinG} color={colors.teal} />
-          <MacroChip label="Carbs" grams={macros.carbsG} color={colors.amber} />
-          <MacroChip label="Fat" grams={macros.fatG} color={colors.red} />
+      <View style={[panel, { padding: 20 }]}>
+        <Text style={type.label}>Daily target · {GOAL_LABELS[goal]}</Text>
+
+        <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 }}>
+          <Text style={{ fontFamily: font.numeral, fontSize: 54, color: colors.ink, letterSpacing: -1 }}>
+            {macros.calories}
+            <Text style={{ fontSize: 18, color: colors.ink3 }}> kcal</Text>
+          </Text>
+          <View style={{ alignItems: "flex-end", paddingBottom: 8 }}>
+            <Text
+              style={{
+                fontFamily: font.numeralMedium,
+                fontSize: 16,
+                color: deficit > 0 ? colors.signal : deficit < 0 ? colors.amber : colors.ink2,
+              }}
+            >
+              {deficit > 0 ? "−" : deficit < 0 ? "+" : "±"}
+              {Math.abs(deficit)}
+            </Text>
+            <Text style={[type.meta, { fontSize: 11 }]}>vs TDEE {macros.tdee}</Text>
+          </View>
         </View>
-        <Text style={{ color: colors.ink2, fontSize: 12, marginTop: 12, lineHeight: 17 }}>{GOAL_CONTEXT[goal]}</Text>
-        <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 8 }}>
-          BMR {macros.bmr} kcal · TDEE {macros.tdee} kcal
-        </Text>
+
+        {/* Composition bar: one hue at three values, every segment directly
+            labeled, so identity never rests on color alone. */}
+        <View style={{ flexDirection: "row", height: 10, borderRadius: 5, overflow: "hidden", marginTop: 16, gap: 2 }}>
+          {split.map((s) => (
+            <View key={s.key} style={{ flex: Math.max(s.share, 0.02), backgroundColor: s.tone }} />
+          ))}
+        </View>
+
+        <View style={{ flexDirection: "row", marginTop: 12, gap: 14 }}>
+          {split.map((s) => (
+            <View key={s.key} style={{ flex: 1, gap: 4 }}>
+              <View style={{ height: 3, borderRadius: 2, backgroundColor: s.tone }} />
+              <Text style={{ fontFamily: font.numeralMedium, fontSize: 19, color: colors.ink }}>
+                {s.grams}
+                <Text style={{ fontSize: 12, color: colors.ink3 }}>g</Text>
+              </Text>
+              <Text style={[type.meta, { fontSize: 11.5 }]}>
+                {s.key} · {Math.round(s.share * 100)}%
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={[type.body, { fontSize: 12.5, lineHeight: 18, marginTop: 16 }]}>{GOAL_CONTEXT[goal]}</Text>
+        <Text style={[type.meta, { fontSize: 11.5, marginTop: 6 }]}>Resting burn {macros.bmr} kcal</Text>
       </View>
 
       <Pressable
         onPress={() => setBuilderOpen(true)}
-        style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center" }}
+        style={({ pressed }) => ({
+          backgroundColor: colors.signal,
+          borderRadius: radii.md,
+          padding: 15,
+          alignItems: "center",
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>🍽 Build a meal</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+          Build a meal
+        </Text>
       </Pressable>
 
       <MealBuilderModal
@@ -114,41 +183,103 @@ function PlanView() {
         initialFatG={macros.fatG}
       />
 
-      <View style={{ gap: 10 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.ink3, textTransform: "uppercase", letterSpacing: 0.6 }}>
-          Eat clean — by nutrient
-        </Text>
-        {NUTRIENT_GUIDANCE.map((n) => {
-          const fromStack = stackNutrients.has(n.nutrient);
-          return (
-            <View key={n.nutrient} style={{ backgroundColor: colors.white, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 15 }}>{n.nutrient}</Text>
-                  <Text style={{ color: colors.tealDark, fontSize: 12, fontWeight: "600", marginTop: 2 }}>{n.amount}</Text>
-                </View>
-                {fromStack && (
-                  <View style={{ backgroundColor: colors.tealLight, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 9, flexShrink: 0 }}>
-                    <Text style={{ color: colors.tealDark, fontSize: 10, fontWeight: "700" }}>From your stack</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={{ color: colors.ink3, fontSize: 12, marginBottom: 8, lineHeight: 17 }}>{n.benefits}</Text>
-              <Text style={{ color: colors.ink2, fontSize: 13, fontWeight: "600" }}>{n.foods.join(" · ")}</Text>
-            </View>
-          );
-        })}
-      </View>
+      <NutrientList stackNutrients={stackNutrients} />
     </View>
   );
 }
 
-function MacroChip({ label, grams, color }: { label: string; grams: number; color: string }) {
+/**
+ * Nutrients your stack's goals point at are sorted to the top under their own
+ * heading, rather than every row carrying a badge. Position does the work a
+ * badge did badly: when everything is badged, the badge says nothing.
+ */
+function NutrientList({ stackNutrients }: { stackNutrients: Set<string> }) {
+  const [open, setOpen] = useState<string | null>(null);
+
+  const prioritized = NUTRIENT_GUIDANCE.filter((n) => stackNutrients.has(n.nutrient));
+  const rest = NUTRIENT_GUIDANCE.filter((n) => !stackNutrients.has(n.nutrient));
+
+  const section = (label: string, note: string, list: typeof NUTRIENT_GUIDANCE) => (
+    <View style={{ gap: 9 }}>
+      <Text style={type.label}>{label}</Text>
+      <Text style={[type.meta, { fontSize: 12, marginTop: -4 }]}>{note}</Text>
+      <View style={[panel, { overflow: "hidden" }]}>
+        {list.map((n, i) => (
+          <NutrientRow
+            key={n.nutrient}
+            guidance={n}
+            first={i === 0}
+            expanded={open === n.nutrient}
+            onToggle={() => setOpen(open === n.nutrient ? null : n.nutrient)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, borderRadius: radii.md, padding: 12, alignItems: "center" }}>
-      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginBottom: 6 }} />
-      <Text style={{ fontWeight: "800", color: colors.ink, fontSize: 16 }}>{grams}g</Text>
-      <Text style={{ color: colors.ink3, fontSize: 11, marginTop: 1 }}>{label}</Text>
+    <View style={{ gap: 22 }}>
+      {prioritized.length > 0 &&
+        prioritized.length < NUTRIENT_GUIDANCE.length &&
+        section(
+          "Worth prioritizing",
+          "Tied to what the peptides in your stack are typically used for.",
+          prioritized,
+        )}
+      {section(
+        prioritized.length > 0 && prioritized.length < NUTRIENT_GUIDANCE.length
+          ? "Everything else"
+          : "Eat clean — by nutrient",
+        "General adult daily reference amounts.",
+        prioritized.length > 0 && prioritized.length < NUTRIENT_GUIDANCE.length ? rest : NUTRIENT_GUIDANCE,
+      )}
+    </View>
+  );
+}
+
+function NutrientRow({
+  guidance, first, expanded, onToggle,
+}: {
+  guidance: (typeof NUTRIENT_GUIDANCE)[number];
+  first: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={{ borderTopWidth: first ? 0 : 1, borderTopColor: colors.hairline }}>
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          minHeight: 56,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          opacity: pressed ? 0.72 : 1,
+        })}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={[type.heading, { fontSize: 15 }]}>{guidance.nutrient}</Text>
+          <Text style={{ fontFamily: font.medium, color: colors.ink3, fontSize: 12.5, marginTop: 2 }}>
+            {guidance.amount}
+          </Text>
+        </View>
+        <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink3, lineHeight: 22 }}>
+          {expanded ? "–" : "+"}
+        </Text>
+      </Pressable>
+
+      {expanded && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 15, gap: 8 }}>
+          <Text style={[type.body, { fontSize: 13, lineHeight: 19 }]}>{guidance.benefits}</Text>
+          <Text style={{ fontFamily: font.semibold, color: colors.ink2, fontSize: 13, lineHeight: 19 }}>
+            {guidance.foods.join(" · ")}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -180,8 +311,8 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 18, gap: 12 }}>
-      <Text style={{ color: colors.ink3, fontSize: 13 }}>
+    <View style={[panel, { padding: 18, gap: 14 }]}>
+      <Text style={type.body}>
         Used only to calculate your calorie/macro targets — not medical advice.
       </Text>
 
@@ -191,21 +322,21 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
         <Field label="Age" value={age} onChangeText={setAge} />
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Sex</Text>
+      <Text style={type.label}>Sex</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {(["Male", "Female"] as const).map((s) => (
           <Chip key={s} label={s} on={sex === s} onPress={() => setSex(s)} />
         ))}
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Activity level</Text>
+      <Text style={type.label}>Activity level</Text>
       <View style={{ gap: 8 }}>
         {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((level) => (
           <Chip key={level} label={ACTIVITY_LABELS[level]} on={activityLevel === level} onPress={() => setActivityLevel(level)} fullWidth />
         ))}
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.ink3 }}>Goal</Text>
+      <Text style={type.label}>Goal</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {(Object.keys(GOAL_LABELS) as NutritionGoal[]).map((g) => (
           <Chip key={g} label={GOAL_LABELS[g]} on={nutritionGoal === g} onPress={() => setNutritionGoal(g)} />
@@ -215,15 +346,25 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <Pressable
         onPress={handleSave}
         disabled={!valid || updateProfile.isPending}
-        style={{
-          backgroundColor: valid ? colors.teal : colors.border2,
+        style={({ pressed }) => ({
+          backgroundColor: valid ? colors.signal : colors.panelRaised,
           borderRadius: radii.md,
           padding: 15,
           alignItems: "center",
           marginTop: 10,
-        }}
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: "#fff", fontWeight: "700" }}>Save & calculate</Text>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 15,
+            letterSpacing: 0.3,
+            color: valid ? colors.onSignal : colors.ink3,
+          }}
+        >
+          Save & calculate
+        </Text>
       </Pressable>
     </View>
   );
@@ -232,18 +373,19 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 function Field({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 11, color: colors.ink3, marginBottom: 4 }}>{label}</Text>
+      <Text style={[type.label, { fontSize: 10, marginBottom: 6 }]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         keyboardType="numeric"
         style={{
-          backgroundColor: colors.bg,
-          borderWidth: 1.5,
-          borderColor: colors.border2,
+          backgroundColor: colors.panelRaised,
+          borderWidth: 1,
+          borderColor: colors.hairline2,
           borderRadius: radii.md,
           padding: 12,
-          fontSize: 15,
+          fontFamily: font.numeralMedium,
+          fontSize: 16,
           color: colors.ink,
         }}
       />
@@ -256,16 +398,16 @@ function Chip({ label, on, onPress, fullWidth }: { label: string; on: boolean; o
     <Pressable
       onPress={onPress}
       style={{
-        paddingVertical: 8,
+        paddingVertical: 9,
         paddingHorizontal: 14,
         borderRadius: 20,
-        borderWidth: 1.5,
-        borderColor: on ? colors.teal : colors.border2,
-        backgroundColor: on ? colors.tealLight : colors.white,
+        borderWidth: 1,
+        borderColor: on ? colors.signal : colors.hairline2,
+        backgroundColor: on ? colors.signalFaint : "transparent",
         width: fullWidth ? "100%" : undefined,
       }}
     >
-      <Text style={{ color: on ? colors.tealDark : colors.ink2, fontWeight: "600", fontSize: 13 }}>{label}</Text>
+      <Text style={{ fontFamily: font.semibold, color: on ? colors.signal : colors.ink2, fontSize: 13 }}>{label}</Text>
     </Pressable>
   );
 }

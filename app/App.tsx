@@ -1,7 +1,18 @@
+import {
+  Barlow_400Regular,
+  Barlow_500Medium,
+  Barlow_600SemiBold,
+  Barlow_700Bold,
+} from "@expo-google-fonts/barlow";
+import {
+  BarlowSemiCondensed_300Light,
+  BarlowSemiCondensed_500Medium,
+} from "@expo-google-fonts/barlow-semi-condensed";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, View } from "react-native";
+import { ActivityIndicator, Platform, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
@@ -22,7 +33,7 @@ function AuthGate() {
   if (!hydrated) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.teal} />
+        <ActivityIndicator color={colors.signal} />
       </View>
     );
   }
@@ -40,19 +51,25 @@ function AuthGate() {
 
 // The web build is for local iteration, not a real target platform — without
 // this it stretches edge-to-edge across a desktop browser window instead of
-// looking like the phone app it actually is. Native builds are untouched.
+// looking like the phone app it actually is. At phone-width viewports the
+// decorative frame is dropped: there is nothing to letterbox, and forcing it
+// only introduces overflow. Native builds are untouched.
 function WebPhoneFrame({ children }: { children: React.ReactNode }) {
+  const { width, height } = useWindowDimensions();
   if (Platform.OS !== "web") return <>{children}</>;
+  if (width < 520 || height < 700) return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#0A1919" }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
       <View
         style={{
           width: 430,
-          height: "95vh" as unknown as number,
+          height: "92vh" as unknown as number,
           maxHeight: 932,
-          borderRadius: 40,
+          borderRadius: 34,
           overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          borderWidth: 1,
+          borderColor: "#1E242B",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
         }}
       >
         {children}
@@ -62,6 +79,19 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Barlow_400Regular,
+    Barlow_500Medium,
+    Barlow_600SemiBold,
+    Barlow_700Bold,
+    BarlowSemiCondensed_300Light,
+    BarlowSemiCondensed_500Medium,
+  });
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
   return (
     <WebPhoneFrame>
       <QueryClientProvider client={queryClient}>

@@ -7,11 +7,15 @@ export interface ScheduleableItem {
   id: string;
   peptideName: string;
   scheduleDays: number[]; // 1 = Monday ... 7 = Sunday
+  dose: number;
+  unit: string;
 }
 
 export interface ScheduleSlot {
   stackItemId: string;
   peptideName: string;
+  dose: number;
+  unit: string;
 }
 
 /** Builds a Mon-Sun grid of which stack items are due each day. */
@@ -19,7 +23,12 @@ export function buildWeekSchedule(items: ScheduleableItem[]): ScheduleSlot[][] {
   const week: ScheduleSlot[][] = Array.from({ length: 7 }, () => []);
   for (const item of items) {
     for (const day of item.scheduleDays) {
-      week[day - 1]?.push({ stackItemId: item.id, peptideName: item.peptideName });
+      week[day - 1]?.push({
+        stackItemId: item.id,
+        peptideName: item.peptideName,
+        dose: item.dose,
+        unit: item.unit,
+      });
     }
   }
   return week;

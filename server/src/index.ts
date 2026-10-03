@@ -6,6 +6,7 @@ import "express-async-errors";
 import cors from "cors";
 import express from "express";
 import type { NextFunction, Request, Response } from "express";
+import { assistantRouter } from "./routes/assistant.js";
 import { authRouter } from "./routes/auth.js";
 import { checkinsRouter } from "./routes/checkins.js";
 import { injectionLogsRouter } from "./routes/injectionLogs.js";
@@ -26,6 +27,7 @@ app.use("/injection-logs", requireAuth, injectionLogsRouter);
 app.use("/checkins", requireAuth, checkinsRouter);
 app.use("/nutrition", requireAuth, nutritionRouter);
 app.use("/meal-builder", requireAuth, mealBuilderRouter);
+app.use("/assistant", requireAuth, assistantRouter);
 
 // Must be registered after all routes. Catches anything thrown/rejected in a
 // route handler (e.g. a dropped DB connection) so it returns a 500 instead

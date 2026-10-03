@@ -95,6 +95,21 @@ export function useCreateCheckin() {
   });
 }
 
+export function useDeleteCheckin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/checkins/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checkins"] }),
+  });
+}
+
+export function useCheckinUploadUrl() {
+  return useMutation({
+    mutationFn: (data: { angle: "front" | "side" | "back"; contentType?: string }) =>
+      api.post<{ uploadUrl: string; publicUrl: string }>("/checkins/upload-url", data),
+  });
+}
+
 export function useNutritionPlans() {
   return useQuery({
     queryKey: ["nutritionPlans"],
@@ -141,5 +156,29 @@ export interface BuildMealInput {
 export function useBuildMeal() {
   return useMutation({
     mutationFn: (data: BuildMealInput) => api.post<BuiltMeal>("/meal-builder/generate", data),
+  });
+}
+
+export interface AssistantAnswer {
+  answer: string;
+}
+
+export function useAskAssistant() {
+  return useMutation({
+    mutationFn: (data: {
+      question: string;
+      context?: string;
+      history?: { role: "user" | "assistant"; text: string }[];
+    }) =>
+      api.post<AssistantAnswer>("/assistant/ask", data),
+  });
+}
+
+export function useUpdateStackItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Partial<Omit<StackItem, "id" | "startedAt" | "archivedAt">>) =>
+      api.patch<StackItem>(`/stack-items/${id}`, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stackItems"] }),
   });
 }

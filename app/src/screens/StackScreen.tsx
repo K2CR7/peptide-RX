@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
-import { ChipSelect } from "../components/ChipSelect";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Select } from "../components/Select";
+import { PhoneModalFrame } from "../components/PhoneModalFrame";
+import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
+  CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
+  describeRemaining, findCycleOption, labelForCycle,
+} from "../lib/cycle";
+import { LearnScreen } from "../screens/LearnScreen";
+import {
   type StackItem,
+  useArchiveStackItem,
   useCreateStackItem,
+  useUpdateStackItem,
   useInjectionLogs,
   useLogInjection,
   useStackItems,
 } from "../lib/queries";
-import { colors, radii } from "../theme";
+import { colors, font, panel, radii, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
 const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
@@ -27,34 +37,105 @@ const FREQUENCY_OPTIONS = [
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function StackScreen() {
+  const insets = useSafeAreaInsets();
   const { data: items, isLoading } = useStackItems();
   const [addOpen, setAddOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
+  const [detailFor, setDetailFor] = useState<StackItem | null>(null);
+  const [editFor, setEditFor] = useState<StackItem | null>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 12 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <Text style={{ fontSize: 26, fontWeight: "800", color: colors.ink }}>My Stack</Text>
-          <Pressable
-            onPress={() => setAddOpen(true)}
-            style={{ backgroundColor: colors.teal, borderRadius: radii.md, paddingVertical: 10, paddingHorizontal: 16 }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>+ Add</Text>
-          </Pressable>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 14 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <Text style={type.title}>My stack</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Pressable
+              onPress={() => setLearnOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Peptide reference"
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.hairline2,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <BookIcon size={20} color={colors.ink2} />
+            </Pressable>
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                minHeight: 44,
+                backgroundColor: colors.signal,
+                borderRadius: radii.md,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <PlusMark size={13} color={colors.onSignal} />
+              <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
+            </Pressable>
+          </View>
         </View>
 
-        {isLoading && <Text style={{ color: colors.ink3 }}>Loading…</Text>}
+        {isLoading && <Text style={type.body}>Loading…</Text>}
         {!isLoading && items?.length === 0 && (
-          <Text style={{ color: colors.ink3 }}>Nothing in your stack yet. Add what you're already taking.</Text>
+          <View style={[panel, { padding: 18 }]}>
+            <Text style={type.body}>Nothing in your stack yet. Add what you're already taking.</Text>
+          </View>
         )}
 
-        {items?.map((item) => (
-          <StackItemCard key={item.id} item={item} onLog={() => setInjectFor({ id: item.id, route: item.route })} />
-        ))}
+        {items && items.length > 0 && (
+          <View style={[panel, { overflow: "hidden" }]}>
+            {items.map((item, i) => (
+              <StackItemRow
+                key={item.id}
+                item={item}
+                first={i === 0}
+                onLog={() => setInjectFor({ id: item.id, route: item.route })}
+                onOpen={() => setDetailFor(item)}
+              />
+            ))}
+          </View>
+        )}
+
+        {items && items.length > 0 && (
+          <Text style={[type.meta, { fontSize: 12, paddingHorizontal: 2 }]}>
+            Tap an item to edit or remove it.
+          </Text>
+        )}
       </ScrollView>
 
-      <AddStackItemModal visible={addOpen} onClose={() => setAddOpen(false)} />
+      {detailFor && (
+        <StackItemSheet
+          item={detailFor}
+          onClose={() => setDetailFor(null)}
+          onEdit={() => {
+            setEditFor(detailFor);
+            setDetailFor(null);
+          }}
+        />
+      )}
+
+      {addOpen && <StackItemFormModal onClose={() => setAddOpen(false)} />}
+      {editFor && <StackItemFormModal item={editFor} onClose={() => setEditFor(null)} />}
+
+      <Modal visible={learnOpen} animationType="slide" onRequestClose={() => setLearnOpen(false)}>
+        <PhoneModalFrame backgroundColor={colors.bg}>
+          <LearnScreen onClose={() => setLearnOpen(false)} />
+        </PhoneModalFrame>
+      </Modal>
 
       {injectFor && (
         <InjectionLogger
@@ -67,23 +148,77 @@ export function StackScreen() {
   );
 }
 
-function StackItemCard({ item, onLog }: { item: StackItem; onLog: () => void }) {
+function StackItemRow({
+  item, first, onLog, onOpen,
+}: { item: StackItem; first: boolean; onLog: () => void; onOpen: () => void }) {
+  const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
+  const off = cycle?.phase === "off";
+
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.border, padding: 16 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 17, fontWeight: "800", color: colors.ink }}>{item.peptideName}</Text>
-          <Text style={{ color: colors.ink3, fontSize: 12, marginTop: 2 }}>{item.frequency} · {item.route ?? "—"}</Text>
-        </View>
-        <View style={{ backgroundColor: colors.teal, borderRadius: radii.sm, paddingVertical: 6, paddingHorizontal: 12 }}>
-          <Text style={{ color: "#fff", fontWeight: "800" }}>{item.dose} {item.unit}</Text>
-        </View>
-      </View>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 13,
+        paddingLeft: 16,
+        paddingRight: 12,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: colors.hairline,
+      }}
+    >
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.peptideName} details`}
+        style={({ pressed }) => ({ flex: 1, minHeight: 44, justifyContent: "center", opacity: pressed ? 0.72 : 1 })}
+      >
+        <Text style={[type.heading, { fontSize: 15.5 }]}>{item.peptideName}</Text>
+        <Text style={[type.meta, { marginTop: 2 }]}>
+          {item.frequency}
+          {item.route ? ` · ${item.route}` : ""}
+        </Text>
+        {cycle && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 }}>
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: off ? colors.amber : colors.signal,
+              }}
+            />
+            <Text style={{ fontFamily: font.semibold, fontSize: 11.5, color: off ? colors.amber : colors.signal }}>
+              {describeCycle(cycle)}
+            </Text>
+            <Text style={[type.meta, { fontSize: 11.5 }]}>· {describeRemaining(cycle)}</Text>
+          </View>
+        )}
+      </Pressable>
+
+      <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
+        {item.dose}
+        <Text style={{ fontSize: 12, color: colors.ink3 }}> {item.unit}</Text>
+      </Text>
+
       <Pressable
         onPress={onLog}
-        style={{ marginTop: 12, borderWidth: 1.5, borderColor: colors.border2, borderRadius: radii.md, padding: 10, alignItems: "center" }}
+        accessibilityRole="button"
+        accessibilityLabel={`Log ${item.peptideName}`}
+        style={({ pressed }) => ({
+          minHeight: 44,
+          minWidth: 62,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 12,
+          borderWidth: 1,
+          borderColor: colors.signalDim,
+          backgroundColor: colors.signalFaint,
+          borderRadius: radii.md,
+          opacity: pressed ? 0.7 : 1,
+        })}
       >
-        <Text style={{ color: colors.tealDark, fontWeight: "700" }}>Log injection</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>Log</Text>
       </Pressable>
     </View>
   );
@@ -108,15 +243,46 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
   );
 }
 
-function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/**
+ * One form for both adding and editing — passing `item` switches it to edit
+ * mode. Duplicating it would mean two places to keep the autofill, the cycle
+ * presets and the validation in step.
+ */
+function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () => void }) {
   const createItem = useCreateStackItem();
-  const [peptideName, setPeptideName] = useState("");
-  const [dose, setDose] = useState("");
-  const [unit, setUnit] = useState("mcg");
-  const [frequency, setFrequency] = useState("");
-  const [route, setRoute] = useState("");
-  const [days, setDays] = useState<number[]>([]);
+  const updateItem = useUpdateStackItem();
+  const editing = item !== undefined;
+
+  const [peptideName, setPeptideName] = useState(item?.peptideName ?? "");
+  const [dose, setDose] = useState(item ? String(item.dose) : "");
+  const [unit, setUnit] = useState(item?.unit ?? "mcg");
+  const [frequency, setFrequency] = useState(item?.frequency ?? "");
+  const [route, setRoute] = useState(item?.route ?? "");
+  const [days, setDays] = useState<number[]>(item?.scheduleDays ?? []);
+  const [cycleLabel, setCycleLabel] = useState(
+    item ? labelForCycle(item.cycleOnDays, item.cycleOffDays) : NO_CYCLE_LABEL,
+  );
+  const [customOnWeeks, setCustomOnWeeks] = useState(
+    item?.cycleOnDays ? String(item.cycleOnDays / 7) : "",
+  );
+  const [customOffWeeks, setCustomOffWeeks] = useState(
+    item?.cycleOffDays ? String(item.cycleOffDays / 7) : "",
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const pending = createItem.isPending || updateItem.isPending;
+
+  const isCustomCycle = cycleLabel === CUSTOM_CYCLE_LABEL;
+
+  function resolveCycle(): { onDays: number | null; offDays: number | null } {
+    if (isCustomCycle) {
+      const on = Math.round(Number(customOnWeeks) * 7);
+      const off = Math.round(Number(customOffWeeks) * 7);
+      return on > 0 && off > 0 ? { onDays: on, offDays: off } : { onDays: null, offDays: null };
+    }
+    const preset = findCycleOption(cycleLabel);
+    return { onDays: preset?.onDays ?? null, offDays: preset?.offDays ?? null };
+  }
 
   function toggleDay(day: number) {
     setDays((d) => (d.includes(day) ? d.filter((x) => x !== day) : [...d, day].sort()));
@@ -136,59 +302,129 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
     }
   }
 
-  function reset() {
-    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]); setError(null);
-  }
-
   async function handleSubmit() {
     setError(null);
     const doseNum = Number(dose);
     if (!peptideName.trim()) return setError("Pick or enter a peptide name.");
     if (!dose || !doseNum) return setError("Pick or enter a dose.");
     if (!frequency.trim()) return setError("Pick or enter a frequency.");
+    const cycle = resolveCycle();
+    if (isCustomCycle && (cycle.onDays === null || cycle.offDays === null)) {
+      return setError("Enter both weeks on and weeks off, or pick a preset cycle.");
+    }
+
+    const payload = {
+      peptideName: peptideName.trim(),
+      dose: doseNum,
+      unit,
+      frequency: frequency.trim(),
+      scheduleDays: days,
+      route: route.trim() || null,
+      cycleOnDays: cycle.onDays,
+      cycleOffDays: cycle.offDays,
+    };
+
     try {
-      await createItem.mutateAsync({
-        peptideName: peptideName.trim(),
-        dose: doseNum,
-        unit,
-        frequency: frequency.trim(),
-        scheduleDays: days,
-        route: route.trim() || null,
-        cycleOnDays: null,
-        cycleOffDays: null,
-      });
-      reset();
+      if (editing) {
+        await updateItem.mutateAsync({ id: item.id, ...payload });
+      } else {
+        await createItem.mutateAsync(payload);
+      }
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add to stack — try again.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : editing
+            ? "Couldn't save those changes — try again."
+            : "Failed to add to stack — try again.",
+      );
     }
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60, gap: 10 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.ink, marginBottom: 8 }}>Add to your stack</Text>
-        <Text style={{ fontSize: 13, color: colors.ink3, marginBottom: 4 }}>Peptide</Text>
-        <ChipSelect
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <PhoneModalFrame backgroundColor={colors.bg}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
+        <Text style={[type.title, { marginBottom: 10 }]}>
+          {editing ? "Edit stack item" : "Add to your stack"}
+        </Text>
+
+        <Select
+          label="Peptide"
           options={Object.keys(PEPTIDE_REFERENCE)}
           value={peptideName}
           onChange={handlePeptideChange}
-          customPlaceholder="Enter peptide name"
+          placeholder="Choose a peptide"
+          customPlaceholder="Enter a peptide not listed"
+          describe={(name) => PEPTIDE_REFERENCE[name]?.aka}
         />
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Dose</Text>
-        <ChipSelect options={DOSE_OPTIONS} value={dose} onChange={setDose} customPlaceholder="Enter dose" keyboardType="decimal-pad" />
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+          <View style={{ flex: 1.4 }}>
+            <Select
+              label="Dose"
+              options={DOSE_OPTIONS}
+              value={dose}
+              onChange={setDose}
+              placeholder="Amount"
+              customPlaceholder="Enter a dose"
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Select
+              label="Unit"
+              options={UNIT_OPTIONS}
+              value={unit}
+              onChange={setUnit}
+              placeholder="Unit"
+              customPlaceholder="Enter a unit"
+            />
+          </View>
+        </View>
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Unit</Text>
-        <ChipSelect options={UNIT_OPTIONS} value={unit} onChange={setUnit} customPlaceholder="Enter unit" />
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Frequency"
+            options={FREQUENCY_OPTIONS}
+            value={frequency}
+            onChange={setFrequency}
+            placeholder="How often"
+            customPlaceholder="Enter a frequency"
+          />
+        </View>
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Frequency</Text>
-        <ChipSelect options={FREQUENCY_OPTIONS} value={frequency} onChange={setFrequency} customPlaceholder="Enter frequency" />
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Route"
+            options={ROUTE_OPTIONS}
+            value={route}
+            onChange={setRoute}
+            placeholder="How it's taken"
+            customPlaceholder="Enter a route"
+          />
+        </View>
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Route</Text>
-        <ChipSelect options={ROUTE_OPTIONS} value={route} onChange={setRoute} customPlaceholder="Enter route" />
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Cycle"
+            options={cycleOptionLabels()}
+            value={cycleLabel}
+            onChange={setCycleLabel}
+            placeholder="No cycle — continuous"
+            customPlaceholder="Enter a cycle"
+          />
+        </View>
 
-        <Text style={{ fontSize: 13, color: colors.ink3, marginTop: 4 }}>Schedule days</Text>
+        {isCustomCycle && (
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+            <WeeksField label="Weeks on" value={customOnWeeks} onChangeText={setCustomOnWeeks} />
+            <WeeksField label="Weeks off" value={customOffWeeks} onChangeText={setCustomOffWeeks} />
+          </View>
+        )}
+
+        <Text style={[type.label, { marginTop: 18 }]}>Schedule days</Text>
         <View style={{ flexDirection: "row", gap: 6 }}>
           {DAY_LABELS.map((label, i) => {
             const day = i + 1;
@@ -199,28 +435,205 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
                 onPress={() => toggleDay(day)}
                 style={{
                   width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
-                  backgroundColor: on ? colors.teal : colors.white, borderWidth: 1.5, borderColor: on ? colors.teal : colors.border2,
+                  backgroundColor: on ? colors.signal : colors.panel,
+                  borderWidth: 1,
+                  borderColor: on ? colors.signal : colors.hairline2,
                 }}
               >
-                <Text style={{ color: on ? "#fff" : colors.ink2, fontWeight: "700", fontSize: 12 }}>{label}</Text>
+                <Text style={{ fontFamily: font.bold, fontSize: 12.5, color: on ? colors.onSignal : colors.ink2 }}>{label}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {error && <Text style={{ color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
+        {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
 
         <Pressable
           onPress={handleSubmit}
-          disabled={createItem.isPending}
-          style={{ backgroundColor: colors.teal, borderRadius: radii.md, padding: 15, alignItems: "center", marginTop: 12, opacity: createItem.isPending ? 0.6 : 1 }}
+          disabled={pending}
+          style={({ pressed }) => ({
+            backgroundColor: colors.signal,
+            borderRadius: radii.md,
+            padding: 15,
+            alignItems: "center",
+            marginTop: 14,
+            opacity: pending || pressed ? 0.7 : 1,
+          })}
         >
-          <Text style={{ color: "#fff", fontWeight: "700" }}>{createItem.isPending ? "Adding…" : "Add to stack"}</Text>
+          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+            {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save changes" : "Add to stack"}
+          </Text>
         </Pressable>
         <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
-          <Text style={{ color: colors.ink3 }}>Cancel</Text>
+          <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
         </Pressable>
       </ScrollView>
+      </PhoneModalFrame>
     </Modal>
+  );
+}
+
+function WeeksField({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={[type.label, { marginBottom: 7 }]}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType="numeric"
+        placeholder="0"
+        placeholderTextColor={colors.ink3}
+        style={{
+          backgroundColor: colors.panel,
+          borderWidth: 1,
+          borderColor: colors.hairline2,
+          borderRadius: radii.md,
+          paddingHorizontal: 14,
+          minHeight: 48,
+          fontFamily: font.numeralMedium,
+          fontSize: 17,
+          color: colors.ink,
+        }}
+      />
+    </View>
+  );
+}
+
+/**
+ * Item detail and removal. Removing archives rather than deletes, so the
+ * injection history behind it stays intact and past weeks keep reading
+ * truthfully; the item just stops appearing in the stack and the schedule.
+ */
+function StackItemSheet({
+  item, onClose, onEdit,
+}: { item: StackItem; onClose: () => void; onEdit: () => void }) {
+  const archive = useArchiveStackItem();
+  const [confirming, setConfirming] = useState(false);
+  const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
+
+  function handleRemove() {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    archive.mutate(item.id, { onSuccess: onClose });
+  }
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <PhoneModalFrame>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={onClose} />
+          <View
+            style={{
+              backgroundColor: colors.panel,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
+              borderColor: colors.hairline2,
+              paddingTop: 18,
+              paddingHorizontal: 20,
+              paddingBottom: 18,
+            }}
+          >
+            <Text style={[type.heading, { fontSize: 19 }]}>{item.peptideName}</Text>
+
+            <View style={{ marginTop: 14, gap: 9 }}>
+              <DetailRow label="Dose" value={`${item.dose} ${item.unit}`} />
+              <DetailRow label="Frequency" value={item.frequency} />
+              <DetailRow label="Route" value={item.route ?? "—"} />
+              <DetailRow
+                label="Cycle"
+                value={cycle ? `${describeCycle(cycle)} · ${describeRemaining(cycle)}` : "Continuous"}
+              />
+              <DetailRow
+                label="Started"
+                value={new Date(item.startedAt).toLocaleDateString(undefined, {
+                  month: "short", day: "numeric", year: "numeric",
+                })}
+              />
+            </View>
+
+            {!confirming && (
+              <Pressable
+                onPress={onEdit}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  marginTop: 18,
+                  minHeight: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: radii.md,
+                  backgroundColor: colors.signal,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+                  Edit
+                </Text>
+              </Pressable>
+            )}
+
+            {confirming && (
+              <Text style={{ fontFamily: font.medium, fontSize: 12.5, color: colors.ink2, marginTop: 16, lineHeight: 18 }}>
+                This takes {item.peptideName} out of your stack and schedule. Injections you already
+                logged are kept, so past weeks still read correctly.
+              </Text>
+            )}
+
+            <Pressable
+              onPress={handleRemove}
+              disabled={archive.isPending}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                marginTop: 16,
+                minHeight: 48,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.red,
+                backgroundColor: confirming ? colors.red : colors.redFaint,
+                opacity: archive.isPending || pressed ? 0.7 : 1,
+              })}
+            >
+              <Text
+                style={{
+                  fontFamily: font.bold,
+                  fontSize: 14.5,
+                  letterSpacing: 0.3,
+                  color: confirming ? colors.bg : colors.red,
+                }}
+              >
+                {archive.isPending
+                  ? "Removing…"
+                  : confirming
+                    ? "Yes, remove it"
+                    : "Remove from stack"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={confirming ? () => setConfirming(false) : onClose}
+              accessibilityRole="button"
+              style={({ pressed }) => ({ minHeight: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
+            >
+              <Text style={[type.meta, { fontSize: 14 }]}>{confirming ? "Keep it" : "Close"}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </PhoneModalFrame>
+    </Modal>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+      <Text style={[type.label, { fontSize: 10.5 }]}>{label}</Text>
+      <Text style={{ fontFamily: font.semibold, fontSize: 14, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
+        {value}
+      </Text>
+    </View>
   );
 }

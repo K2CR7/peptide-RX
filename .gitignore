@@ -13,3 +13,8 @@ app/android/
 
 # Prisma
 server/prisma/dev.db
+
+# Impeccable design skill — vendored tooling, reinstall with `npx impeccable install`
+.claude/skills/impeccable/
+.claude/settings.local.json
+app/.impeccable/
