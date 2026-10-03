@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CircularProgress } from "../components/CircularProgress";
+import { DoseMeter } from "../components/DoseMeter";
 import { ChevronRight, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
@@ -72,7 +72,6 @@ export function HomeScreen() {
   }, [allLogs]);
 
   const doneCount = dueToday.filter((i) => loggedTodayIds.has(i.id)).length;
-  const progress = dueToday.length > 0 ? doneCount / dueToday.length : 0;
   const allDone = dueToday.length > 0 && doneCount === dueToday.length;
 
   const dayCount = useMemo(() => {
@@ -173,17 +172,16 @@ export function HomeScreen() {
           style={[
             panel,
             {
-              padding: 26,
-              alignItems: "center",
+              padding: 20,
               backgroundColor: allDone ? colors.signalFaint : colors.panel,
               borderColor: allDone ? colors.signalDim : colors.hairline,
             },
           ]}
         >
-          <CircularProgress
-            progress={progress}
-            label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-            sublabel={allDone ? "protocol complete" : "doses logged"}
+          <DoseMeter
+            total={dueToday.length}
+            done={doneCount}
+            label={allDone ? "protocol complete" : "doses logged"}
           />
         </View>
 
