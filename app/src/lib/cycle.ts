@@ -99,3 +99,13 @@ export function cycleOptionLabels(): string[] {
 export function findCycleOption(label: string): CycleOption | undefined {
   return CYCLE_OPTIONS.find((o) => o.label === label);
 }
+
+/**
+ * Which dropdown option represents a stored cycle — so the edit form opens
+ * showing the same label the user originally picked.
+ */
+export function labelForCycle(onDays: number | null, offDays: number | null): string {
+  if (!onDays || !offDays) return NO_CYCLE_LABEL;
+  const preset = CYCLE_OPTIONS.find((o) => o.onDays === onDays && o.offDays === offDays);
+  return preset ? preset.label : CUSTOM_CYCLE_LABEL;
+}

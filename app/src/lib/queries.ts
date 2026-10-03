@@ -173,3 +173,12 @@ export function useAskAssistant() {
       api.post<AssistantAnswer>("/assistant/ask", data),
   });
 }
+
+export function useUpdateStackItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Partial<Omit<StackItem, "id" | "startedAt" | "archivedAt">>) =>
+      api.patch<StackItem>(`/stack-items/${id}`, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stackItems"] }),
+  });
+}

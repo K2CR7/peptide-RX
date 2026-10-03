@@ -8,13 +8,14 @@ import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
   CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
-  describeRemaining, findCycleOption,
+  describeRemaining, findCycleOption, labelForCycle,
 } from "../lib/cycle";
 import { LearnScreen } from "../screens/LearnScreen";
 import {
   type StackItem,
   useArchiveStackItem,
   useCreateStackItem,
+  useUpdateStackItem,
   useInjectionLogs,
   useLogInjection,
   useStackItems,
@@ -42,6 +43,7 @@ export function StackScreen() {
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
   const [detailFor, setDetailFor] = useState<StackItem | null>(null);
+  const [editFor, setEditFor] = useState<StackItem | null>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -110,16 +112,24 @@ export function StackScreen() {
 
         {items && items.length > 0 && (
           <Text style={[type.meta, { fontSize: 12, paddingHorizontal: 2 }]}>
-            Tap an item to see details or remove it.
+            Tap an item to edit or remove it.
           </Text>
         )}
       </ScrollView>
 
       {detailFor && (
-        <StackItemSheet item={detailFor} onClose={() => setDetailFor(null)} />
+        <StackItemSheet
+          item={detailFor}
+          onClose={() => setDetailFor(null)}
+          onEdit={() => {
+            setEditFor(detailFor);
+            setDetailFor(null);
+          }}
+        />
       )}
 
-      <AddStackItemModal visible={addOpen} onClose={() => setAddOpen(false)} />
+      {addOpen && <StackItemFormModal onClose={() => setAddOpen(false)} />}
+      {editFor && <StackItemFormModal item={editFor} onClose={() => setEditFor(null)} />}
 
       <Modal visible={learnOpen} animationType="slide" onRequestClose={() => setLearnOpen(false)}>
         <PhoneModalFrame backgroundColor={colors.bg}>
@@ -233,18 +243,34 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
   );
 }
 
-function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/**
+ * One form for both adding and editing — passing `item` switches it to edit
+ * mode. Duplicating it would mean two places to keep the autofill, the cycle
+ * presets and the validation in step.
+ */
+function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () => void }) {
   const createItem = useCreateStackItem();
-  const [peptideName, setPeptideName] = useState("");
-  const [dose, setDose] = useState("");
-  const [unit, setUnit] = useState("mcg");
-  const [frequency, setFrequency] = useState("");
-  const [route, setRoute] = useState("");
-  const [days, setDays] = useState<number[]>([]);
-  const [cycleLabel, setCycleLabel] = useState(NO_CYCLE_LABEL);
-  const [customOnWeeks, setCustomOnWeeks] = useState("");
-  const [customOffWeeks, setCustomOffWeeks] = useState("");
+  const updateItem = useUpdateStackItem();
+  const editing = item !== undefined;
+
+  const [peptideName, setPeptideName] = useState(item?.peptideName ?? "");
+  const [dose, setDose] = useState(item ? String(item.dose) : "");
+  const [unit, setUnit] = useState(item?.unit ?? "mcg");
+  const [frequency, setFrequency] = useState(item?.frequency ?? "");
+  const [route, setRoute] = useState(item?.route ?? "");
+  const [days, setDays] = useState<number[]>(item?.scheduleDays ?? []);
+  const [cycleLabel, setCycleLabel] = useState(
+    item ? labelForCycle(item.cycleOnDays, item.cycleOffDays) : NO_CYCLE_LABEL,
+  );
+  const [customOnWeeks, setCustomOnWeeks] = useState(
+    item?.cycleOnDays ? String(item.cycleOnDays / 7) : "",
+  );
+  const [customOffWeeks, setCustomOffWeeks] = useState(
+    item?.cycleOffDays ? String(item.cycleOffDays / 7) : "",
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const pending = createItem.isPending || updateItem.isPending;
 
   const isCustomCycle = cycleLabel === CUSTOM_CYCLE_LABEL;
 
@@ -276,11 +302,6 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
     }
   }
 
-  function reset() {
-    setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]); setError(null);
-    setCycleLabel(NO_CYCLE_LABEL); setCustomOnWeeks(""); setCustomOffWeeks("");
-  }
-
   async function handleSubmit() {
     setError(null);
     const doseNum = Number(dose);
@@ -291,29 +312,43 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
     if (isCustomCycle && (cycle.onDays === null || cycle.offDays === null)) {
       return setError("Enter both weeks on and weeks off, or pick a preset cycle.");
     }
+
+    const payload = {
+      peptideName: peptideName.trim(),
+      dose: doseNum,
+      unit,
+      frequency: frequency.trim(),
+      scheduleDays: days,
+      route: route.trim() || null,
+      cycleOnDays: cycle.onDays,
+      cycleOffDays: cycle.offDays,
+    };
+
     try {
-      await createItem.mutateAsync({
-        peptideName: peptideName.trim(),
-        dose: doseNum,
-        unit,
-        frequency: frequency.trim(),
-        scheduleDays: days,
-        route: route.trim() || null,
-        cycleOnDays: cycle.onDays,
-        cycleOffDays: cycle.offDays,
-      });
-      reset();
+      if (editing) {
+        await updateItem.mutateAsync({ id: item.id, ...payload });
+      } else {
+        await createItem.mutateAsync(payload);
+      }
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add to stack — try again.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : editing
+            ? "Couldn't save those changes — try again."
+            : "Failed to add to stack — try again.",
+      );
     }
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible animationType="slide" onRequestClose={onClose}>
       <PhoneModalFrame backgroundColor={colors.bg}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
-        <Text style={[type.title, { marginBottom: 10 }]}>Add to your stack</Text>
+        <Text style={[type.title, { marginBottom: 10 }]}>
+          {editing ? "Edit stack item" : "Add to your stack"}
+        </Text>
 
         <Select
           label="Peptide"
@@ -415,18 +450,18 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
 
         <Pressable
           onPress={handleSubmit}
-          disabled={createItem.isPending}
+          disabled={pending}
           style={({ pressed }) => ({
             backgroundColor: colors.signal,
             borderRadius: radii.md,
             padding: 15,
             alignItems: "center",
             marginTop: 14,
-            opacity: createItem.isPending || pressed ? 0.7 : 1,
+            opacity: pending || pressed ? 0.7 : 1,
           })}
         >
           <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-            {createItem.isPending ? "Adding…" : "Add to stack"}
+            {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save changes" : "Add to stack"}
           </Text>
         </Pressable>
         <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
@@ -469,7 +504,9 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
  * injection history behind it stays intact and past weeks keep reading
  * truthfully; the item just stops appearing in the stack and the schedule.
  */
-function StackItemSheet({ item, onClose }: { item: StackItem; onClose: () => void }) {
+function StackItemSheet({
+  item, onClose, onEdit,
+}: { item: StackItem; onClose: () => void; onEdit: () => void }) {
   const archive = useArchiveStackItem();
   const [confirming, setConfirming] = useState(false);
   const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
@@ -516,6 +553,26 @@ function StackItemSheet({ item, onClose }: { item: StackItem; onClose: () => voi
                 })}
               />
             </View>
+
+            {!confirming && (
+              <Pressable
+                onPress={onEdit}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  marginTop: 18,
+                  minHeight: 48,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: radii.md,
+                  backgroundColor: colors.signal,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+                  Edit
+                </Text>
+              </Pressable>
+            )}
 
             {confirming && (
               <Text style={{ fontFamily: font.medium, fontSize: 12.5, color: colors.ink2, marginTop: 16, lineHeight: 18 }}>
