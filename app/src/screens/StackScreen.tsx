@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Select } from "../components/Select";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
+import {
+  CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
+  describeRemaining, findCycleOption,
+} from "../lib/cycle";
 import { LearnScreen } from "../screens/LearnScreen";
 import {
   type StackItem,
@@ -122,6 +126,9 @@ export function StackScreen() {
 }
 
 function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean; onLog: () => void }) {
+  const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
+  const off = cycle?.phase === "off";
+
   return (
     <View
       style={{
@@ -141,6 +148,22 @@ function StackItemRow({ item, first, onLog }: { item: StackItem; first: boolean;
           {item.frequency}
           {item.route ? ` · ${item.route}` : ""}
         </Text>
+        {cycle && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 }}>
+            <View
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: off ? colors.amber : colors.signal,
+              }}
+            />
+            <Text style={{ fontFamily: font.semibold, fontSize: 11.5, color: off ? colors.amber : colors.signal }}>
+              {describeCycle(cycle)}
+            </Text>
+            <Text style={[type.meta, { fontSize: 11.5 }]}>· {describeRemaining(cycle)}</Text>
+          </View>
+        )}
       </View>
 
       <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
@@ -198,7 +221,22 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
   const [frequency, setFrequency] = useState("");
   const [route, setRoute] = useState("");
   const [days, setDays] = useState<number[]>([]);
+  const [cycleLabel, setCycleLabel] = useState(NO_CYCLE_LABEL);
+  const [customOnWeeks, setCustomOnWeeks] = useState("");
+  const [customOffWeeks, setCustomOffWeeks] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const isCustomCycle = cycleLabel === CUSTOM_CYCLE_LABEL;
+
+  function resolveCycle(): { onDays: number | null; offDays: number | null } {
+    if (isCustomCycle) {
+      const on = Math.round(Number(customOnWeeks) * 7);
+      const off = Math.round(Number(customOffWeeks) * 7);
+      return on > 0 && off > 0 ? { onDays: on, offDays: off } : { onDays: null, offDays: null };
+    }
+    const preset = findCycleOption(cycleLabel);
+    return { onDays: preset?.onDays ?? null, offDays: preset?.offDays ?? null };
+  }
 
   function toggleDay(day: number) {
     setDays((d) => (d.includes(day) ? d.filter((x) => x !== day) : [...d, day].sort()));
@@ -220,6 +258,7 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
 
   function reset() {
     setPeptideName(""); setDose(""); setUnit("mcg"); setFrequency(""); setRoute(""); setDays([]); setError(null);
+    setCycleLabel(NO_CYCLE_LABEL); setCustomOnWeeks(""); setCustomOffWeeks("");
   }
 
   async function handleSubmit() {
@@ -228,6 +267,10 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
     if (!peptideName.trim()) return setError("Pick or enter a peptide name.");
     if (!dose || !doseNum) return setError("Pick or enter a dose.");
     if (!frequency.trim()) return setError("Pick or enter a frequency.");
+    const cycle = resolveCycle();
+    if (isCustomCycle && (cycle.onDays === null || cycle.offDays === null)) {
+      return setError("Enter both weeks on and weeks off, or pick a preset cycle.");
+    }
     try {
       await createItem.mutateAsync({
         peptideName: peptideName.trim(),
@@ -236,8 +279,8 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
         frequency: frequency.trim(),
         scheduleDays: days,
         route: route.trim() || null,
-        cycleOnDays: null,
-        cycleOffDays: null,
+        cycleOnDays: cycle.onDays,
+        cycleOffDays: cycle.offDays,
       });
       reset();
       onClose();
@@ -308,6 +351,24 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
           />
         </View>
 
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Cycle"
+            options={cycleOptionLabels()}
+            value={cycleLabel}
+            onChange={setCycleLabel}
+            placeholder="No cycle — continuous"
+            customPlaceholder="Enter a cycle"
+          />
+        </View>
+
+        {isCustomCycle && (
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+            <WeeksField label="Weeks on" value={customOnWeeks} onChangeText={setCustomOnWeeks} />
+            <WeeksField label="Weeks off" value={customOffWeeks} onChangeText={setCustomOffWeeks} />
+          </View>
+        )}
+
         <Text style={[type.label, { marginTop: 18 }]}>Schedule days</Text>
         <View style={{ flexDirection: "row", gap: 6 }}>
           {DAY_LABELS.map((label, i) => {
@@ -354,5 +415,31 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
       </ScrollView>
       </PhoneModalFrame>
     </Modal>
+  );
+}
+
+function WeeksField({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={[type.label, { marginBottom: 7 }]}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType="numeric"
+        placeholder="0"
+        placeholderTextColor={colors.ink3}
+        style={{
+          backgroundColor: colors.panel,
+          borderWidth: 1,
+          borderColor: colors.hairline2,
+          borderRadius: radii.md,
+          paddingHorizontal: 14,
+          minHeight: 48,
+          fontFamily: font.numeralMedium,
+          fontSize: 17,
+          color: colors.ink,
+        }}
+      />
+    </View>
   );
 }

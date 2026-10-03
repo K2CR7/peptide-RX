@@ -5,7 +5,8 @@ import { CircularProgress } from "../components/CircularProgress";
 import { ChevronRight, MarkLogged } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteLabel } from "../lib/injectionSites";
-import { useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
+import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
+import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { colors, font, panel, radii, type } from "../theme";
@@ -32,7 +33,31 @@ export function HomeScreen() {
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
 
   const today = todayDow();
-  const dueToday = useMemo(() => (items ?? []).filter((i) => i.scheduleDays.includes(today)), [items, today]);
+
+  // An item in its off phase isn't due, however its weekday schedule reads —
+  // the cycle outranks the weekly pattern.
+  const cycles = useMemo(
+    () =>
+      (items ?? [])
+        .map((i) => ({ item: i, cycle: cycleState(i.startedAt, i.cycleOnDays, i.cycleOffDays) }))
+        .filter((c): c is { item: StackItem; cycle: CycleState } => c.cycle !== null),
+    [items],
+  );
+
+  const offIds = useMemo(
+    () => new Set(cycles.filter((c) => c.cycle.phase === "off").map((c) => c.item.id)),
+    [cycles],
+  );
+
+  const dueToday = useMemo(
+    () => (items ?? []).filter((i) => i.scheduleDays.includes(today) && !offIds.has(i.id)),
+    [items, today, offIds],
+  );
+
+  const restingToday = useMemo(
+    () => (items ?? []).filter((i) => i.scheduleDays.includes(today) && offIds.has(i.id)),
+    [items, today, offIds],
+  );
 
   const loggedTodayIds = useMemo(() => {
     const now = new Date();
@@ -204,6 +229,67 @@ export function HomeScreen() {
             })}
           </View>
         </View>
+
+        {cycles.length > 0 && (
+          <View style={{ gap: 10 }}>
+            <Text style={type.label}>Cycles</Text>
+            <View style={[panel, { overflow: "hidden" }]}>
+              {cycles.map(({ item, cycle }, i) => {
+                const off = cycle.phase === "off";
+                const tone = off ? colors.amber : colors.signal;
+                return (
+                  <View
+                    key={item.id}
+                    style={{
+                      paddingVertical: 13,
+                      paddingHorizontal: 16,
+                      borderTopWidth: i === 0 ? 0 : 1,
+                      borderTopColor: colors.hairline,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <Text style={[type.heading, { fontSize: 15 }]}>{item.peptideName}</Text>
+                      <Text style={{ fontFamily: font.semibold, fontSize: 12, color: tone, letterSpacing: 0.4 }}>
+                        {off ? "OFF" : "ON"}
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: 3 }}>
+                      <Text style={[type.meta, { fontSize: 12.5 }]}>{describeCycle(cycle)}</Text>
+                      <Text style={[type.meta, { fontSize: 12.5 }]}>{describeRemaining(cycle)}</Text>
+                    </View>
+
+                    <View
+                      style={{
+                        height: 4,
+                        borderRadius: 2,
+                        backgroundColor: colors.panelRaised,
+                        marginTop: 9,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: `${Math.round(cycle.progress * 100)}%`,
+                          height: "100%",
+                          borderRadius: 2,
+                          backgroundColor: tone,
+                        }}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {restingToday.length > 0 && (
+              <Text style={[type.meta, { fontSize: 12.5 }]}>
+                {restingToday.map((i) => i.peptideName).join(", ")}{" "}
+                {restingToday.length === 1 ? "is" : "are"} scheduled today but resting — not counted above.
+              </Text>
+            )}
+          </View>
+        )}
 
         {rotation?.next && (
           <View style={{ gap: 10 }}>
