@@ -7,16 +7,13 @@ import { colors, font, panel, radii, type } from "../theme";
 // Evidence strength is a four-step ramp, not a set of categories: one hue
 // carries "supported", one carries "thin", one carries "speculative". Trace
 // blue is reserved for data lines and never appears here.
-function tierTone(tier: string): string {
-  switch (tier) {
-    case "FDA Approved": return colors.signal;
-    case "Clinical Trials": return colors.ink2;
-    case "Limited Human":
-    case "Preclinical": return colors.amber;
-    case "Speculative": return colors.red;
-    default: return colors.ink3;
-  }
-}
+const TIER_TONE: Record<string, string> = {
+  "FDA Approved": colors.signal,
+  "Clinical Trials": colors.ink2,
+  "Limited Human": colors.amber,
+  Preclinical: colors.amber,
+  Speculative: colors.red,
+};
 
 const TIER_ORDER = ["FDA Approved", "Clinical Trials", "Limited Human", "Preclinical", "Speculative"];
 
@@ -71,11 +68,11 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
         </View>
 
         {groups.map(({ tier, names }) => {
-          const tone = tierTone(tier);
+          const tone = TIER_TONE[tier] ?? colors.ink3;
           return (
             <View key={tier} style={{ gap: 9 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
-                <View style={{ width: 3, height: 15, borderRadius: 0, backgroundColor: tone }} />
+                <View style={{ width: 3, height: 15, borderRadius: 2, backgroundColor: tone }} />
                 <Text style={[type.label, { color: tone }]}>{tier}</Text>
                 <Text style={{ fontFamily: font.numeralMedium, fontSize: 13, color: colors.ink3 }}>{names.length}</Text>
               </View>
@@ -137,7 +134,7 @@ function PeptideRow({
             <View
               style={{
                 backgroundColor: colors.redFaint,
-                borderWidth: 2,
+                borderWidth: 1,
                 borderColor: colors.red,
                 borderRadius: radii.sm,
                 padding: 10,

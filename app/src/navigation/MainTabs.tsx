@@ -33,7 +33,7 @@ export function MainTabs() {
         tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: colors.panel,
-          borderTopWidth: 2,
+          borderTopWidth: 1,
           borderTopColor: colors.hairline,
           height: 60 + insets.bottom,
           paddingTop: 6,

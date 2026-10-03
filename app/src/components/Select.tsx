@@ -73,7 +73,7 @@ export function Select({
           minHeight: 48,
           paddingHorizontal: 14,
           backgroundColor: colors.panel,
-          borderWidth: 2,
+          borderWidth: 1,
           borderColor: value ? colors.hairline2 : colors.hairline,
           borderRadius: radii.md,
           opacity: pressed ? 0.72 : 1,
@@ -106,9 +106,9 @@ export function Select({
           style={{
             maxHeight: "80%",
             backgroundColor: colors.panel,
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-            borderTopWidth: 2,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderTopWidth: 1,
             borderColor: colors.hairline2,
             paddingTop: 16,
             paddingBottom: 18,
@@ -135,7 +135,7 @@ export function Select({
                 autoCorrect={false}
                 style={{
                   backgroundColor: colors.panelRaised,
-                  borderWidth: 2,
+                  borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
                   paddingHorizontal: 13,
@@ -160,7 +160,7 @@ export function Select({
                 onSubmitEditing={commitCustom}
                 style={{
                   backgroundColor: colors.panelRaised,
-                  borderWidth: 2,
+                  borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
                   paddingHorizontal: 13,
@@ -256,7 +256,7 @@ export function Select({
                   minHeight: 50,
                   justifyContent: "center",
                   paddingHorizontal: 20,
-                  borderTopWidth: 2,
+                  borderTopWidth: 1,
                   borderTopColor: colors.hairline2,
                   opacity: pressed ? 0.72 : 1,
                 })}

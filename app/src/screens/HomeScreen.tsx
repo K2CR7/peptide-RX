@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DoseMeter } from "../components/DoseMeter";
-import { ChevronRight, MarkLogged, SparkIcon, ThemeIcon } from "../components/icons";
-import { useThemeToggle } from "../lib/themeToggle";
+import { CircularProgress } from "../components/CircularProgress";
+import { ChevronRight, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteLabel } from "../lib/injectionSites";
@@ -12,7 +11,7 @@ import { type CycleState, cycleState, describeCycle, describeRemaining } from ".
 import { computeAdherence } from "../lib/adherence";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
-import { BORDER, colors, font, panel, radii, type } from "../theme";
+import { colors, font, panel, radii, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -35,7 +34,6 @@ export function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
   const [askOpen, setAskOpen] = useState(false);
-  const toggleTheme = useThemeToggle();
 
   const today = todayDow();
 
@@ -151,23 +149,6 @@ export function HomeScreen() {
             <Text style={type.title}>{user?.name ? `Hey, ${user.name}` : "Tonight's readout"}</Text>
             <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
           </View>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-          <Pressable
-            onPress={toggleTheme}
-            accessibilityRole="button"
-            accessibilityLabel="Switch light or dark"
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderWidth: BORDER,
-              borderColor: colors.hairline,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <ThemeIcon size={20} color={colors.ink} />
-          </Pressable>
           <Pressable
             onPress={() => setAskOpen(true)}
             accessibilityRole="button"
@@ -176,7 +157,7 @@ export function HomeScreen() {
               width: 44,
               height: 44,
               borderRadius: radii.md,
-              borderWidth: 2,
+              borderWidth: 1,
               borderColor: colors.signalDim,
               backgroundColor: colors.signalFaint,
               alignItems: "center",
@@ -186,14 +167,23 @@ export function HomeScreen() {
           >
             <SparkIcon size={20} color={colors.signal} />
           </Pressable>
-          </View>
         </View>
 
-        <View style={[panel, { padding: 18, backgroundColor: allDone ? colors.signalFaint : colors.panel }]}>
-          <DoseMeter
-            total={dueToday.length}
-            done={doneCount}
-            label={allDone ? "protocol complete" : "doses logged"}
+        <View
+          style={[
+            panel,
+            {
+              padding: 26,
+              alignItems: "center",
+              backgroundColor: allDone ? colors.signalFaint : colors.panel,
+              borderColor: allDone ? colors.signalDim : colors.hairline,
+            },
+          ]}
+        >
+          <CircularProgress
+            progress={progress}
+            label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
+            sublabel={allDone ? "protocol complete" : "doses logged"}
           />
         </View>
 
@@ -240,7 +230,7 @@ export function HomeScreen() {
                       style={{
                         width: 24,
                         height: 24,
-                        borderRadius: 0,
+                        borderRadius: 12,
                         borderWidth: 2,
                         borderColor: colors.hairline2,
                       }}
@@ -287,8 +277,8 @@ export function HomeScreen() {
                         paddingVertical: 6,
                         paddingLeft: 10,
                         paddingRight: 7,
-                        borderRadius: 0,
-                        borderWidth: 2,
+                        borderRadius: 20,
+                        borderWidth: 1,
                         borderColor: colors.signalDim,
                         backgroundColor: colors.signalFaint,
                       }}
@@ -347,7 +337,7 @@ export function HomeScreen() {
                       style={{
                         flex: 1,
                         height: d.due === 0 ? 3 : 18,
-                        borderRadius: 0,
+                        borderRadius: 2,
                         backgroundColor: complete
                           ? colors.signal
                           : missed && !isToday
@@ -399,7 +389,7 @@ export function HomeScreen() {
                     <View
                       style={{
                         height: 4,
-                        borderRadius: 0,
+                        borderRadius: 2,
                         backgroundColor: colors.panelRaised,
                         marginTop: 9,
                         overflow: "hidden",
@@ -409,7 +399,7 @@ export function HomeScreen() {
                         style={{
                           width: `${Math.round(cycle.progress * 100)}%`,
                           height: "100%",
-                          borderRadius: 0,
+                          borderRadius: 2,
                           backgroundColor: tone,
                         }}
                       />
@@ -438,11 +428,11 @@ export function HomeScreen() {
               </Text>
 
               {rotation.recent.length > 0 && (
-                <View style={{ marginTop: 14, borderTopWidth: 2, borderTopColor: colors.hairline, paddingTop: 12, gap: 9 }}>
+                <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 9 }}>
                   {rotation.recent.map((log) => (
                     <View key={log.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 9, flex: 1 }}>
-                        <View style={{ width: 5, height: 5, borderRadius: 0, backgroundColor: colors.ink3 }} />
+                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.ink3 }} />
                         <Text style={[type.body, { fontSize: 13.5 }]}>{siteLabel(log.site)}</Text>
                       </View>
                       <Text style={[type.meta, { fontSize: 12 }]}>{relativeDay(log.takenAt)}</Text>

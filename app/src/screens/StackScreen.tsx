@@ -57,7 +57,7 @@ export function StackScreen() {
                 width: 44,
                 height: 44,
                 borderRadius: radii.md,
-                borderWidth: 2,
+                borderWidth: 1,
                 borderColor: colors.hairline2,
                 alignItems: "center",
                 justifyContent: "center",
@@ -174,7 +174,7 @@ function StackItemRow({
               style={{
                 width: 6,
                 height: 6,
-                borderRadius: 0,
+                borderRadius: 3,
                 backgroundColor: off ? colors.amber : colors.signal,
               }}
             />
@@ -201,7 +201,7 @@ function StackItemRow({
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 12,
-          borderWidth: 2,
+          borderWidth: 1,
           borderColor: colors.signalDim,
           backgroundColor: colors.signalFaint,
           borderRadius: radii.md,
@@ -399,9 +399,9 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
                 key={day}
                 onPress={() => toggleDay(day)}
                 style={{
-                  width: 38, height: 38, borderRadius: 0, alignItems: "center", justifyContent: "center",
+                  width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
                   backgroundColor: on ? colors.signal : colors.panel,
-                  borderWidth: 2,
+                  borderWidth: 1,
                   borderColor: on ? colors.signal : colors.hairline2,
                 }}
               >
@@ -450,7 +450,7 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
         placeholderTextColor={colors.ink3}
         style={{
           backgroundColor: colors.panel,
-          borderWidth: 2,
+          borderWidth: 1,
           borderColor: colors.hairline2,
           borderRadius: radii.md,
           paddingHorizontal: 14,
@@ -490,9 +490,9 @@ function StackItemSheet({ item, onClose }: { item: StackItem; onClose: () => voi
           <View
             style={{
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 0,
-              borderTopRightRadius: 0,
-              borderTopWidth: 2,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
               borderColor: colors.hairline2,
               paddingTop: 18,
               paddingHorizontal: 20,
@@ -534,7 +534,7 @@ function StackItemSheet({ item, onClose }: { item: StackItem; onClose: () => voi
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: radii.md,
-                borderWidth: 2,
+                borderWidth: 1,
                 borderColor: colors.red,
                 backgroundColor: confirming ? colors.red : colors.redFaint,
                 opacity: archive.isPending || pressed ? 0.7 : 1,

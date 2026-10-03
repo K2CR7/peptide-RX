@@ -221,7 +221,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
             placeholderTextColor={colors.ink3}
             style={{
               backgroundColor: colors.panel,
-              borderWidth: 2,
+              borderWidth: 1,
               borderColor: colors.hairline2,
               borderRadius: radii.md,
               padding: 13,
@@ -245,7 +245,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
                   width: 76,
                   height: 76,
                   borderRadius: radii.md,
-                  borderWidth: 2,
+                  borderWidth: 1,
                   borderColor: colors.hairline2,
                   backgroundColor: colors.panel,
                   alignItems: "center",
@@ -305,7 +305,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
         placeholderTextColor={colors.ink3}
         style={{
           backgroundColor: colors.panel,
-          borderWidth: 2,
+          borderWidth: 1,
           borderColor: colors.hairline2,
           borderRadius: radii.md,
           padding: 12,

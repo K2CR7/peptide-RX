@@ -11,16 +11,14 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { useAuthStore } from "./src/store/authStore";
-import { BORDER, colors, mode, setThemeMode, type ThemeMode } from "./src/theme";
-import { ThemeToggleContext } from "./src/lib/themeToggle";
-import { secureStorage } from "./src/lib/secureStorage";
+import { colors } from "./src/theme";
 
 const queryClient = new QueryClient();
 
@@ -61,23 +59,17 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   if (width < 520 || height < 700) return <>{children}</>;
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.bg === "#000000" ? "#2A2A2A" : "#C9C9C4",
-      }}
-    >
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
       <View
         style={{
           width: 430,
           height: "92vh" as unknown as number,
           maxHeight: 932,
-          borderRadius: 0,
+          borderRadius: 34,
           overflow: "hidden",
-          borderWidth: BORDER,
-          borderColor: colors.ink,
+          borderWidth: 1,
+          borderColor: "#1E242B",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
         }}
       >
         {children}
@@ -85,8 +77,6 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
     </View>
   );
 }
-
-const THEME_KEY = "peptiderx.themeMode";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -98,51 +88,19 @@ export default function App() {
     BarlowSemiCondensed_500Medium,
   });
 
-  const [themeMode, setMode] = useState<ThemeMode>(mode);
-  const [themeReady, setThemeReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    secureStorage
-      .getItem(THEME_KEY)
-      .then((stored) => {
-        if (cancelled) return;
-        const next: ThemeMode = stored === "light" ? "light" : "dark";
-        setThemeMode(next);
-        setMode(next);
-      })
-      .finally(() => {
-        if (!cancelled) setThemeReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Mutating the palette here (an event handler, never render) and then
-  // remounting via the key below is what makes every screen re-read it.
-  const toggleTheme = useCallback(() => {
-    const next: ThemeMode = themeMode === "dark" ? "light" : "dark";
-    setThemeMode(next);
-    setMode(next);
-    secureStorage.setItem(THEME_KEY, next).catch(() => {});
-  }, [themeMode]);
-
-  if (!fontsLoaded || !themeReady) {
+  if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   }
 
   return (
-    <ThemeToggleContext.Provider value={toggleTheme}>
-      <WebPhoneFrame key={themeMode}>
-        <QueryClientProvider client={queryClient}>
-          <SafeAreaProvider>
-            <NavigationContainer>
-              <AuthGate />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </QueryClientProvider>
-      </WebPhoneFrame>
-    </ThemeToggleContext.Provider>
+    <WebPhoneFrame>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <AuthGate />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </WebPhoneFrame>
   );
 }

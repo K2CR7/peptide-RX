@@ -67,9 +67,9 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
             style={{
               height: "74%",
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 0,
-              borderTopRightRadius: 0,
-              borderTopWidth: 2,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderTopWidth: 1,
               borderColor: colors.hairline2,
               paddingTop: 16,
               paddingBottom: 14,
@@ -82,7 +82,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 alignItems: "center",
                 paddingHorizontal: 20,
                 paddingBottom: 12,
-                borderBottomWidth: 2,
+                borderBottomWidth: 1,
                 borderBottomColor: colors.hairline,
               }}
             >
@@ -123,7 +123,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                         minHeight: 46,
                         justifyContent: "center",
                         paddingHorizontal: 14,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         borderColor: colors.hairline2,
                         borderRadius: radii.md,
                         opacity: pressed ? 0.72 : 1,
@@ -141,10 +141,10 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                     <View
                       style={{
                         backgroundColor: colors.signalFaint,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         borderColor: colors.signalDim,
                         borderRadius: radii.lg,
-                        borderBottomRightRadius: 0,
+                        borderBottomRightRadius: 4,
                         paddingVertical: 9,
                         paddingHorizontal: 13,
                       }}
@@ -178,7 +178,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                       style={{
                         width: 6,
                         height: 6,
-                        borderRadius: 0,
+                        borderRadius: 3,
                         backgroundColor: colors.ink3,
                         opacity: 1 - d * 0.28,
                       }}
@@ -196,7 +196,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 gap: 9,
                 paddingHorizontal: 20,
                 paddingTop: 12,
-                borderTopWidth: 2,
+                borderTopWidth: 1,
                 borderTopColor: colors.hairline,
               }}
             >
@@ -211,7 +211,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 style={{
                   flex: 1,
                   backgroundColor: colors.panelRaised,
-                  borderWidth: 2,
+                  borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
                   paddingHorizontal: 13,
