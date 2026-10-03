@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChipSelect } from "../components/ChipSelect";
+import { Select } from "../components/Select";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
@@ -248,27 +248,63 @@ function AddStackItemModal({ visible, onClose }: { visible: boolean; onClose: ()
       <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
         <Text style={[type.title, { marginBottom: 10 }]}>Add to your stack</Text>
 
-        <Text style={type.label}>Peptide</Text>
-        <ChipSelect
+        <Select
+          label="Peptide"
           options={Object.keys(PEPTIDE_REFERENCE)}
           value={peptideName}
           onChange={handlePeptideChange}
-          customPlaceholder="Enter peptide name"
+          placeholder="Choose a peptide"
+          customPlaceholder="Enter a peptide not listed"
+          describe={(name) => PEPTIDE_REFERENCE[name]?.aka}
         />
 
-        <Text style={[type.label, { marginTop: 10 }]}>Dose</Text>
-        <ChipSelect options={DOSE_OPTIONS} value={dose} onChange={setDose} customPlaceholder="Enter dose" keyboardType="decimal-pad" />
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+          <View style={{ flex: 1.4 }}>
+            <Select
+              label="Dose"
+              options={DOSE_OPTIONS}
+              value={dose}
+              onChange={setDose}
+              placeholder="Amount"
+              customPlaceholder="Enter a dose"
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Select
+              label="Unit"
+              options={UNIT_OPTIONS}
+              value={unit}
+              onChange={setUnit}
+              placeholder="Unit"
+              customPlaceholder="Enter a unit"
+            />
+          </View>
+        </View>
 
-        <Text style={[type.label, { marginTop: 10 }]}>Unit</Text>
-        <ChipSelect options={UNIT_OPTIONS} value={unit} onChange={setUnit} customPlaceholder="Enter unit" />
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Frequency"
+            options={FREQUENCY_OPTIONS}
+            value={frequency}
+            onChange={setFrequency}
+            placeholder="How often"
+            customPlaceholder="Enter a frequency"
+          />
+        </View>
 
-        <Text style={[type.label, { marginTop: 10 }]}>Frequency</Text>
-        <ChipSelect options={FREQUENCY_OPTIONS} value={frequency} onChange={setFrequency} customPlaceholder="Enter frequency" />
+        <View style={{ marginTop: 14 }}>
+          <Select
+            label="Route"
+            options={ROUTE_OPTIONS}
+            value={route}
+            onChange={setRoute}
+            placeholder="How it's taken"
+            customPlaceholder="Enter a route"
+          />
+        </View>
 
-        <Text style={[type.label, { marginTop: 10 }]}>Route</Text>
-        <ChipSelect options={ROUTE_OPTIONS} value={route} onChange={setRoute} customPlaceholder="Enter route" />
-
-        <Text style={[type.label, { marginTop: 10 }]}>Schedule days</Text>
+        <Text style={[type.label, { marginTop: 18 }]}>Schedule days</Text>
         <View style={{ flexDirection: "row", gap: 6 }}>
           {DAY_LABELS.map((label, i) => {
             const day = i + 1;
