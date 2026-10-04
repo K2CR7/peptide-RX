@@ -23,6 +23,12 @@ function serializeUser(user: {
   age: number | null;
   activityLevel: string | null;
   nutritionGoal: string | null;
+  onboardedAt: Date | null;
+  tourCompletedAt: Date | null;
+  goals: string[];
+  medications: string[];
+  usedPeptidesBefore: boolean | null;
+  priorExperienceNote: string | null;
 }) {
   return {
     id: user.id,
@@ -35,6 +41,12 @@ function serializeUser(user: {
     age: user.age,
     activityLevel: user.activityLevel,
     nutritionGoal: user.nutritionGoal,
+    onboardedAt: user.onboardedAt ? user.onboardedAt.toISOString() : null,
+    tourCompletedAt: user.tourCompletedAt ? user.tourCompletedAt.toISOString() : null,
+    goals: user.goals,
+    medications: user.medications,
+    usedPeptidesBefore: user.usedPeptidesBefore,
+    priorExperienceNote: user.priorExperienceNote,
   };
 }
 
@@ -53,6 +65,15 @@ const updateProfileSchema = z.object({
   age: z.number().int().positive().optional(),
   activityLevel: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"]).optional(),
   nutritionGoal: z.enum(["CUT", "MAINTAIN", "BULK"]).optional(),
+
+  // Onboarding. Dates come over as booleans — the client says "this is done"
+  // and the server stamps the time, so a client clock can't set it.
+  onboarded: z.boolean().optional(),
+  tourCompleted: z.boolean().optional(),
+  goals: z.array(z.string()).optional(),
+  medications: z.array(z.string()).optional(),
+  usedPeptidesBefore: z.boolean().optional(),
+  priorExperienceNote: z.string().optional(),
 });
 
 authRouter.patch("/me", requireAuth, async (req, res) => {
@@ -60,9 +81,26 @@ authRouter.patch("/me", requireAuth, async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
+  // The client reports completion as a boolean and the server stamps the
+  // time, so a wrong device clock can't write a bogus date — and re-sending
+  // `onboarded: true` can't quietly move the original timestamp.
+  const { onboarded, tourCompleted, ...rest } = parsed.data;
+  const existing = await prisma.user.findUnique({
+    where: { id: req.userId! },
+    select: { onboardedAt: true, tourCompletedAt: true },
+  });
+
   const user = await prisma.user.update({
     where: { id: req.userId! },
-    data: parsed.data,
+    data: {
+      ...rest,
+      ...(onboarded !== undefined
+        ? { onboardedAt: onboarded ? (existing?.onboardedAt ?? new Date()) : null }
+        : {}),
+      ...(tourCompleted !== undefined
+        ? { tourCompletedAt: tourCompleted ? (existing?.tourCompletedAt ?? new Date()) : null }
+        : {}),
+    },
   });
   res.json(serializeUser(user));
 });
@@ -111,7 +149,7 @@ authRouter.post("/signup", async (req, res) => {
 
   const tokens = await issueTokens(user.id);
   res.status(201).json({
-    user: { id: user.id, email: user.email, name: user.name },
+    user: serializeUser(user),
     ...tokens,
   });
 });
@@ -138,7 +176,7 @@ authRouter.post("/login", async (req, res) => {
   }
 
   const tokens = await issueTokens(user.id);
-  res.json({ user: { id: user.id, email: user.email, name: user.name }, ...tokens });
+  res.json({ user: serializeUser(user), ...tokens });
 });
 
 const refreshSchema = z.object({ refreshToken: z.string() });
@@ -180,4 +218,48 @@ authRouter.post("/logout", async (req, res) => {
     where: { tokenHash: hashToken(parsed.data.refreshToken) },
   });
   res.status(204).send();
+});
+
+/**
+ * Wipe the signed-in user's tracked data, keeping the account itself.
+ *
+ * Scoped deliberately: stack items, their injection logs, check-ins, their
+ * photos, and nutrition records. The account, password and profile answers
+ * survive, because this is "start the protocol over", not "delete me".
+ *
+ * `replayFirstRun` additionally clears the onboarding stamps so the survey and
+ * tour run again. It is separate from the wipe so either can be done alone —
+ * replaying the tutorial should not cost you your history.
+ */
+const resetSchema = z.object({
+  clearData: z.boolean().optional(),
+  replayFirstRun: z.boolean().optional(),
+});
+
+authRouter.post("/me/reset", requireAuth, async (req, res) => {
+  const parsed = resetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { clearData = false, replayFirstRun = false } = parsed.data;
+  const userId = req.userId!;
+
+  if (clearData) {
+    // InjectionLog cascades from StackItem, CheckinPhoto from Checkin, so the
+    // parents are enough. Done in one transaction: a half-cleared account is
+    // worse than either outcome.
+    await prisma.$transaction([
+      prisma.stackItem.deleteMany({ where: { userId } }),
+      prisma.checkin.deleteMany({ where: { userId } }),
+      prisma.nutritionLog.deleteMany({ where: { userId } }),
+      prisma.nutritionPlan.deleteMany({ where: { userId } }),
+    ]);
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: replayFirstRun ? { onboardedAt: null, tourCompletedAt: null } : {},
+  });
+
+  res.json(serializeUser(user));
 });

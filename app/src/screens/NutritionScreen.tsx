@@ -15,6 +15,7 @@ import {
 } from "../lib/nutrition";
 import { useAuthStore } from "../store/authStore";
 import { Button, Chip, ErrorText } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { Disclosure } from "../components/icons";
 import { colors, font, panel, radii, space, type } from "../theme";
 
@@ -161,20 +162,22 @@ function PlanView() {
         <Text style={[type.metaSm, { marginTop: 8 }]}>Resting burn {macros.bmr} kcal</Text>
       </View>
 
-      <Pressable
-        onPress={() => setBuilderOpen(true)}
-        style={({ pressed }) => ({
-          backgroundColor: colors.signal,
-          borderRadius: radii.md,
-          padding: 16,
-          alignItems: "center",
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-          Build a meal
-        </Text>
-      </Pressable>
+      <TourTarget id="fuel-builder">
+        <Pressable
+          onPress={() => setBuilderOpen(true)}
+          style={({ pressed }) => ({
+            backgroundColor: colors.signal,
+            borderRadius: radii.md,
+            padding: 16,
+            alignItems: "center",
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+            Build a meal
+          </Text>
+        </Pressable>
+      </TourTarget>
 
       <MealBuilderModal
         visible={builderOpen}

@@ -118,10 +118,19 @@ export function useNutritionPlans() {
   });
 }
 
+/**
+ * Completion is sent as a boolean, not a date — the server stamps the time,
+ * so a wrong device clock can't write a bogus one.
+ */
+export type ProfileUpdate = Partial<Omit<AuthUser, "id" | "email" | "onboardedAt" | "tourCompletedAt">> & {
+  onboarded?: boolean;
+  tourCompleted?: boolean;
+};
+
 export function useUpdateProfile() {
   const setUser = useAuthStore((s) => s.setUser);
   return useMutation({
-    mutationFn: (data: Partial<AuthUser>) => api.patch<AuthUser>("/auth/me", data),
+    mutationFn: (data: ProfileUpdate) => api.patch<AuthUser>("/auth/me", data),
     onSuccess: (user) => setUser(user),
   });
 }
@@ -181,5 +190,24 @@ export function useUpdateStackItem() {
     mutationFn: ({ id, ...data }: { id: string } & Partial<Omit<StackItem, "id" | "startedAt" | "archivedAt">>) =>
       api.patch<StackItem>(`/stack-items/${id}`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["stackItems"] }),
+  });
+}
+
+/**
+ * Start over. `clearData` wipes tracked records; `replayFirstRun` re-runs the
+ * survey and tour. Separate flags so replaying the tutorial doesn't cost you
+ * your history, and vice versa.
+ */
+export function useResetAccount() {
+  const qc = useQueryClient();
+  const setUser = useAuthStore((s) => s.setUser);
+  return useMutation({
+    mutationFn: (opts: { clearData?: boolean; replayFirstRun?: boolean }) =>
+      api.post<AuthUser>("/auth/me/reset", opts),
+    onSuccess: (user) => {
+      setUser(user);
+      // Every list on screen is now stale.
+      qc.invalidateQueries();
+    },
   });
 }
