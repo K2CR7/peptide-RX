@@ -192,3 +192,22 @@ export function useUpdateStackItem() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["stackItems"] }),
   });
 }
+
+/**
+ * Start over. `clearData` wipes tracked records; `replayFirstRun` re-runs the
+ * survey and tour. Separate flags so replaying the tutorial doesn't cost you
+ * your history, and vice versa.
+ */
+export function useResetAccount() {
+  const qc = useQueryClient();
+  const setUser = useAuthStore((s) => s.setUser);
+  return useMutation({
+    mutationFn: (opts: { clearData?: boolean; replayFirstRun?: boolean }) =>
+      api.post<AuthUser>("/auth/me/reset", opts),
+    onSuccess: (user) => {
+      setUser(user);
+      // Every list on screen is now stale.
+      qc.invalidateQueries();
+    },
+  });
+}

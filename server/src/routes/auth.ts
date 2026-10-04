@@ -219,3 +219,47 @@ authRouter.post("/logout", async (req, res) => {
   });
   res.status(204).send();
 });
+
+/**
+ * Wipe the signed-in user's tracked data, keeping the account itself.
+ *
+ * Scoped deliberately: stack items, their injection logs, check-ins, their
+ * photos, and nutrition records. The account, password and profile answers
+ * survive, because this is "start the protocol over", not "delete me".
+ *
+ * `replayFirstRun` additionally clears the onboarding stamps so the survey and
+ * tour run again. It is separate from the wipe so either can be done alone —
+ * replaying the tutorial should not cost you your history.
+ */
+const resetSchema = z.object({
+  clearData: z.boolean().optional(),
+  replayFirstRun: z.boolean().optional(),
+});
+
+authRouter.post("/me/reset", requireAuth, async (req, res) => {
+  const parsed = resetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { clearData = false, replayFirstRun = false } = parsed.data;
+  const userId = req.userId!;
+
+  if (clearData) {
+    // InjectionLog cascades from StackItem, CheckinPhoto from Checkin, so the
+    // parents are enough. Done in one transaction: a half-cleared account is
+    // worse than either outcome.
+    await prisma.$transaction([
+      prisma.stackItem.deleteMany({ where: { userId } }),
+      prisma.checkin.deleteMany({ where: { userId } }),
+      prisma.nutritionLog.deleteMany({ where: { userId } }),
+      prisma.nutritionPlan.deleteMany({ where: { userId } }),
+    ]);
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: replayFirstRun ? { onboardedAt: null, tourCompletedAt: null } : {},
+  });
+
+  res.json(serializeUser(user));
+});
