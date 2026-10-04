@@ -26,9 +26,13 @@ async function request<T>(
   const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
 
   if (res.status === 401 && auth && retry) {
-    const refreshed = await useAuthStore.getState().refresh();
-    if (refreshed) return request<T>(path, options, { auth, retry: false });
-    useAuthStore.getState().signOut();
+    const outcome = await useAuthStore.getState().refresh();
+    if (outcome === "ok") return request<T>(path, options, { auth, retry: false });
+    // Only sign out when the server actually refused the refresh token.
+    // "unreachable" means we never got an answer — the session may well be
+    // fine, and throwing a logout at a dropped connection is what made this
+    // app log people out on every backend restart.
+    if (outcome === "rejected") useAuthStore.getState().signOut();
   }
 
   if (!res.ok) {
