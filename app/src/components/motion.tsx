@@ -6,20 +6,20 @@ every transition feels like the same hand. Exponential ease-out: things leave
 quickly and settle slowly, which reads as an instrument responding rather
 than an animation playing.
 
-Deliberately restrained. The surface is a medical readout, so motion exists
-to show continuity between steps — not to perform.
+Built on React Native's own Animated rather than Reanimated, deliberately.
+
+Reanimated 4 needs react-native-worklets/plugin, and Metro only picks that up
+after a cache clear — so any environment where the plugin hadn't been applied
+rendered the entire first-run flow at opacity 0. The content was all there in
+the DOM and completely invisible. That is the real lesson here and it outlives
+the plugin problem: never make whether a thing can be SEEN depend on whether
+an animation RAN. Built-in Animated needs no build step, so the failure mode
+is gone rather than papered over, and these are fades and short slides, which
+it drives perfectly well on the native thread.
 */
 import type { ReactNode } from "react";
-import { useEffect } from "react";
-import Animated, {
-  Easing,
-  FadeIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
-import type { ViewStyle } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, type ViewStyle } from "react-native";
 
 /** Exponential ease-out. Real objects decelerate; they don't bounce. */
 export const EASE = Easing.bezier(0.16, 1, 0.3, 1);
@@ -50,23 +50,45 @@ export function Rise({
   duration?: number;
   style?: ViewStyle;
 }) {
-  const progress = useSharedValue(0);
+  const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    progress.value = withDelay(delay, withTiming(1, { duration, easing: EASE }));
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration,
+      delay,
+      easing: EASE,
+      useNativeDriver: true,
+    });
+    anim.start();
+    // If this unmounts mid-flight, land on the visible end state rather than
+    // leaving a half-faded ghost behind.
+    return () => {
+      anim.stop();
+      progress.setValue(1);
+    };
   }, [delay, duration, progress]);
 
-  // Explicit deps: without the Babel plugin (which Metro only picks up after a
-  // cache clear) Reanimated refuses to infer them on web.
-  const animated = useAnimatedStyle(
-    () => ({
-      opacity: progress.value,
-      transform: [{ translateY: (1 - progress.value) * distance }],
-    }),
-    [distance],
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: progress,
+          transform: [
+            {
+              translateY: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [distance, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
   );
-
-  return <Animated.View style={[style, animated]}>{children}</Animated.View>;
 }
 
 /** A plain cross-fade, for swapping content in place. */
@@ -81,23 +103,47 @@ export function Fade({
   duration?: number;
   style?: ViewStyle;
 }) {
-  return (
-    <Animated.View style={style} entering={FadeIn.delay(delay).duration(duration).easing(EASE)}>
-      {children}
-    </Animated.View>
-  );
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.timing(opacity, {
+      toValue: 1,
+      duration,
+      delay,
+      easing: EASE,
+      useNativeDriver: true,
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      opacity.setValue(1);
+    };
+  }, [delay, duration, opacity]);
+
+  return <Animated.View style={[style, { opacity }]}>{children}</Animated.View>;
 }
 
 /**
- * Drives a 0→1 value once on mount. For animating something that isn't a
+ * Drives a 0→1 value once on mount, for animating something that isn't a
  * whole subtree — a progress rail, a dimming scrim.
  */
 export function useEntrance(duration: number = DUR.step, delay = 0) {
-  const progress = useSharedValue(0);
+  const progress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    progress.value = withDelay(delay, withTiming(1, { duration, easing: EASE }));
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration,
+      delay,
+      easing: EASE,
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      progress.setValue(1);
+    };
   }, [delay, duration, progress]);
   return progress;
 }
 
-export { Animated, withTiming, useSharedValue, useAnimatedStyle };
+export { Animated };

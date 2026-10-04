@@ -16,8 +16,7 @@ import { MEDICATION_OPTIONS } from "../data/medications";
 import { INTERACTION_DISCLAIMER } from "../data/peptideInteractions";
 import { useUpdateProfile } from "../lib/queries";
 import { Button, ErrorText } from "../components/primitives";
-import { Rise, useEntrance } from "../components/motion";
-import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { Animated, Rise, useEntrance } from "../components/motion";
 import { CheckMark } from "../components/icons";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
@@ -318,13 +317,10 @@ function SelectRow({
 
 /** A hairline that fills as you move through the survey. */
 function ProgressRail({ step, total, topInset }: { step: number; total: number; topInset: number }) {
+  // Width can't ride the native driver, so this one interpolates on the JS
+  // thread — it's a 2px rule, not something anyone will see drop a frame.
   const progress = useEntrance(400);
-  const fill = useAnimatedStyle(
-    () => ({
-      width: withTiming(`${((step + 1) / total) * 100 * progress.value}%`, { duration: 420 }),
-    }),
-    [step, total],
-  );
+  const pct = ((step + 1) / total) * 100;
 
   return (
     <View
@@ -336,7 +332,14 @@ function ProgressRail({ step, total, topInset }: { step: number; total: number; 
       }}
     >
       <View style={{ height: 2, borderRadius: 1, backgroundColor: colors.hairline2, overflow: "hidden" }}>
-        <Animated.View style={[{ height: 2, borderRadius: 1, backgroundColor: colors.signal }, fill]} />
+        <Animated.View
+          style={{
+            height: 2,
+            borderRadius: 1,
+            backgroundColor: colors.signal,
+            width: progress.interpolate({ inputRange: [0, 1], outputRange: ["0%", `${pct}%`] }),
+          }}
+        />
       </View>
       <Text style={[type.metaSm, { marginTop: space.sm }]}>
         Step {step + 1} of {total}

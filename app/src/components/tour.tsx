@@ -20,10 +20,9 @@ import {
   type ReactNode,
 } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "./primitives";
-import { EASE, DUR } from "./motion";
+import { DUR, Fade } from "./motion";
 import { colors, radii, space, type } from "../theme";
 
 export interface TourStop {
@@ -208,9 +207,7 @@ function TourOverlay({
   const scrim = "rgba(6,8,10,0.86)";
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(DUR.step).easing(EASE)}
-      exiting={FadeOut.duration(DUR.quick)}
+    <View
       style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       pointerEvents="box-none"
     >
@@ -253,9 +250,9 @@ function TourOverlay({
             : { bottom: height - (hole?.y ?? 0) + space.xl }),
         }}
       >
-        <Animated.View
+        <Fade
           key={stop.id}
-          entering={FadeIn.duration(DUR.step).easing(EASE)}
+          duration={DUR.step}
           style={{
             backgroundColor: colors.panel,
             borderWidth: 1,
@@ -289,11 +286,11 @@ function TourOverlay({
           />
 
           <Button label="Skip tour" variant="quiet" size="sm" onPress={onSkip} />
-        </Animated.View>
+        </Fade>
       </View>
 
       {/* Keep the caption clear of the home indicator. */}
       <View pointerEvents="none" style={{ height: insets.bottom }} />
-    </Animated.View>
+    </View>
   );
 }
