@@ -89,9 +89,9 @@ export function BodyDiagram({
       <Text
         style={{
           fontFamily: font.medium,
-          fontSize: 11.5,
+          fontSize: 11,
           color: colors.ink3,
-          marginTop: 6,
+          marginTop: 8,
           letterSpacing: 0.2,
         }}
       >

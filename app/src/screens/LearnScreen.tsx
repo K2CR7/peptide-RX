@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
-import { colors, font, panel, radii, type } from "../theme";
+import { BulletMark, Disclosure } from "../components/icons";
+import { colors, font, panel, radii, type, space } from "../theme";
 
 // Evidence strength is a four-step ramp, not a set of categories: one hue
 // carries "supported", one carries "thin", one carries "speculative". Trace
@@ -41,11 +42,11 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 40, gap: 22 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 40, gap: 24 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={type.title}>Reference</Text>
-            <Text style={[type.body, { fontSize: 13, marginTop: 4 }]}>
+            <Text style={[type.bodySm, { marginTop: 4 }]}>
               Grouped by how strong the evidence is. Information only — not a recommendation to take anything.
             </Text>
           </View>
@@ -62,7 +63,7 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 14 }}>Done</Text>
+              <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 15 }}>Done</Text>
             </Pressable>
           )}
         </View>
@@ -70,13 +71,13 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
         {groups.map(({ tier, names }) => {
           const tone = TIER_TONE[tier] ?? colors.ink3;
           return (
-            <View key={tier} style={{ gap: 9 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
+            <View key={tier} style={{ gap: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <View style={{ width: 3, height: 15, borderRadius: 2, backgroundColor: tone }} />
                 <Text style={[type.label, { color: tone }]}>{tier}</Text>
                 <Text style={{ fontFamily: font.numeralMedium, fontSize: 13, color: colors.ink3 }}>{names.length}</Text>
               </View>
-              <Text style={[type.meta, { fontSize: 12, marginTop: -3, marginLeft: 12 }]}>{GROUP_NOTE[tier]}</Text>
+              <Text style={[type.meta, { marginTop: -3, marginLeft: 12 }]}>{GROUP_NOTE[tier]}</Text>
 
               <View style={[panel, { overflow: "hidden" }]}>
                 {names.map((name, i) => (
@@ -120,46 +121,51 @@ function PeptideRow({
         })}
       >
         <View style={{ flex: 1 }}>
-          <Text style={[type.heading, { fontSize: 15.5 }]}>{name}</Text>
+          <Text style={type.headingSm}>{name}</Text>
           <Text style={[type.meta, { marginTop: 2 }]}>{p.aka}</Text>
         </View>
-        <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink3, lineHeight: 22 }}>
-          {expanded ? "–" : "+"}
-        </Text>
+        <Disclosure size={16} color={colors.ink3} open={expanded} />
       </Pressable>
 
       {expanded && (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+        <View style={{ paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.md }}>
+          {/* A filled, bordered box inside the panel was a card in a card. The
+              warning earns its emphasis from the red rule and red text, not
+              from a second container. */}
           {p.evidenceTier?.fdaFlag && (
-            <View
-              style={{
-                backgroundColor: colors.redFaint,
-                borderWidth: 1,
-                borderColor: colors.red,
-                borderRadius: radii.sm,
-                padding: 10,
-              }}
-            >
-              <Text style={{ fontFamily: font.semibold, color: colors.red, fontSize: 12, lineHeight: 17 }}>
+            <View style={{ flexDirection: "row", gap: space.md }}>
+              <View style={{ width: 2, borderRadius: 1, backgroundColor: colors.red }} />
+              <Text style={[type.bodySm, { flex: 1, fontFamily: font.semibold, color: colors.red }]}>
                 {p.evidenceTier.fdaNote}
               </Text>
             </View>
           )}
           <Text style={type.body}>{p.description}</Text>
-          <View>
+          <View style={{ gap: space.xs }}>
             <Text style={[type.label, { color: tone }]}>Reported upsides</Text>
-            {p.upsides.map((u, i) => (
-              <Text key={i} style={[type.body, { fontSize: 13.5, marginTop: 4 }]}>· {u}</Text>
-            ))}
+            {p.upsides.map((u, i) => <BulletLine key={i} text={u} />)}
           </View>
-          <View>
+          <View style={{ gap: space.xs }}>
             <Text style={[type.label, { color: colors.red }]}>Known risks</Text>
-            {p.risks.map((r, i) => (
-              <Text key={i} style={[type.body, { fontSize: 13.5, marginTop: 4 }]}>· {r}</Text>
-            ))}
+            {p.risks.map((r, i) => <BulletLine key={i} text={r} />)}
           </View>
         </View>
       )}
+    </View>
+  );
+}
+
+/**
+ * A list line. The marker was the character "·" prefixed into the string,
+ * which gave no hanging indent — wrapped lines ran back under the bullet.
+ */
+function BulletLine({ text }: { text: string }) {
+  return (
+    <View style={{ flexDirection: "row", gap: space.sm, alignItems: "flex-start" }}>
+      <View style={{ paddingTop: 8 }}>
+        <BulletMark size={5} color={colors.ink3} />
+      </View>
+      <Text style={[type.bodySm, { flex: 1 }]}>{text}</Text>
     </View>
   );
 }

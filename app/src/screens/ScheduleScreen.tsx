@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MarkDue, MarkLogged, MarkMissed, MarkScheduled } from "../components/icons";
 import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
 import { useInjectionLogs, useStackItems } from "../lib/queries";
-import { colors, font, panel, type } from "../theme";
+import { AsyncBlock, Panel } from "../components/primitives";
+import { colors, font, panel, type, space } from "../theme";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 const DAY_MS = 24 * 3600 * 1000;
@@ -25,7 +26,7 @@ function StateMark({ state }: { state: CellState }) {
 
 export function ScheduleScreen() {
   const insets = useSafeAreaInsets();
-  const { data: items } = useStackItems();
+  const { data: items, isLoading, isError, refetch } = useStackItems();
   const { data: allLogs } = useInjectionLogs();
   const dates = weekDates();
   const today = todayDow();
@@ -89,15 +90,25 @@ export function ScheduleScreen() {
     >
       <Text style={type.title}>This week</Text>
       <Text style={[type.meta, { marginTop: 4 }]}>
-        <Text style={{ fontFamily: font.numeralMedium, fontSize: 14, color: colors.ink }}>
+        <Text style={{ fontFamily: font.numeralMedium, fontSize: 15, color: colors.ink }}>
           {totals.logged}/{totals.owed}
         </Text>
         {"  logged so far"}
       </Text>
 
-      {rows.length === 0 ? (
-        <View style={[panel, { padding: 18, marginTop: 16 }]}>
-          <Text style={type.body}>Nothing scheduled yet. Add items to your stack to build a week.</Text>
+      {isLoading || isError || rows.length === 0 ? (
+        <View style={{ marginTop: space.lg }}>
+          <Panel pad={space.lg}>
+            <AsyncBlock
+              loading={isLoading}
+              error={isError}
+              isEmpty={rows.length === 0}
+              emptyText="Nothing scheduled yet. Add items to your stack to build a week."
+              onRetry={refetch}
+            >
+              <View />
+            </AsyncBlock>
+          </Panel>
         </View>
       ) : (
         <View style={[panel, { marginTop: 16, paddingVertical: 4, overflow: "hidden" }]}>
@@ -111,7 +122,7 @@ export function ScheduleScreen() {
                   <Text
                     style={{
                       fontFamily: font.semibold,
-                      fontSize: 10.5,
+                      fontSize: 11,
                       letterSpacing: 0.8,
                       color: isToday ? colors.signal : colors.ink3,
                     }}
@@ -121,7 +132,7 @@ export function ScheduleScreen() {
                   <Text
                     style={{
                       fontFamily: font.numeralMedium,
-                      fontSize: 14,
+                      fontSize: 15,
                       color: isToday ? colors.ink : colors.ink3,
                       marginTop: 1,
                     }}
@@ -156,11 +167,11 @@ export function ScheduleScreen() {
                 borderTopColor: colors.hairline,
               }}
             >
-              <View style={{ width: NAME_COL, paddingRight: 8, paddingLeft: 14 }}>
-                <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.ink }} numberOfLines={1}>
+              <View style={{ width: NAME_COL, paddingRight: 8, paddingLeft: 16 }}>
+                <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.ink }} numberOfLines={1}>
                   {item.peptideName}
                 </Text>
-                <Text style={{ fontFamily: font.numeralMedium, fontSize: 11.5, color: colors.ink3, marginTop: 1 }}>
+                <Text style={{ fontFamily: font.numeralMedium, fontSize: 11, color: colors.ink3, marginTop: 1 }}>
                   {item.dose} {item.unit}
                 </Text>
               </View>
@@ -193,11 +204,11 @@ export function ScheduleScreen() {
               alignItems: "center",
               borderTopWidth: 1,
               borderTopColor: colors.hairline2,
-              paddingVertical: 9,
+              paddingVertical: 8,
             }}
           >
-            <View style={{ width: NAME_COL, paddingLeft: 14 }}>
-              <Text style={[type.label, { fontSize: 9.5, letterSpacing: 1 }]}>Logged</Text>
+            <View style={{ width: NAME_COL, paddingLeft: 16 }}>
+              <Text style={[type.label, { letterSpacing: 1 }]}>Logged</Text>
             </View>
             {perDay.map((d, i) => {
               const isToday = i + 1 === today;
@@ -215,7 +226,7 @@ export function ScheduleScreen() {
                   <Text
                     style={{
                       fontFamily: font.numeralMedium,
-                      fontSize: 12.5,
+                      fontSize: 13,
                       color: d.due === 0 ? colors.ink3 : complete ? colors.signal : colors.ink2,
                     }}
                   >
@@ -228,7 +239,7 @@ export function ScheduleScreen() {
         </View>
       )}
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 13, rowGap: 8, marginTop: 14, paddingHorizontal: 2 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 8, marginTop: 16, paddingHorizontal: 2 }}>
         <LegendItem state="logged" label="Logged" />
         <LegendItem state="due" label="Due today" />
         <LegendItem state="missed" label="Not logged" />
@@ -241,9 +252,9 @@ export function ScheduleScreen() {
 
 function LegendItem({ state, label }: { state: CellState; label: string }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <StateMark state={state} />
-      <Text style={[type.meta, { fontSize: 12 }]}>{label}</Text>
+      <Text style={type.meta}>{label}</Text>
     </View>
   );
 }

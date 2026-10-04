@@ -8,7 +8,8 @@ import { PlusMark } from "../components/icons";
 import { WeightChart } from "../components/WeightChart";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { type Checkin, useCheckinUploadUrl, useCheckins, useCreateCheckin, useDeleteCheckin } from "../lib/queries";
-import { colors, font, panel, radii, type } from "../theme";
+import { AsyncBlock, ErrorText, SectionLabel } from "../components/primitives";
+import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const LB_PER_KG = 2.20462;
 const ANGLES = ["front", "side", "back"] as const;
@@ -16,7 +17,7 @@ type Angle = (typeof ANGLES)[number];
 
 export function CheckinScreen() {
   const insets = useSafeAreaInsets();
-  const { data: checkins, isLoading } = useCheckins();
+  const { data: checkins, isLoading, isError, refetch } = useCheckins();
   const [addOpen, setAddOpen] = useState(false);
 
   return (
@@ -31,7 +32,7 @@ export function CheckinScreen() {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              gap: 6,
+              gap: 8,
               minHeight: 44,
               backgroundColor: colors.signal,
               borderRadius: radii.md,
@@ -40,23 +41,30 @@ export function CheckinScreen() {
             })}
           >
             <PlusMark size={13} color={colors.onSignal} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13.5, color: colors.onSignal, letterSpacing: 0.3 }}>
+            <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.onSignal, letterSpacing: 0.3 }}>
               Check in
             </Text>
           </Pressable>
         </View>
 
-        <WeightChart checkins={checkins ?? []} />
+        {/* Held back until the data lands — the chart's own empty copy
+            ("log a couple check-ins") was otherwise shown during loading to
+            someone who already had months of them. */}
+        {!isLoading && !isError && <WeightChart checkins={checkins ?? []} />}
 
-        <View style={{ gap: 10 }}>
-          <Text style={type.label}>History</Text>
-          {isLoading && <Text style={type.body}>Loading…</Text>}
-          {!isLoading && checkins?.length === 0 && (
-            <View style={[panel, { padding: 18 }]}>
-              <Text style={type.body}>No check-ins yet. Log your first one above.</Text>
+        <View style={{ gap: space.md }}>
+          <SectionLabel>History</SectionLabel>
+          <AsyncBlock
+            loading={isLoading}
+            error={isError}
+            isEmpty={checkins?.length === 0}
+            emptyText="No check-ins yet. Log your first one above."
+            onRetry={refetch}
+          >
+            <View style={{ gap: space.md }}>
+              {checkins?.map((c) => <CheckinCard key={c.id} checkin={c} />)}
             </View>
-          )}
-          {checkins?.map((c) => <CheckinCard key={c.id} checkin={c} />)}
+          </AsyncBlock>
         </View>
       </ScrollView>
 
@@ -67,42 +75,71 @@ export function CheckinScreen() {
 
 function CheckinCard({ checkin }: { checkin: Checkin }) {
   const deleteCheckin = useDeleteCheckin();
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const weightLb = checkin.weightKg != null ? Math.round(checkin.weightKg * LB_PER_KG) : null;
+
+  // Was a single unconfirmed tap that discarded a check-in and its photos
+  // with no undo, no pending state and no error path. Two taps now, and a
+  // failure says so instead of looking like nothing happened.
+  function handleDelete() {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setError(null);
+    deleteCheckin.mutate(checkin.id, {
+      onError: () => {
+        setError("Couldn't delete that check-in — try again.");
+        setConfirming(false);
+      },
+    });
+  }
 
   return (
     <View style={[panel, { borderRadius: radii.lg, padding: 16 }]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View>
-          <Text style={[type.heading, { fontSize: 15 }]}>
+          <Text style={type.headingSm}>
             {new Date(checkin.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
           </Text>
-          <View style={{ flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <View style={{ flexDirection: "row", gap: space.lg, marginTop: space.sm, flexWrap: "wrap" }}>
             {weightLb != null && <Stat label="weight" value={`${weightLb} lb`} />}
             {checkin.energy != null && <Stat label="energy" value={`${checkin.energy}/10`} />}
             {checkin.mood != null && <Stat label="mood" value={`${checkin.mood}/10`} />}
           </View>
         </View>
         <Pressable
-          onPress={() => deleteCheckin.mutate(checkin.id)}
+          onPress={handleDelete}
+          disabled={deleteCheckin.isPending}
           accessibilityRole="button"
-          accessibilityLabel="Delete this check-in"
+          accessibilityLabel={confirming ? "Confirm delete this check-in" : "Delete this check-in"}
           style={({ pressed }) => ({
             minWidth: 56,
-            minHeight: 44,
+            minHeight: HIT,
             marginTop: -8,
             marginRight: -6,
             alignItems: "flex-end",
             justifyContent: "center",
-            paddingHorizontal: 6,
+            paddingHorizontal: space.sm,
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>Delete</Text>
+          <Text
+            style={[
+              type.meta,
+              { color: colors.red, fontFamily: confirming ? font.bold : font.medium },
+            ]}
+          >
+            {deleteCheckin.isPending ? "Deleting…" : confirming ? "Tap to confirm" : "Delete"}
+          </Text>
         </Pressable>
       </View>
-      {checkin.notes && <Text style={[type.body, { marginTop: 10 }]}>{checkin.notes}</Text>}
+
+      <ErrorText style={{ marginTop: space.sm }}>{error}</ErrorText>
+      {checkin.notes && <Text style={[type.body, { marginTop: 12 }]}>{checkin.notes}</Text>}
       {checkin.photos.length > 0 && (
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
           {checkin.photos.map((p) => (
             <Image
               key={p.id}
@@ -116,19 +153,16 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
   );
 }
 
+/**
+ * Was a filled, rounded chip sitting inside the card — a box in a box, where
+ * the inner boundary carried no information the spacing didn't already give.
+ * A hairline divider separates the readings instead.
+ */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View
-      style={{
-        backgroundColor: colors.panelRaised,
-        borderRadius: radii.sm,
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-      }}
-    >
-      <Text style={{ fontFamily: font.numeralMedium, fontSize: 13.5, color: colors.ink }}>
-        {value} <Text style={{ fontFamily: font.medium, fontSize: 11.5, color: colors.ink3 }}>{label}</Text>
-      </Text>
+    <View style={{ flexDirection: "row", alignItems: "baseline", gap: space.xs }}>
+      <Text style={[type.statSm, { fontSize: 15 }]}>{value}</Text>
+      <Text style={type.metaSm}>{label}</Text>
     </View>
   );
 }
@@ -224,7 +258,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
               borderWidth: 1,
               borderColor: colors.hairline2,
               borderRadius: radii.md,
-              padding: 13,
+              padding: 12,
               fontFamily: font.regular,
               fontSize: 15,
               color: colors.ink,
@@ -236,7 +270,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
 
         <View>
           <Text style={[type.label, { marginBottom: 8 }]}>Progress photos (optional)</Text>
-          <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: 12 }}>
             {ANGLES.map((angle) => (
               <Pressable
                 key={angle}
@@ -275,7 +309,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
           style={({ pressed }) => ({
             backgroundColor: colors.signal,
             borderRadius: radii.md,
-            padding: 15,
+            padding: 16,
             alignItems: "center",
             marginTop: 8,
             opacity: createCheckin.isPending || pressed ? 0.7 : 1,
@@ -286,7 +320,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
           </Text>
         </Pressable>
         <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
-          <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
+          <Text style={[type.meta, { fontSize: 15 }]}>Cancel</Text>
         </Pressable>
       </ScrollView>
       </PhoneModalFrame>
@@ -323,9 +357,9 @@ function SliderField({ label, value, onChange }: { label: string; value: number;
     <View>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
         <Text style={type.label}>{label}</Text>
-        <Text style={{ fontFamily: font.numeralMedium, fontSize: 16, color: colors.ink }}>
+        <Text style={{ fontFamily: font.numeralMedium, fontSize: 17, color: colors.ink }}>
           {value}
-          <Text style={{ fontSize: 12, color: colors.ink3 }}>/10</Text>
+          <Text style={{ fontSize: 13, color: colors.ink3 }}>/10</Text>
         </Text>
       </View>
       <Slider

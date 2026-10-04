@@ -246,3 +246,41 @@ export function ChevronRight({ size = 16, color }: IconProps) {
     </Svg>
   );
 }
+
+/**
+ * Disclosure, swap and bullet were text characters until now — "+"/"–", "⇅"
+ * and "·" set in a Text node. A Unicode glyph standing in for an icon doesn't
+ * share the system's stroke weight, doesn't align optically with the drawn
+ * set, and shifts with the font. Drawn here at the same 1.75 stroke as
+ * everything else.
+ */
+export function Disclosure({ size = 16, color, open = false }: IconProps & { open?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1={5} y1={12} x2={19} y2={12} stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+      {!open && (
+        <Line x1={12} y1={5} x2={12} y2={19} stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+      )}
+    </Svg>
+  );
+}
+
+export function SwapMark({ size = 14, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1={8} y1={4} x2={8} y2={20} stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+      <Polyline points="4,8 8,4 12,8" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1={16} y1={20} x2={16} y2={4} stroke={color} strokeWidth={STROKE} strokeLinecap="round" />
+      <Polyline points="12,16 16,20 20,16" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+/** List marker. Sized to sit on a 13px line without optical drift. */
+export function BulletMark({ size = 5, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 6 6" fill="none">
+      <Circle cx={3} cy={3} r={2.2} fill={color} />
+    </Svg>
+  );
+}

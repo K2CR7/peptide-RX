@@ -36,7 +36,7 @@ export function MainTabs() {
           borderTopWidth: 1,
           borderTopColor: colors.hairline,
           height: 60 + insets.bottom,
-          paddingTop: 6,
+          paddingTop: 8,
           paddingBottom: insets.bottom > 0 ? insets.bottom : 6,
         },
         tabBarLabelStyle: {

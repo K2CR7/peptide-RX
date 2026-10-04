@@ -67,12 +67,36 @@ export const font = {
   numeralMedium: "BarlowSemiCondensed_500Medium",
 } as const;
 
+/*
+TYPE RAMP — 11 / 13 / 15 / 17 / 20 / 24 / 32 / 38 / 52.
+
+Nine steps with real jumps between them, because this is an Operate surface:
+scanability and a stable role scale beat expressive range. Every role below
+resolves to one of those nine sizes — no half-points, no per-screen nudging.
+Roles are named for the job they do, so a screen asks for `type.statLg` rather
+than re-deciding what 38px means.
+
+Light text on a near-black ground needs a touch more line height and tracking
+than the same face would on white; that compensation lives here, once.
+*/
 export const type = {
-  display: { fontFamily: font.numeral, fontSize: 56, color: colors.ink, letterSpacing: -0.5 },
-  displaySm: { fontFamily: font.numeral, fontSize: 40, color: colors.ink, letterSpacing: -0.5 },
+  // Instrument readouts. The numerals ARE the product on this surface —
+  // density is the point, not a pattern to be designed away.
+  display: { fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -0.5 },
+  statLg: { fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 },
+  statMd: { fontFamily: font.numeral, fontSize: 32, color: colors.ink, letterSpacing: -0.5 },
+  statSm: { fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 },
+
+  // Voice
   title: { fontFamily: font.bold, fontSize: 24, color: colors.ink, letterSpacing: 0.2 },
   heading: { fontFamily: font.semibold, fontSize: 17, color: colors.ink, letterSpacing: 0.2 },
-  body: { fontFamily: font.regular, fontSize: 14.5, color: colors.ink2, lineHeight: 21 },
+  headingSm: { fontFamily: font.semibold, fontSize: 15, color: colors.ink, letterSpacing: 0.2 },
+
+  // Reading
+  body: { fontFamily: font.regular, fontSize: 15, color: colors.ink2, lineHeight: 22 },
+  bodySm: { fontFamily: font.regular, fontSize: 13, color: colors.ink2, lineHeight: 19 },
+
+  // Supporting
   label: {
     fontFamily: font.semibold,
     fontSize: 11,
@@ -81,6 +105,14 @@ export const type = {
     letterSpacing: 1.4,
   },
   meta: { fontFamily: font.medium, fontSize: 13, color: colors.ink3, letterSpacing: 0.2 },
+  metaSm: { fontFamily: font.medium, fontSize: 11, color: colors.ink3, letterSpacing: 0.2 },
+
+  // Controls
+  button: { fontFamily: font.bold, fontSize: 15, letterSpacing: 0.3, color: colors.ink },
+  buttonSm: { fontFamily: font.bold, fontSize: 13, letterSpacing: 0.3, color: colors.ink },
+
+  // One error voice, so a failure reads the same everywhere it can happen.
+  error: { fontFamily: font.medium, fontSize: 13, color: colors.red, lineHeight: 19 },
 } as const;
 
 export const radii = {
@@ -90,7 +122,29 @@ export const radii = {
   xl: 20,
 } as const;
 
+/*
+SPACING — a 4pt grid, used through `space` rather than typed per call site.
+
+The steps are deliberately uneven at the top (24 → 32 → 40) so separation
+between groups can outrun separation within one. Tight groups, generous
+separation, more room above a heading than below it.
+*/
+export const space = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  section: 32,
+  screen: 40,
+} as const;
+
+/** Kept for arbitrary multiples of the same 4pt grid. */
 export const spacing = (n: number) => n * 4;
+
+/** Minimum tappable edge. Anything interactive clears this. */
+export const HIT = 44;
 
 export const panel = {
   backgroundColor: colors.panel,

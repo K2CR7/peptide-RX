@@ -11,7 +11,8 @@ import { type CycleState, cycleState, describeCycle, describeRemaining } from ".
 import { computeAdherence } from "../lib/adherence";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
-import { colors, font, panel, radii, type } from "../theme";
+import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
+import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -28,9 +29,10 @@ function relativeDay(iso: string): string {
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { data: items } = useStackItems();
+  const { data: items, isLoading, isError, refetch } = useStackItems();
   const { data: allLogs } = useInjectionLogs();
   const logInjection = useLogInjection();
+  const [logError, setLogError] = useState<string | null>(null);
   const user = useAuthStore((s) => s.user);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
   const [askOpen, setAskOpen] = useState(false);
@@ -173,7 +175,7 @@ export function HomeScreen() {
           style={[
             panel,
             {
-              padding: 26,
+              padding: 24,
               alignItems: "center",
               backgroundColor: allDone ? colors.signalFaint : colors.panel,
               borderColor: allDone ? colors.signalDim : colors.hairline,
@@ -187,16 +189,29 @@ export function HomeScreen() {
           />
         </View>
 
-        <View style={{ gap: 10 }}>
-          <Text style={type.label}>Due today</Text>
+        <View style={{ gap: space.md }}>
+          <SectionLabel>Due today</SectionLabel>
 
-          {dueToday.length === 0 && (
-            <View style={[panel, { padding: 18 }]}>
-              <Text style={type.body}>Nothing due today. Add items to your stack to see them here.</Text>
-            </View>
+          {/* "Nothing due today" is a claim about the data, so it must wait for
+              the data. Previously this read only `data`, which meant an offline
+              user with a full stack was told their stack was empty. */}
+          {(isLoading || isError || dueToday.length === 0) && (
+            <Panel pad={space.lg}>
+              <AsyncBlock
+                loading={isLoading}
+                error={isError}
+                isEmpty={dueToday.length === 0}
+                emptyText="Nothing due today. Add items to your stack to see them here."
+                onRetry={refetch}
+              >
+                <View />
+              </AsyncBlock>
+            </Panel>
           )}
 
-          <View style={{ gap: 8 }}>
+          <ErrorText>{logError}</ErrorText>
+
+          <View style={{ gap: space.sm }}>
             {dueToday.map((item) => {
               const done = loggedTodayIds.has(item.id);
               return (
@@ -211,10 +226,10 @@ export function HomeScreen() {
                     {
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 13,
+                      gap: 12,
                       borderRadius: radii.lg,
-                      paddingVertical: 14,
-                      paddingLeft: 15,
+                      paddingVertical: 16,
+                      paddingLeft: 16,
                       paddingRight: 12,
                       minHeight: 64,
                       backgroundColor: done ? colors.signalFaint : colors.panel,
@@ -238,7 +253,7 @@ export function HomeScreen() {
                   )}
 
                   <View style={{ flex: 1 }}>
-                    <Text style={[type.heading, { fontSize: 15.5 }]}>{item.peptideName}</Text>
+                    <Text style={type.headingSm}>{item.peptideName}</Text>
                     <Text style={[type.meta, { marginTop: 1 }]}>{item.frequency}</Text>
                   </View>
 
@@ -251,18 +266,18 @@ export function HomeScreen() {
                     }}
                   >
                     {item.dose}
-                    <Text style={{ fontSize: 12, color: colors.ink3 }}> {item.unit}</Text>
+                    <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
                   </Text>
 
                   {done ? (
                     <Text
                       style={{
                         fontFamily: font.semibold,
-                        fontSize: 10.5,
+                        fontSize: 11,
                         color: colors.signal,
                         letterSpacing: 1.2,
                         textTransform: "uppercase",
-                        marginLeft: 6,
+                        marginLeft: 8,
                       }}
                     >
                       Logged
@@ -273,17 +288,17 @@ export function HomeScreen() {
                         flexDirection: "row",
                         alignItems: "center",
                         gap: 2,
-                        marginLeft: 6,
-                        paddingVertical: 6,
-                        paddingLeft: 10,
-                        paddingRight: 7,
+                        marginLeft: 8,
+                        paddingVertical: 8,
+                        paddingLeft: 12,
+                        paddingRight: 8,
                         borderRadius: 20,
                         borderWidth: 1,
                         borderColor: colors.signalDim,
                         backgroundColor: colors.signalFaint,
                       }}
                     >
-                      <Text style={{ fontFamily: font.bold, fontSize: 12, color: colors.signal, letterSpacing: 0.3 }}>
+                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>
                         Log
                       </Text>
                       <ChevronRight size={13} color={colors.signal} />
@@ -300,9 +315,9 @@ export function HomeScreen() {
             whole panel vanishing — the streak still counts today, and a
             missing panel reads like a bug. */}
         {(items?.length ?? 0) > 0 && (
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: 12 }}>
             <Text style={type.label}>Consistency</Text>
-            <View style={[panel, { padding: 18 }]}>
+            <View style={[panel, { padding: 20 }]}>
               <View style={{ flexDirection: "row", gap: 24 }}>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -316,7 +331,7 @@ export function HomeScreen() {
                     {adherence.pct ?? "—"}
                     {adherence.pct !== null && <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>}
                   </Text>
-                  <Text style={[type.meta, { fontSize: 12 }]}>
+                  <Text style={type.meta}>
                     {adherence.pct !== null ? "last 7 days" : "no full days yet"}
                   </Text>
                 </View>
@@ -331,7 +346,7 @@ export function HomeScreen() {
                   >
                     {adherence.streak}
                   </Text>
-                  <Text style={[type.meta, { fontSize: 12 }]}>
+                  <Text style={type.meta}>
                     day{adherence.streak === 1 ? "" : "s"} in a row
                   </Text>
                 </View>
@@ -362,7 +377,7 @@ export function HomeScreen() {
                   );
                 })}
               </View>
-              <Text style={[type.meta, { fontSize: 11.5, marginTop: 7 }]}>
+              <Text style={[type.metaSm, { marginTop: 8 }]}>
                 {adherence.pct !== null
                   ? "Last 7 days · thin marks are rest days"
                   : "Your first scheduled day will show here tomorrow"}
@@ -372,7 +387,7 @@ export function HomeScreen() {
         )}
 
         {cycles.length > 0 && (
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: 12 }}>
             <Text style={type.label}>Cycles</Text>
             <View style={[panel, { overflow: "hidden" }]}>
               {cycles.map(({ item, cycle }, i) => {
@@ -382,22 +397,22 @@ export function HomeScreen() {
                   <View
                     key={item.id}
                     style={{
-                      paddingVertical: 13,
+                      paddingVertical: 12,
                       paddingHorizontal: 16,
                       borderTopWidth: i === 0 ? 0 : 1,
                       borderTopColor: colors.hairline,
                     }}
                   >
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <Text style={[type.heading, { fontSize: 15 }]}>{item.peptideName}</Text>
-                      <Text style={{ fontFamily: font.semibold, fontSize: 12, color: tone, letterSpacing: 0.4 }}>
+                      <Text style={type.headingSm}>{item.peptideName}</Text>
+                      <Text style={{ fontFamily: font.semibold, fontSize: 13, color: tone, letterSpacing: 0.4 }}>
                         {off ? "OFF" : "ON"}
                       </Text>
                     </View>
 
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginTop: 3 }}>
-                      <Text style={[type.meta, { fontSize: 12.5 }]}>{describeCycle(cycle)}</Text>
-                      <Text style={[type.meta, { fontSize: 12.5 }]}>{describeRemaining(cycle)}</Text>
+                      <Text style={type.meta}>{describeCycle(cycle)}</Text>
+                      <Text style={type.meta}>{describeRemaining(cycle)}</Text>
                     </View>
 
                     <View
@@ -405,7 +420,7 @@ export function HomeScreen() {
                         height: 4,
                         borderRadius: 2,
                         backgroundColor: colors.panelRaised,
-                        marginTop: 9,
+                        marginTop: 8,
                         overflow: "hidden",
                       }}
                     >
@@ -424,7 +439,7 @@ export function HomeScreen() {
             </View>
 
             {restingToday.length > 0 && (
-              <Text style={[type.meta, { fontSize: 12.5 }]}>
+              <Text style={type.meta}>
                 {restingToday.map((i) => i.peptideName).join(", ")}{" "}
                 {restingToday.length === 1 ? "is" : "are"} scheduled today but resting — not counted above.
               </Text>
@@ -433,23 +448,23 @@ export function HomeScreen() {
         )}
 
         {rotation?.next && (
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: 12 }}>
             <Text style={type.label}>Site rotation</Text>
             <View style={[panel, { padding: 16 }]}>
-              <Text style={[type.meta, { fontSize: 12 }]}>Next site up</Text>
-              <Text style={[type.heading, { fontSize: 17, color: colors.signal, marginTop: 3 }]}>
+              <Text style={type.meta}>Next site up</Text>
+              <Text style={[type.heading, { color: colors.signal, marginTop: 3 }]}>
                 {rotation.next.label}
               </Text>
 
               {rotation.recent.length > 0 && (
-                <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 9 }}>
+                <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 8 }}>
                   {rotation.recent.filter((l) => l.site).map((log) => (
                     <View key={log.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 9, flex: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.ink3 }} />
-                        <Text style={[type.body, { fontSize: 13.5 }]}>{siteLabel(log.site!)}</Text>
+                        <Text style={type.bodySm}>{siteLabel(log.site!)}</Text>
                       </View>
-                      <Text style={[type.meta, { fontSize: 12 }]}>{relativeDay(log.takenAt)}</Text>
+                      <Text style={type.meta}>{relativeDay(log.takenAt)}</Text>
                     </View>
                   ))}
                 </View>
@@ -475,7 +490,13 @@ export function HomeScreen() {
           onConfirm={(site) => {
             // site is null for oral and nasal routes — there is nowhere to pin,
             // but the dose still happened, so it still gets logged.
-            logInjection.mutate({ stackItemId: injectFor.id, site });
+            // A failure used to be invisible: the sheet closed either way and
+            // the row just never flipped to Logged.
+            setLogError(null);
+            logInjection.mutate(
+              { stackItemId: injectFor.id, site },
+              { onError: () => setLogError("Couldn't log that dose — check your connection and try again.") },
+            );
             setInjectFor(null);
           }}
         />

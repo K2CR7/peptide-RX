@@ -58,20 +58,20 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
   const delta = active.weightLb - first.weightLb;
 
   return (
-    <View style={[panel, { padding: 18 }]}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+    <View style={[panel, { padding: 20 }]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
         <Text style={type.label}>Weight trend</Text>
         <Text style={type.meta}>
           {new Date(active.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
-        <Text style={{ fontFamily: font.numeral, fontSize: 40, color: colors.ink, letterSpacing: -0.5 }}>
+      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
+        <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 }}>
           {Math.round(active.weightLb)}
-          <Text style={{ fontSize: 16, color: colors.ink3 }}> lb</Text>
+          <Text style={{ fontSize: 17, color: colors.ink3 }}> lb</Text>
         </Text>
-        <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: delta <= 0 ? colors.signal : colors.amber }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: delta <= 0 ? colors.signal : colors.amber }}>
           {delta === 0 ? "—" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)} lb`}
         </Text>
       </View>

@@ -59,7 +59,7 @@ export function Select({
 
   return (
     <View>
-      <Text style={[type.label, { marginBottom: 7 }]}>{label}</Text>
+      <Text style={[type.label, { marginBottom: 8 }]}>{label}</Text>
 
       <Pressable
         onPress={() => { setOpen(true); setCustomMode(false); setDraft(value && !isPreset ? value : ""); }}
@@ -69,9 +69,9 @@ export function Select({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 10,
+          gap: 12,
           minHeight: 48,
-          paddingHorizontal: 14,
+          paddingHorizontal: 16,
           backgroundColor: colors.panel,
           borderWidth: 1,
           borderColor: value ? colors.hairline2 : colors.hairline,
@@ -91,7 +91,7 @@ export function Select({
           {value || placeholder}
         </Text>
         {value && !isPreset && (
-          <Text style={[type.label, { fontSize: 9.5, color: colors.ink3 }]}>Custom</Text>
+          <Text style={[type.label, { color: colors.ink3 }]}>Custom</Text>
         )}
         <View style={{ transform: [{ rotate: "90deg" }] }}>
           <ChevronRight size={15} color={colors.ink3} />
@@ -111,22 +111,22 @@ export function Select({
             borderTopWidth: 1,
             borderColor: colors.hairline2,
             paddingTop: 16,
-            paddingBottom: 18,
+            paddingBottom: 20,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20 }}>
-            <Text style={[type.heading, { fontSize: 17 }]}>{label}</Text>
+            <Text style={type.heading}>{label}</Text>
             <Pressable
               onPress={close}
               accessibilityRole="button"
               style={({ pressed }) => ({ minHeight: 44, minWidth: 44, alignItems: "flex-end", justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
             >
-              <Text style={{ fontFamily: font.semibold, fontSize: 14, color: colors.ink2 }}>Close</Text>
+              <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink2 }}>Close</Text>
             </Pressable>
           </View>
 
           {options.length >= SEARCH_THRESHOLD && !customMode && (
-            <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+            <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -138,7 +138,7 @@ export function Select({
                   borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
-                  paddingHorizontal: 13,
+                  paddingHorizontal: 12,
                   minHeight: 44,
                   fontFamily: font.regular,
                   fontSize: 15,
@@ -149,7 +149,7 @@ export function Select({
           )}
 
           {customMode ? (
-            <View style={{ paddingHorizontal: 20, paddingTop: 14, gap: 12 }}>
+            <View style={{ paddingHorizontal: 20, paddingTop: 16, gap: 12 }}>
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
@@ -163,10 +163,10 @@ export function Select({
                   borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
-                  paddingHorizontal: 13,
+                  paddingHorizontal: 12,
                   minHeight: 48,
                   fontFamily: font.regular,
-                  fontSize: 16,
+                  fontSize: 17,
                   color: colors.ink,
                 }}
               />
@@ -199,13 +199,13 @@ export function Select({
                 accessibilityRole="button"
                 style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
               >
-                <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.ink2 }}>Back to list</Text>
+                <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.ink2 }}>Back to list</Text>
               </Pressable>
             </View>
           ) : (
-            <ScrollView style={{ marginTop: 10 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ marginTop: 12 }} keyboardShouldPersistTaps="handled">
               {filtered.length === 0 && (
-                <Text style={[type.body, { paddingHorizontal: 20, paddingVertical: 14 }]}>
+                <Text style={[type.body, { paddingHorizontal: 20, paddingVertical: 16 }]}>
                   No match for “{query.trim()}”.
                 </Text>
               )}
@@ -224,7 +224,7 @@ export function Select({
                       alignItems: "center",
                       gap: 12,
                       minHeight: 50,
-                      paddingVertical: 10,
+                      paddingVertical: 12,
                       paddingHorizontal: 20,
                       borderTopWidth: i === 0 ? 0 : 1,
                       borderTopColor: colors.hairline,
@@ -242,7 +242,7 @@ export function Select({
                       >
                         {opt}
                       </Text>
-                      {sub && <Text style={[type.meta, { fontSize: 12, marginTop: 1 }]}>{sub}</Text>}
+                      {sub && <Text style={[type.meta, { marginTop: 1 }]}>{sub}</Text>}
                     </View>
                     {selected && <CheckMark size={14} color={colors.signal} />}
                   </Pressable>
@@ -261,7 +261,7 @@ export function Select({
                   opacity: pressed ? 0.72 : 1,
                 })}
               >
-                <Text style={{ fontFamily: font.semibold, fontSize: 14.5, color: colors.ink2 }}>
+                <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink2 }}>
                   {customPlaceholder ?? `Enter ${label.toLowerCase()} manually`}
                 </Text>
               </Pressable>

@@ -33,7 +33,11 @@ Distinct from a peptide dosing calculator or a generic fitness/macro tracker: it
 
 ## Brand Commitments
 
-"Peptide RX" is a working title only, confirmed open to change as part of this design pass — nothing about the name is locked in. The current visual identity (teal `#3BBFB8` accent on a light background) was ported from an early prototype's CSS and is not a confirmed brand commitment.
+"Peptide RX" is a working title only, confirmed open to change — nothing about the name is locked in.
+
+The visual identity **is** settled: the dark "recovery instrument" world — near-black ground, hairline-seamed panels, one signal green, trace blue for data lines only, Barlow Semi-Condensed numerals. The owner chose it from a concept round and has reaffirmed it since, in these terms: informative and medical, not a toy. It is specified in `DESIGN.md`.
+
+(The teal `#3BBFB8`-on-light identity previously recorded here was the early prototype's CSS. It was replaced by the redesign and no longer exists in the app.)
 
 ## Evidence on Hand
 
