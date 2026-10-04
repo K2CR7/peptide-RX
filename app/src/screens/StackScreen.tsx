@@ -5,6 +5,7 @@ import { Select } from "../components/Select";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
+import { siteHistory } from "../lib/injectionSites";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
   CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
@@ -20,7 +21,8 @@ import {
   useLogInjection,
   useStackItems,
 } from "../lib/queries";
-import { colors, font, panel, radii, type } from "../theme";
+import { AsyncBlock, Button, ErrorText, Panel } from "../components/primitives";
+import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
 const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
@@ -35,10 +37,11 @@ const FREQUENCY_OPTIONS = [
   "Every other day", "Every 3 days", "As needed",
 ];
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const FULL_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function StackScreen() {
   const insets = useSafeAreaInsets();
-  const { data: items, isLoading } = useStackItems();
+  const { data: items, isLoading, isError, refetch } = useStackItems();
   const [addOpen, setAddOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
@@ -47,7 +50,7 @@ export function StackScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 14 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={type.title}>My stack</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -75,7 +78,7 @@ export function StackScreen() {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 6,
+                gap: 8,
                 minHeight: 44,
                 backgroundColor: colors.signal,
                 borderRadius: radii.md,
@@ -84,16 +87,23 @@ export function StackScreen() {
               })}
             >
               <PlusMark size={13} color={colors.onSignal} />
-              <Text style={{ fontFamily: font.bold, fontSize: 14, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
+              <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
             </Pressable>
           </View>
         </View>
 
-        {isLoading && <Text style={type.body}>Loading…</Text>}
-        {!isLoading && items?.length === 0 && (
-          <View style={[panel, { padding: 18 }]}>
-            <Text style={type.body}>Nothing in your stack yet. Add what you're already taking.</Text>
-          </View>
+        {(isLoading || isError || items?.length === 0) && (
+          <Panel pad={space.lg}>
+            <AsyncBlock
+              loading={isLoading}
+              error={isError}
+              isEmpty={items?.length === 0}
+              emptyText="Nothing in your stack yet. Add what you're already taking."
+              onRetry={refetch}
+            >
+              <View />
+            </AsyncBlock>
+          </Panel>
         )}
 
         {items && items.length > 0 && (
@@ -111,7 +121,7 @@ export function StackScreen() {
         )}
 
         {items && items.length > 0 && (
-          <Text style={[type.meta, { fontSize: 12, paddingHorizontal: 2 }]}>
+          <Text style={[type.metaSm, { paddingHorizontal: 2 }]}>
             Tap an item to edit or remove it.
           </Text>
         )}
@@ -160,7 +170,7 @@ function StackItemRow({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        paddingVertical: 13,
+        paddingVertical: 12,
         paddingLeft: 16,
         paddingRight: 12,
         borderTopWidth: first ? 0 : 1,
@@ -173,13 +183,13 @@ function StackItemRow({
         accessibilityLabel={`${item.peptideName} details`}
         style={({ pressed }) => ({ flex: 1, minHeight: 44, justifyContent: "center", opacity: pressed ? 0.72 : 1 })}
       >
-        <Text style={[type.heading, { fontSize: 15.5 }]}>{item.peptideName}</Text>
+        <Text style={type.headingSm}>{item.peptideName}</Text>
         <Text style={[type.meta, { marginTop: 2 }]}>
           {item.frequency}
           {item.route ? ` · ${item.route}` : ""}
         </Text>
         {cycle && (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
             <View
               style={{
                 width: 6,
@@ -188,17 +198,17 @@ function StackItemRow({
                 backgroundColor: off ? colors.amber : colors.signal,
               }}
             />
-            <Text style={{ fontFamily: font.semibold, fontSize: 11.5, color: off ? colors.amber : colors.signal }}>
+            <Text style={{ fontFamily: font.semibold, fontSize: 11, color: off ? colors.amber : colors.signal }}>
               {describeCycle(cycle)}
             </Text>
-            <Text style={[type.meta, { fontSize: 11.5 }]}>· {describeRemaining(cycle)}</Text>
+            <Text style={type.metaSm}>· {describeRemaining(cycle)}</Text>
           </View>
         )}
       </Pressable>
 
       <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
         {item.dose}
-        <Text style={{ fontSize: 12, color: colors.ink3 }}> {item.unit}</Text>
+        <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
       </Text>
 
       <Pressable
@@ -227,7 +237,7 @@ function StackItemRow({
 function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string; route: string | null; onClose: () => void }) {
   const { data: logs } = useInjectionLogs(stackItemId);
   const logInjection = useLogInjection();
-  const history = (logs ?? []).map((l) => l.site).reverse();
+  const history = siteHistory(logs ?? []).reverse();
 
   return (
     <InjectionSitePicker
@@ -236,7 +246,9 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
       history={history}
       onClose={onClose}
       onConfirm={(site) => {
-        if (site) logInjection.mutate({ stackItemId, site });
+        // site is null for oral and nasal routes — there is nowhere to pin,
+        // but the dose still happened, so it still gets logged.
+        logInjection.mutate({ stackItemId, site });
         onClose();
       }}
     />
@@ -345,8 +357,8 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <PhoneModalFrame backgroundColor={colors.bg}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 10 }}>
-        <Text style={[type.title, { marginBottom: 10 }]}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingTop: 68, paddingBottom: 40, gap: 12 }}>
+        <Text style={[type.title, { marginBottom: 12 }]}>
           {editing ? "Edit stack item" : "Add to your stack"}
         </Text>
 
@@ -360,7 +372,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           describe={(name) => PEPTIDE_REFERENCE[name]?.aka}
         />
 
-        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+        <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
           <View style={{ flex: 1.4 }}>
             <Select
               label="Dose"
@@ -384,7 +396,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           </View>
         </View>
 
-        <View style={{ marginTop: 14 }}>
+        <View style={{ marginTop: 16 }}>
           <Select
             label="Frequency"
             options={FREQUENCY_OPTIONS}
@@ -395,7 +407,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           />
         </View>
 
-        <View style={{ marginTop: 14 }}>
+        <View style={{ marginTop: 16 }}>
           <Select
             label="Route"
             options={ROUTE_OPTIONS}
@@ -406,7 +418,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           />
         </View>
 
-        <View style={{ marginTop: 14 }}>
+        <View style={{ marginTop: 16 }}>
           <Select
             label="Cycle"
             options={cycleOptionLabels()}
@@ -418,14 +430,16 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
         </View>
 
         {isCustomCycle && (
-          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
             <WeeksField label="Weeks on" value={customOnWeeks} onChangeText={setCustomOnWeeks} />
             <WeeksField label="Weeks off" value={customOffWeeks} onChangeText={setCustomOffWeeks} />
           </View>
         )}
 
-        <Text style={[type.label, { marginTop: 18 }]}>Schedule days</Text>
-        <View style={{ flexDirection: "row", gap: 6 }}>
+        <Text style={[type.label, { marginTop: space.lg }]}>Schedule days</Text>
+        {/* Seven adjacent circles were 38pt with a 6pt gap — under the 44pt
+            floor and close enough together to mis-tap. */}
+        <View style={{ flexDirection: "row", gap: space.xs }}>
           {DAY_LABELS.map((label, i) => {
             const day = i + 1;
             const on = days.includes(day);
@@ -433,40 +447,37 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
               <Pressable
                 key={day}
                 onPress={() => toggleDay(day)}
-                style={{
-                  width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center",
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={FULL_DAY_NAMES[i]}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  height: HIT,
+                  borderRadius: radii.md,
+                  alignItems: "center",
+                  justifyContent: "center",
                   backgroundColor: on ? colors.signal : colors.panel,
                   borderWidth: 1,
                   borderColor: on ? colors.signal : colors.hairline2,
-                }}
+                  opacity: pressed ? 0.7 : 1,
+                })}
               >
-                <Text style={{ fontFamily: font.bold, fontSize: 12.5, color: on ? colors.onSignal : colors.ink2 }}>{label}</Text>
+                <Text style={[type.buttonSm, { color: on ? colors.onSignal : colors.ink2 }]}>{label}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13, marginTop: 8 }}>{error}</Text>}
+        <ErrorText style={{ marginTop: space.sm }}>{error}</ErrorText>
 
-        <Pressable
+        <Button
+          label={editing ? "Save changes" : "Add to stack"}
+          loadingLabel={editing ? "Saving…" : "Adding…"}
           onPress={handleSubmit}
-          disabled={pending}
-          style={({ pressed }) => ({
-            backgroundColor: colors.signal,
-            borderRadius: radii.md,
-            padding: 15,
-            alignItems: "center",
-            marginTop: 14,
-            opacity: pending || pressed ? 0.7 : 1,
-          })}
-        >
-          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-            {pending ? (editing ? "Saving…" : "Adding…") : editing ? "Save changes" : "Add to stack"}
-          </Text>
-        </Pressable>
-        <Pressable onPress={onClose} style={{ alignItems: "center", padding: 12 }}>
-          <Text style={[type.meta, { fontSize: 14 }]}>Cancel</Text>
-        </Pressable>
+          loading={pending}
+          style={{ marginTop: space.lg }}
+        />
+        <Button label="Cancel" variant="quiet" onPress={onClose} />
       </ScrollView>
       </PhoneModalFrame>
     </Modal>
@@ -476,7 +487,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
 function WeeksField({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={[type.label, { marginBottom: 7 }]}>{label}</Text>
+      <Text style={[type.label, { marginBottom: 8 }]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -488,7 +499,7 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
           borderWidth: 1,
           borderColor: colors.hairline2,
           borderRadius: radii.md,
-          paddingHorizontal: 14,
+          paddingHorizontal: 16,
           minHeight: 48,
           fontFamily: font.numeralMedium,
           fontSize: 17,
@@ -509,14 +520,24 @@ function StackItemSheet({
 }: { item: StackItem; onClose: () => void; onEdit: () => void }) {
   const archive = useArchiveStackItem();
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
 
+  // Only onSuccess was handled, so a failed archive left the sheet open with
+  // the button reading "Removing…" indefinitely and nothing explaining why.
   function handleRemove() {
     if (!confirming) {
       setConfirming(true);
       return;
     }
-    archive.mutate(item.id, { onSuccess: onClose });
+    setError(null);
+    archive.mutate(item.id, {
+      onSuccess: onClose,
+      onError: () => {
+        setError("Couldn't remove that — check your connection and try again.");
+        setConfirming(false);
+      },
+    });
   }
 
   return (
@@ -531,14 +552,14 @@ function StackItemSheet({
               borderTopRightRadius: 24,
               borderTopWidth: 1,
               borderColor: colors.hairline2,
-              paddingTop: 18,
+              paddingTop: 20,
               paddingHorizontal: 20,
-              paddingBottom: 18,
+              paddingBottom: 20,
             }}
           >
-            <Text style={[type.heading, { fontSize: 19 }]}>{item.peptideName}</Text>
+            <Text style={[type.heading, { fontSize: 20 }]}>{item.peptideName}</Text>
 
-            <View style={{ marginTop: 14, gap: 9 }}>
+            <View style={{ marginTop: 16, gap: 8 }}>
               <DetailRow label="Dose" value={`${item.dose} ${item.unit}`} />
               <DetailRow label="Frequency" value={item.frequency} />
               <DetailRow label="Route" value={item.route ?? "—"} />
@@ -555,71 +576,32 @@ function StackItemSheet({
             </View>
 
             {!confirming && (
-              <Pressable
-                onPress={onEdit}
-                accessibilityRole="button"
-                style={({ pressed }) => ({
-                  marginTop: 18,
-                  minHeight: 48,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: radii.md,
-                  backgroundColor: colors.signal,
-                  opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-                  Edit
-                </Text>
-              </Pressable>
+              <Button label="Edit" onPress={onEdit} style={{ marginTop: space.lg }} />
             )}
 
             {confirming && (
-              <Text style={{ fontFamily: font.medium, fontSize: 12.5, color: colors.ink2, marginTop: 16, lineHeight: 18 }}>
+              <Text style={[type.bodySm, { marginTop: space.lg }]}>
                 This takes {item.peptideName} out of your stack and schedule. Injections you already
                 logged are kept, so past weeks still read correctly.
               </Text>
             )}
 
-            <Pressable
-              onPress={handleRemove}
-              disabled={archive.isPending}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                marginTop: 16,
-                minHeight: 48,
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: radii.md,
-                borderWidth: 1,
-                borderColor: colors.red,
-                backgroundColor: confirming ? colors.red : colors.redFaint,
-                opacity: archive.isPending || pressed ? 0.7 : 1,
-              })}
-            >
-              <Text
-                style={{
-                  fontFamily: font.bold,
-                  fontSize: 14.5,
-                  letterSpacing: 0.3,
-                  color: confirming ? colors.bg : colors.red,
-                }}
-              >
-                {archive.isPending
-                  ? "Removing…"
-                  : confirming
-                    ? "Yes, remove it"
-                    : "Remove from stack"}
-              </Text>
-            </Pressable>
+            <ErrorText style={{ marginTop: space.md }}>{error}</ErrorText>
 
-            <Pressable
+            <Button
+              label={confirming ? "Yes, remove it" : "Remove from stack"}
+              loadingLabel="Removing…"
+              variant={confirming ? "dangerSolid" : "danger"}
+              onPress={handleRemove}
+              loading={archive.isPending}
+              style={{ marginTop: space.lg }}
+            />
+
+            <Button
+              label={confirming ? "Keep it" : "Close"}
+              variant="quiet"
               onPress={confirming ? () => setConfirming(false) : onClose}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ minHeight: 44, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
-            >
-              <Text style={[type.meta, { fontSize: 14 }]}>{confirming ? "Keep it" : "Close"}</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </PhoneModalFrame>
@@ -630,8 +612,8 @@ function StackItemSheet({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-      <Text style={[type.label, { fontSize: 10.5 }]}>{label}</Text>
-      <Text style={{ fontFamily: font.semibold, fontSize: 14, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
+      <Text style={type.label}>{label}</Text>
+      <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
         {value}
       </Text>
     </View>

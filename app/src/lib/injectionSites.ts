@@ -137,3 +137,12 @@ export function getNextSite(routeKey: RouteKey, history: string[] = []): Injecti
   const unused = sites.find((s) => !recent.includes(s.id));
   return unused ?? sites[0];
 }
+
+/**
+ * The site ids out of a run of logs, oldest first, skipping doses that had no
+ * site to record. Rotation only has meaning for routes you actually pin, so an
+ * oral or nasal dose must not shift the cycle along.
+ */
+export function siteHistory(logs: { site: string | null }[]): string[] {
+  return logs.map((l) => l.site).filter((s): s is string => s !== null);
+}

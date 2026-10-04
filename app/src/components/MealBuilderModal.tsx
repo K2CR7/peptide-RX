@@ -4,7 +4,9 @@ import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-nativ
 import { NUTRIENT_GUIDANCE } from "../data/wellnessGoals";
 import { type BuiltMeal, type MacroConstraint, useBuildMeal } from "../lib/queries";
 import { PhoneModalFrame } from "./PhoneModalFrame";
-import { colors, font, panel, radii, type } from "../theme";
+import { Button, Chip, ErrorText } from "./primitives";
+import { SwapMark } from "./icons";
+import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 interface Props {
   visible: boolean;
@@ -108,7 +110,7 @@ export function MealBuilderModal({
 
         {!meal && (
           <>
-            <Text style={[type.body, { fontSize: 13, marginTop: -6 }]}>
+            <Text style={[type.bodySm, { marginTop: -6 }]}>
               Tap a label to switch it between a max and a min limit.
             </Text>
 
@@ -131,33 +133,23 @@ export function MealBuilderModal({
 
             <Text style={type.label}>Prioritize any nutrients (optional)</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {NUTRIENT_GUIDANCE.map((n) => {
-                const on = priority.includes(n.nutrient);
-                return (
-                  <Pressable
-                    key={n.nutrient}
-                    onPress={() => togglePriority(n.nutrient)}
-                    style={{
-                      paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20,
-                      borderWidth: 1, borderColor: on ? colors.signal : colors.hairline2,
-                      backgroundColor: on ? colors.signalFaint : "transparent",
-                    }}
-                  >
-                    <Text style={{ fontFamily: font.semibold, color: on ? colors.signal : colors.ink2, fontSize: 13 }}>
-                      {n.nutrient}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              {NUTRIENT_GUIDANCE.map((n) => (
+                <Chip
+                  key={n.nutrient}
+                  label={n.nutrient}
+                  selected={priority.includes(n.nutrient)}
+                  onPress={() => togglePriority(n.nutrient)}
+                />
+              ))}
             </View>
 
-            {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>{error}</Text>}
+            <ErrorText>{error}</ErrorText>
 
             <Pressable
               onPress={handleBuild}
               disabled={buildMeal.isPending}
               style={({ pressed }) => ({
-                backgroundColor: colors.signal, borderRadius: radii.md, padding: 15,
+                backgroundColor: colors.signal, borderRadius: radii.md, padding: 16,
                 alignItems: "center", marginTop: 4, opacity: buildMeal.isPending || pressed ? 0.7 : 1,
               })}
             >
@@ -170,24 +162,24 @@ export function MealBuilderModal({
 
         {meal && (
           <>
-            <View style={[panel, { padding: 18 }]}>
-              <Text style={[type.heading, { fontSize: 18, marginBottom: 12 }]}>{meal.title}</Text>
+            <View style={[panel, { padding: 20 }]}>
+              <Text style={[type.heading, { marginBottom: 12 }]}>{meal.title}</Text>
               {meal.ingredients.map((ing, i) => (
-                <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 5 }}>
-                  <Text style={{ fontFamily: font.numeralMedium, fontSize: 14, color: colors.signal, minWidth: 62 }}>
+                <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
+                  <Text style={{ fontFamily: font.numeralMedium, fontSize: 15, color: colors.signal, minWidth: 62 }}>
                     {ing.amount}
                   </Text>
-                  <Text style={[type.body, { flex: 1, fontSize: 14 }]}>{ing.item}</Text>
+                  <Text style={[type.body, { flex: 1, fontSize: 15 }]}>{ing.item}</Text>
                 </View>
               ))}
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
                 <MacroPill label="kcal" value={meal.estimatedMacros.calories} />
                 <MacroPill label="protein" value={meal.estimatedMacros.protein} />
                 <MacroPill label="carbs" value={meal.estimatedMacros.carbs} />
                 <MacroPill label="fat" value={meal.estimatedMacros.fat} />
               </View>
               {meal.notes && (
-                <Text style={[type.body, { fontSize: 12.5, lineHeight: 18, marginTop: 12 }]}>{meal.notes}</Text>
+                <Text style={[type.bodySm, { marginTop: 12 }]}>{meal.notes}</Text>
               )}
             </View>
 
@@ -199,18 +191,18 @@ export function MealBuilderModal({
               onChangeText={setFeedback}
               style={{
                 backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.hairline2,
-                borderRadius: radii.md, padding: 13, fontFamily: font.regular, fontSize: 15, color: colors.ink,
+                borderRadius: radii.md, padding: 12, fontFamily: font.regular, fontSize: 15, color: colors.ink,
               }}
             />
 
-            {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>{error}</Text>}
+            <ErrorText>{error}</ErrorText>
 
             <Pressable
               onPress={handleRefine}
               disabled={buildMeal.isPending || !feedback.trim()}
               style={({ pressed }) => ({
                 backgroundColor: feedback.trim() ? colors.signal : colors.panelRaised,
-                borderRadius: radii.md, padding: 15, alignItems: "center",
+                borderRadius: radii.md, padding: 16, alignItems: "center",
                 opacity: pressed ? 0.7 : 1,
               })}
             >
@@ -225,13 +217,13 @@ export function MealBuilderModal({
             </Pressable>
 
             <Pressable onPress={reset} style={{ alignItems: "center", padding: 8 }}>
-              <Text style={[type.meta, { fontSize: 14 }]}>Start over with new targets</Text>
+              <Text style={[type.meta, { fontSize: 15 }]}>Start over with new targets</Text>
             </Pressable>
           </>
         )}
 
         <Pressable onPress={handleClose} style={{ alignItems: "center", padding: 12 }}>
-          <Text style={[type.meta, { fontSize: 14 }]}>Close</Text>
+          <Text style={[type.meta, { fontSize: 15 }]}>Close</Text>
         </Pressable>
       </ScrollView>
       </PhoneModalFrame>
@@ -248,7 +240,7 @@ function SliderField({
         {label}
         <Text style={{ fontFamily: font.numeralMedium, fontSize: 17, color: colors.ink }}>
           {Math.round(value)}
-          <Text style={{ fontSize: 12, color: colors.ink3 }}> {unit}</Text>
+          <Text style={{ fontSize: 13, color: colors.ink3 }}> {unit}</Text>
         </Text>
       </View>
       <Slider
@@ -271,33 +263,37 @@ function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstrai
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={8}
-      style={{
+      accessibilityRole="button"
+      accessibilityLabel={`${name} is a ${isMax ? "maximum" : "minimum"} — tap to switch`}
+      style={({ pressed }) => ({
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        borderRadius: 20,
+        gap: space.sm,
+        minHeight: HIT,
+        borderRadius: radii.md,
         borderWidth: 1,
         borderColor: tint,
         backgroundColor: isMax ? colors.amberFaint : colors.signalFaint,
-        paddingVertical: 5,
-        paddingHorizontal: 12,
-      }}
+        paddingHorizontal: space.md,
+        opacity: pressed ? 0.7 : 1,
+      })}
     >
-      <Text style={{ fontFamily: font.bold, fontSize: 12.5, color: tint, letterSpacing: 0.3 }}>
+      <Text style={[type.buttonSm, { color: tint }]}>
         {isMax ? "Max" : "Min"} {name}
       </Text>
-      <Text style={{ fontFamily: font.regular, fontSize: 11, color: tint }}>⇅</Text>
+      {/* Was the character "⇅" set in a Text node — a Unicode arrow doing an
+          icon's job, at a weight the drawn set never matches. */}
+      <SwapMark size={13} color={tint} />
     </Pressable>
   );
 }
 
+/** Flattened out of its filled box — a chip inside the result panel was a card in a card. */
 function MacroPill({ label, value }: { label: string; value: number }) {
   return (
-    <View style={{ backgroundColor: colors.panelRaised, borderRadius: radii.sm, paddingVertical: 6, paddingHorizontal: 11 }}>
-      <Text style={{ fontFamily: font.numeralMedium, fontSize: 14, color: colors.ink }}>
-        {Math.round(value)} <Text style={{ fontFamily: font.medium, fontSize: 11.5, color: colors.ink3 }}>{label}</Text>
-      </Text>
+    <View style={{ flexDirection: "row", alignItems: "baseline", gap: space.xs }}>
+      <Text style={[type.statSm, { fontSize: 15 }]}>{Math.round(value)}</Text>
+      <Text style={type.metaSm}>{label}</Text>
     </View>
   );
 }

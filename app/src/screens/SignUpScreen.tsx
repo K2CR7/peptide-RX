@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "../store/authStore";
-import { colors, font, radii, type } from "../theme";
+import { Button, ErrorText } from "../components/primitives";
+import { HIT, colors, font, radii, space, type } from "../theme";
 
 export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => void }) {
   const signUp = useAuthStore((s) => s.signUp);
@@ -26,10 +27,10 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: "center", padding: 24, gap: 12 }}>
       <Text style={type.label}>PEPTIDE RX</Text>
-      <Text style={{ fontFamily: font.numeral, fontSize: 44, color: colors.ink, letterSpacing: -0.5 }}>
+      <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 }}>
         Create account
       </Text>
-      <Text style={[type.body, { fontSize: 13, marginBottom: 8 }]}>
+      <Text style={[type.bodySm, { marginBottom: 8 }]}>
         A tracking tool for your own stack — not medical advice.
       </Text>
       <TextInput
@@ -56,29 +57,27 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
         onChangeText={setPassword}
         style={inputStyle}
       />
-      {error && <Text style={{ fontFamily: font.medium, color: colors.red, fontSize: 13 }}>{error}</Text>}
-      <Pressable
+      <ErrorText>{error}</ErrorText>
+      <Button
+        label="Create account"
+        loadingLabel="Creating…"
         onPress={handleSubmit}
-        disabled={loading}
+        loading={loading}
+        style={{ marginTop: space.sm }}
+      />
+      <Pressable
+        onPress={onNavigateSignIn}
+        accessibilityRole="button"
+        accessibilityLabel="Go to sign in"
         style={({ pressed }) => ({
-          backgroundColor: colors.signal,
-          borderRadius: radii.md,
-          padding: 15,
+          minHeight: HIT,
           alignItems: "center",
-          marginTop: 8,
-          opacity: loading || pressed ? 0.7 : 1,
+          justifyContent: "center",
+          marginTop: space.xs,
+          opacity: pressed ? 0.7 : 1,
         })}
       >
-        {loading ? (
-          <ActivityIndicator color={colors.onSignal} />
-        ) : (
-          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-            Create account
-          </Text>
-        )}
-      </Pressable>
-      <Pressable onPress={onNavigateSignIn} style={{ alignItems: "center", marginTop: 12 }}>
-        <Text style={[type.body, { fontSize: 14 }]}>
+        <Text style={type.body}>
           Already have an account?{" "}
           <Text style={{ fontFamily: font.bold, color: colors.signal }}>Sign in</Text>
         </Text>
@@ -92,7 +91,7 @@ const inputStyle = {
   borderWidth: 1,
   borderColor: colors.hairline2,
   borderRadius: radii.md,
-  padding: 14,
+  padding: 16,
   fontFamily: font.regular,
   fontSize: 15,
   color: colors.ink,

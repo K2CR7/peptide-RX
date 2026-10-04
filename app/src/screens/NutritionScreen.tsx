@@ -14,7 +14,9 @@ import {
   type NutritionGoal,
 } from "../lib/nutrition";
 import { useAuthStore } from "../store/authStore";
-import { colors, font, panel, radii, type } from "../theme";
+import { Button, Chip, ErrorText } from "../components/primitives";
+import { Disclosure } from "../components/icons";
+import { colors, font, panel, radii, space, type } from "../theme";
 
 const LB_PER_KG = 2.20462;
 const IN_PER_CM = 0.393701;
@@ -48,7 +50,7 @@ export function NutritionScreen() {
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 14 }}>Edit</Text>
+            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 15 }}>Edit</Text>
           </Pressable>
         )}
       </View>
@@ -113,22 +115,22 @@ function PlanView() {
         <Text style={type.label}>Daily target · {GOAL_LABELS[goal]}</Text>
 
         <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 }}>
-          <Text style={{ fontFamily: font.numeral, fontSize: 54, color: colors.ink, letterSpacing: -1 }}>
+          <Text style={{ fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -1 }}>
             {macros.calories}
-            <Text style={{ fontSize: 18, color: colors.ink3 }}> kcal</Text>
+            <Text style={{ fontSize: 17, color: colors.ink3 }}> kcal</Text>
           </Text>
           <View style={{ alignItems: "flex-end", paddingBottom: 8 }}>
             <Text
               style={{
                 fontFamily: font.numeralMedium,
-                fontSize: 16,
+                fontSize: 17,
                 color: deficit > 0 ? colors.signal : deficit < 0 ? colors.amber : colors.ink2,
               }}
             >
               {deficit > 0 ? "−" : deficit < 0 ? "+" : "±"}
               {Math.abs(deficit)}
             </Text>
-            <Text style={[type.meta, { fontSize: 11 }]}>vs TDEE {macros.tdee}</Text>
+            <Text style={type.metaSm}>vs TDEE {macros.tdee}</Text>
           </View>
         </View>
 
@@ -140,23 +142,23 @@ function PlanView() {
           ))}
         </View>
 
-        <View style={{ flexDirection: "row", marginTop: 12, gap: 14 }}>
+        <View style={{ flexDirection: "row", marginTop: 12, gap: 16 }}>
           {split.map((s) => (
             <View key={s.key} style={{ flex: 1, gap: 4 }}>
               <View style={{ height: 3, borderRadius: 2, backgroundColor: s.tone }} />
-              <Text style={{ fontFamily: font.numeralMedium, fontSize: 19, color: colors.ink }}>
+              <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink }}>
                 {s.grams}
-                <Text style={{ fontSize: 12, color: colors.ink3 }}>g</Text>
+                <Text style={{ fontSize: 13, color: colors.ink3 }}>g</Text>
               </Text>
-              <Text style={[type.meta, { fontSize: 11.5 }]}>
+              <Text style={type.metaSm}>
                 {s.key} · {Math.round(s.share * 100)}%
               </Text>
             </View>
           ))}
         </View>
 
-        <Text style={[type.body, { fontSize: 12.5, lineHeight: 18, marginTop: 16 }]}>{GOAL_CONTEXT[goal]}</Text>
-        <Text style={[type.meta, { fontSize: 11.5, marginTop: 6 }]}>Resting burn {macros.bmr} kcal</Text>
+        <Text style={[type.bodySm, { lineHeight: 18, marginTop: 16 }]}>{GOAL_CONTEXT[goal]}</Text>
+        <Text style={[type.metaSm, { marginTop: 8 }]}>Resting burn {macros.bmr} kcal</Text>
       </View>
 
       <Pressable
@@ -164,7 +166,7 @@ function PlanView() {
         style={({ pressed }) => ({
           backgroundColor: colors.signal,
           borderRadius: radii.md,
-          padding: 15,
+          padding: 16,
           alignItems: "center",
           opacity: pressed ? 0.7 : 1,
         })}
@@ -200,9 +202,9 @@ function NutrientList({ stackNutrients }: { stackNutrients: Set<string> }) {
   const rest = NUTRIENT_GUIDANCE.filter((n) => !stackNutrients.has(n.nutrient));
 
   const section = (label: string, note: string, list: typeof NUTRIENT_GUIDANCE) => (
-    <View style={{ gap: 9 }}>
+    <View style={{ gap: 8 }}>
       <Text style={type.label}>{label}</Text>
-      <Text style={[type.meta, { fontSize: 12, marginTop: -4 }]}>{note}</Text>
+      <Text style={[type.meta, { marginTop: -4 }]}>{note}</Text>
       <View style={[panel, { overflow: "hidden" }]}>
         {list.map((n, i) => (
           <NutrientRow
@@ -218,7 +220,7 @@ function NutrientList({ stackNutrients }: { stackNutrients: Set<string> }) {
   );
 
   return (
-    <View style={{ gap: 22 }}>
+    <View style={{ gap: 24 }}>
       {prioritized.length > 0 &&
         prioritized.length < NUTRIENT_GUIDANCE.length &&
         section(
@@ -262,20 +264,16 @@ function NutrientRow({
         })}
       >
         <View style={{ flex: 1 }}>
-          <Text style={[type.heading, { fontSize: 15 }]}>{guidance.nutrient}</Text>
-          <Text style={{ fontFamily: font.medium, color: colors.ink3, fontSize: 12.5, marginTop: 2 }}>
-            {guidance.amount}
-          </Text>
+          <Text style={type.headingSm}>{guidance.nutrient}</Text>
+          <Text style={[type.metaSm, { marginTop: 2 }]}>{guidance.amount}</Text>
         </View>
-        <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink3, lineHeight: 22 }}>
-          {expanded ? "–" : "+"}
-        </Text>
+        <Disclosure size={16} color={colors.ink3} open={expanded} />
       </Pressable>
 
       {expanded && (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 15, gap: 8 }}>
-          <Text style={[type.body, { fontSize: 13, lineHeight: 19 }]}>{guidance.benefits}</Text>
-          <Text style={{ fontFamily: font.semibold, color: colors.ink2, fontSize: 13, lineHeight: 19 }}>
+        <View style={{ paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.sm }}>
+          <Text style={type.bodySm}>{guidance.benefits}</Text>
+          <Text style={[type.bodySm, { fontFamily: font.semibold, color: colors.ink2 }]}>
             {guidance.foods.join(" · ")}
           </Text>
         </View>
@@ -295,28 +293,38 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | "">(user?.activityLevel ?? "");
   const [nutritionGoal, setNutritionGoal] = useState<NutritionGoal | "">(user?.nutritionGoal ?? "");
 
+  const [error, setError] = useState<string | null>(null);
+
   const valid = weightLb && heightIn && age && sex && activityLevel && nutritionGoal;
 
+  // Everything on this screen is derived from this save. Without a catch, a
+  // failed request threw into nothing: onDone() never ran, no message
+  // appeared, and the form simply sat there looking like it had been ignored.
   async function handleSave() {
     if (!valid) return;
-    await updateProfile.mutateAsync({
-      weightKg: Number(weightLb) / LB_PER_KG,
-      heightCm: Number(heightIn) / IN_PER_CM,
-      age: Number(age),
-      sex: sex as "Male" | "Female",
-      activityLevel: activityLevel as ActivityLevel,
-      nutritionGoal: nutritionGoal as NutritionGoal,
-    });
-    onDone();
+    setError(null);
+    try {
+      await updateProfile.mutateAsync({
+        weightKg: Number(weightLb) / LB_PER_KG,
+        heightCm: Number(heightIn) / IN_PER_CM,
+        age: Number(age),
+        sex: sex as "Male" | "Female",
+        activityLevel: activityLevel as ActivityLevel,
+        nutritionGoal: nutritionGoal as NutritionGoal,
+      });
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save your profile — try again.");
+    }
   }
 
   return (
-    <View style={[panel, { padding: 18, gap: 14 }]}>
+    <View style={[panel, { padding: 20, gap: 16 }]}>
       <Text style={type.body}>
         Used only to calculate your calorie/macro targets — not medical advice.
       </Text>
 
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: 12 }}>
         <Field label="Weight (lb)" value={weightLb} onChangeText={setWeightLb} />
         <Field label="Height (in)" value={heightIn} onChangeText={setHeightIn} />
         <Field label="Age" value={age} onChangeText={setAge} />
@@ -325,47 +333,34 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <Text style={type.label}>Sex</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {(["Male", "Female"] as const).map((s) => (
-          <Chip key={s} label={s} on={sex === s} onPress={() => setSex(s)} />
+          <Chip key={s} label={s} selected={sex === s} onPress={() => setSex(s)} />
         ))}
       </View>
 
       <Text style={type.label}>Activity level</Text>
       <View style={{ gap: 8 }}>
         {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((level) => (
-          <Chip key={level} label={ACTIVITY_LABELS[level]} on={activityLevel === level} onPress={() => setActivityLevel(level)} fullWidth />
+          <Chip key={level} label={ACTIVITY_LABELS[level]} selected={activityLevel === level} onPress={() => setActivityLevel(level)} fullWidth />
         ))}
       </View>
 
       <Text style={type.label}>Goal</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {(Object.keys(GOAL_LABELS) as NutritionGoal[]).map((g) => (
-          <Chip key={g} label={GOAL_LABELS[g]} on={nutritionGoal === g} onPress={() => setNutritionGoal(g)} />
+          <Chip key={g} label={GOAL_LABELS[g]} selected={nutritionGoal === g} onPress={() => setNutritionGoal(g)} />
         ))}
       </View>
 
-      <Pressable
+      <ErrorText>{error}</ErrorText>
+
+      <Button
+        label="Save & calculate"
+        loadingLabel="Saving…"
         onPress={handleSave}
-        disabled={!valid || updateProfile.isPending}
-        style={({ pressed }) => ({
-          backgroundColor: valid ? colors.signal : colors.panelRaised,
-          borderRadius: radii.md,
-          padding: 15,
-          alignItems: "center",
-          marginTop: 10,
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 15,
-            letterSpacing: 0.3,
-            color: valid ? colors.onSignal : colors.ink3,
-          }}
-        >
-          Save & calculate
-        </Text>
-      </Pressable>
+        disabled={!valid}
+        loading={updateProfile.isPending}
+        style={{ marginTop: space.md }}
+      />
     </View>
   );
 }
@@ -373,7 +368,7 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 function Field({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={[type.label, { fontSize: 10, marginBottom: 6 }]}>{label}</Text>
+      <Text style={[type.label, { marginBottom: 8 }]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -385,7 +380,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
           borderRadius: radii.md,
           padding: 12,
           fontFamily: font.numeralMedium,
-          fontSize: 16,
+          fontSize: 17,
           color: colors.ink,
         }}
       />
@@ -393,21 +388,3 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
   );
 }
 
-function Chip({ label, on, onPress, fullWidth }: { label: string; on: boolean; onPress: () => void; fullWidth?: boolean }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingVertical: 9,
-        paddingHorizontal: 14,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: on ? colors.signal : colors.hairline2,
-        backgroundColor: on ? colors.signalFaint : "transparent",
-        width: fullWidth ? "100%" : undefined,
-      }}
-    >
-      <Text style={{ fontFamily: font.semibold, color: on ? colors.signal : colors.ink2, fontSize: 13 }}>{label}</Text>
-    </Pressable>
-  );
-}

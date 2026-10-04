@@ -12,13 +12,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Platform, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { useAuthStore } from "./src/store/authStore";
-import { colors, font, radii, type } from "./src/theme";
+import { Button } from "./src/components/primitives";
+import { colors, type } from "./src/theme";
 
 const queryClient = new QueryClient();
 
@@ -74,24 +75,7 @@ function ServerUnreachable({ onRetry, retrying }: { onRetry: () => void; retryin
         You're still signed in — the app just couldn't connect. Check that the backend is
         running, then try again.
       </Text>
-      <Pressable
-        onPress={onRetry}
-        disabled={retrying}
-        accessibilityRole="button"
-        style={({ pressed }) => ({
-          minHeight: 48,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: radii.md,
-          backgroundColor: retrying ? colors.panelRaised : colors.signal,
-          marginTop: 4,
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Text style={{ fontFamily: font.bold, fontSize: 15, letterSpacing: 0.3, color: retrying ? colors.ink3 : colors.onSignal }}>
-          {retrying ? "Connecting…" : "Try again"}
-        </Text>
-      </Pressable>
+      <Button label="Try again" loadingLabel="Connecting…" onPress={onRetry} loading={retrying} />
     </View>
   );
 }

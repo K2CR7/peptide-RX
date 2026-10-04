@@ -72,7 +72,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
               borderTopWidth: 1,
               borderColor: colors.hairline2,
               paddingTop: 16,
-              paddingBottom: 14,
+              paddingBottom: 16,
             }}
           >
             <View
@@ -86,7 +86,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 borderBottomColor: colors.hairline,
               }}
             >
-              <Text style={[type.heading, { fontSize: 17 }]}>Ask about your data</Text>
+              <Text style={type.heading}>Ask about your data</Text>
               <Pressable
                 onPress={close}
                 accessibilityRole="button"
@@ -98,7 +98,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Text style={{ fontFamily: font.semibold, fontSize: 14, color: colors.ink2 }}>Close</Text>
+                <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink2 }}>Close</Text>
               </Pressable>
             </View>
 
@@ -111,7 +111,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
             >
               {empty && (
                 <View style={{ gap: 8 }}>
-                  <Text style={[type.body, { fontSize: 13.5, marginBottom: 2 }]}>
+                  <Text style={[type.bodySm, { marginBottom: 2 }]}>
                     Answers come from what you've logged. It won't advise on doses or anything medical.
                   </Text>
                   {suggestions.map((s) => (
@@ -122,14 +122,14 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                       style={({ pressed }) => ({
                         minHeight: 46,
                         justifyContent: "center",
-                        paddingHorizontal: 14,
+                        paddingHorizontal: 16,
                         borderWidth: 1,
                         borderColor: colors.hairline2,
                         borderRadius: radii.md,
                         opacity: pressed ? 0.72 : 1,
                       })}
                     >
-                      <Text style={{ fontFamily: font.medium, fontSize: 14, color: colors.ink }}>{s}</Text>
+                      <Text style={{ fontFamily: font.medium, fontSize: 15, color: colors.ink }}>{s}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -145,11 +145,11 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                         borderColor: colors.signalDim,
                         borderRadius: radii.lg,
                         borderBottomRightRadius: 4,
-                        paddingVertical: 9,
-                        paddingHorizontal: 13,
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
                       }}
                     >
-                      <Text style={{ fontFamily: font.medium, fontSize: 14.5, color: colors.ink, lineHeight: 20 }}>
+                      <Text style={{ fontFamily: font.medium, fontSize: 15, color: colors.ink, lineHeight: 20 }}>
                         {turn.text}
                       </Text>
                     </View>
@@ -171,7 +171,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
               )}
 
               {ask.isPending && (
-                <View style={{ alignSelf: "flex-start", flexDirection: "row", gap: 5, paddingVertical: 4 }}>
+                <View style={{ alignSelf: "flex-start", flexDirection: "row", gap: 4, paddingVertical: 4 }}>
                   {[0, 1, 2].map((d) => (
                     <View
                       key={d}
@@ -193,7 +193,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
             <View
               style={{
                 flexDirection: "row",
-                gap: 9,
+                gap: 8,
                 paddingHorizontal: 20,
                 paddingTop: 12,
                 borderTopWidth: 1,
@@ -214,7 +214,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                   borderWidth: 1,
                   borderColor: colors.hairline2,
                   borderRadius: radii.md,
-                  paddingHorizontal: 13,
+                  paddingHorizontal: 12,
                   minHeight: 46,
                   fontFamily: font.regular,
                   fontSize: 15,
@@ -227,7 +227,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 accessibilityRole="button"
                 style={({ pressed }) => ({
                   minHeight: 46,
-                  paddingHorizontal: 17,
+                  paddingHorizontal: 16,
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: radii.md,
@@ -238,7 +238,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                 <Text
                   style={{
                     fontFamily: font.bold,
-                    fontSize: 14,
+                    fontSize: 15,
                     letterSpacing: 0.3,
                     color: question.trim() && !ask.isPending ? colors.onSignal : colors.ink3,
                   }}

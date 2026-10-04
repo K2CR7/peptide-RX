@@ -9,7 +9,7 @@ import {
 import {
   type BodyView, getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark,
 } from "../lib/injectionSites";
-import { colors, font, radii, type } from "../theme";
+import { HIT, colors, font, radii, type } from "../theme";
 
 const STEP_ICONS: Record<StepMark, (p: { size?: number; color: string }) => ReactElement> = {
   wash: StepWash,
@@ -111,20 +111,20 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
               borderTopWidth: 1,
               borderColor: colors.hairline2,
               maxHeight: "92%",
-              paddingTop: 18,
+              paddingTop: 20,
               paddingHorizontal: 20,
-              paddingBottom: 18,
+              paddingBottom: 20,
             },
           ]}
         >
           {!showGuide && hasSites && (
             <>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={[type.heading, { fontSize: 18 }]}>Pin your site</Text>
+                <Text style={type.heading}>Pin your site</Text>
                 {hasBack && <ViewToggle view={view} onChange={setView} />}
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 6 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 8 }}>
                 <BodyDiagram
                   view={view}
                   sites={sites}
@@ -142,22 +142,22 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                     borderColor: selectedSite ? colors.signalDim : colors.hairline,
                     backgroundColor: selectedSite ? colors.signalFaint : colors.panelRaised,
                     borderRadius: radii.md,
-                    padding: 13,
+                    padding: 12,
                   }}
                 >
                   {selectedSite ? (
                     <>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text style={{ fontFamily: font.bold, fontSize: 15.5, color: colors.signal }}>
+                        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.signal }}>
                           {selectedSite.label}
                         </Text>
                         {selectedSite.id === recommended?.id && (
-                          <Text style={[type.label, { fontSize: 10, color: colors.signal }]}>Next up</Text>
+                          <Text style={[type.label, { color: colors.signal }]}>Next up</Text>
                         )}
                       </View>
-                      <Text style={[type.body, { fontSize: 13, marginTop: 3 }]}>{selectedSite.desc}</Text>
+                      <Text style={[type.bodySm, { marginTop: 3 }]}>{selectedSite.desc}</Text>
                       {(usage[selectedSite.id] ?? 0) > 0 && (
-                        <Text style={{ fontFamily: font.medium, fontSize: 12.5, color: colors.amber, marginTop: 6 }}>
+                        <Text style={{ fontFamily: font.medium, fontSize: 13, color: colors.amber, marginTop: 8 }}>
                           Used {usage[selectedSite.id]}× recently — rotating reduces irritation and lipohypertrophy.
                         </Text>
                       )}
@@ -172,7 +172,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.ink2 }}>
+                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.ink2 }}>
                     {showAll ? "Hide site list" : "Choose from a list instead"}
                   </Text>
                 </Pressable>
@@ -193,8 +193,8 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                             alignItems: "center",
                             justifyContent: "space-between",
                             minHeight: 52,
-                            paddingVertical: 10,
-                            paddingHorizontal: 13,
+                            paddingVertical: 12,
+                            paddingHorizontal: 12,
                             borderTopWidth: i === 0 ? 0 : 1,
                             borderTopColor: colors.hairline,
                             backgroundColor: isSel ? colors.signalFaint : "transparent",
@@ -205,13 +205,13 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                             <Text
                               style={{
                                 fontFamily: font.semibold,
-                                fontSize: 14.5,
+                                fontSize: 15,
                                 color: isSel ? colors.signal : colors.ink,
                               }}
                             >
                               {site.label}
                             </Text>
-                            <Text style={[type.meta, { fontSize: 12, marginTop: 1 }]}>{site.desc}</Text>
+                            <Text style={[type.meta, { marginTop: 1 }]}>{site.desc}</Text>
                           </View>
                           {used > 0 && (
                             <Text style={{ fontFamily: font.numeralMedium, fontSize: 13, color: colors.amber }}>
@@ -235,7 +235,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   minHeight: 50,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginTop: 14,
+                  marginTop: 16,
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
@@ -257,7 +257,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingRight: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.ink2 }}>
+                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.ink2 }}>
                     How to inject
                   </Text>
                 </Pressable>
@@ -266,7 +266,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingLeft: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={[type.meta, { fontSize: 13.5 }]}>Cancel</Text>
+                  <Text style={type.meta}>Cancel</Text>
                 </Pressable>
               </View>
             </>
@@ -274,10 +274,10 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
 
           {!showGuide && !hasSites && (
             <>
-              <Text style={[type.heading, { fontSize: 18 }]}>
+              <Text style={type.heading}>
                 {routeKey === "Oral" ? "Oral — no injection site" : "Nasal spray — no injection site"}
               </Text>
-              <Text style={[type.body, { marginTop: 6 }]}>
+              <Text style={[type.body, { marginTop: 8 }]}>
                 Nothing to pin for this route. Confirm to log today's dose.
               </Text>
 
@@ -305,14 +305,14 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingRight: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.ink2 }}>Instructions</Text>
+                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.ink2 }}>Instructions</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => { reset(); onClose(); }}
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingLeft: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={[type.meta, { fontSize: 13.5 }]}>Cancel</Text>
+                  <Text style={type.meta}>Cancel</Text>
                 </Pressable>
               </View>
             </>
@@ -327,11 +327,11 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingLeft: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={{ fontFamily: font.semibold, fontSize: 13.5, color: colors.signal }}>Done</Text>
+                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.signal }}>Done</Text>
                 </Pressable>
               </View>
 
-              <View style={{ flexDirection: "row", gap: 4, marginTop: 8, marginBottom: 14 }}>
+              <View style={{ flexDirection: "row", gap: 4, marginTop: 8, marginBottom: 16 }}>
                 {steps.map((_, i) => (
                   <View
                     key={i}
@@ -358,16 +358,16 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   justifyContent: "center",
                 }}
               >
-                <View style={{ marginBottom: 14 }}>
+                <View style={{ marginBottom: 16 }}>
                   {STEP_ICONS[steps[step].mark]({ size: 38, color: colors.signal })}
                 </View>
-                <Text style={[type.heading, { fontSize: 17, marginBottom: 8, textAlign: "center" }]}>
+                <Text style={[type.heading, { marginBottom: 8, textAlign: "center" }]}>
                   {steps[step].title}
                 </Text>
                 <Text style={[type.body, { textAlign: "center" }]}>{steps[step].body}</Text>
               </View>
 
-              <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 {step > 0 && (
                   <Pressable
                     onPress={() => setStep((s) => s - 1)}
@@ -377,13 +377,13 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                       borderColor: colors.hairline2,
                       borderRadius: radii.md,
                       minHeight: 48,
-                      paddingHorizontal: 22,
+                      paddingHorizontal: 24,
                       alignItems: "center",
                       justifyContent: "center",
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
-                    <Text style={{ fontFamily: font.semibold, color: colors.ink2, fontSize: 14 }}>Back</Text>
+                    <Text style={{ fontFamily: font.semibold, color: colors.ink2, fontSize: 15 }}>Back</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -399,7 +399,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                     opacity: pressed ? 0.7 : 1,
                   })}
                 >
-                  <Text style={{ fontFamily: font.bold, fontSize: 14.5, color: colors.onSignal, letterSpacing: 0.3 }}>
+                  <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
                     {step < steps.length - 1 ? "Next step" : "Back to pinning"}
                   </Text>
                 </Pressable>
@@ -433,8 +433,8 @@ function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: BodyView
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             style={({ pressed }) => ({
-              minHeight: 36,
-              paddingHorizontal: 14,
+              minHeight: HIT,
+              paddingHorizontal: 16,
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: on ? colors.signalFaint : "transparent",
@@ -444,7 +444,7 @@ function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: BodyView
             <Text
               style={{
                 fontFamily: font.semibold,
-                fontSize: 12.5,
+                fontSize: 13,
                 color: on ? colors.signal : colors.ink3,
                 textTransform: "capitalize",
               }}
