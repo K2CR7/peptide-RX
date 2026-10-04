@@ -12,23 +12,33 @@ import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Platform, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { useAuthStore } from "./src/store/authStore";
-import { colors } from "./src/theme";
+import { colors, font, radii, type } from "./src/theme";
 
 const queryClient = new QueryClient();
 
 function AuthGate() {
-  const { user, hydrated, hydrate } = useAuthStore();
+  const { user, hydrated, hydrate, serverUnreachable } = useAuthStore();
   const [showSignUp, setShowSignUp] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  async function retry() {
+    setRetrying(true);
+    try {
+      await hydrate();
+    } finally {
+      setRetrying(false);
+    }
+  }
 
   if (!hydrated) {
     return (
@@ -36,6 +46,13 @@ function AuthGate() {
         <ActivityIndicator color={colors.signal} />
       </View>
     );
+  }
+
+  // We still hold a refresh token, we just couldn't reach the backend to use
+  // it. Showing the sign-in form here would be a lie: the session is intact
+  // and re-entering a password wouldn't help.
+  if (!user && serverUnreachable) {
+    return <ServerUnreachable onRetry={retry} retrying={retrying} />;
   }
 
   if (!user) {
@@ -47,6 +64,36 @@ function AuthGate() {
   }
 
   return <MainTabs />;
+}
+
+function ServerUnreachable({ onRetry, retrying }: { onRetry: () => void; retrying: boolean }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: "center", padding: 24, gap: 12 }}>
+      <Text style={type.title}>Can't reach the server</Text>
+      <Text style={type.body}>
+        You're still signed in — the app just couldn't connect. Check that the backend is
+        running, then try again.
+      </Text>
+      <Pressable
+        onPress={onRetry}
+        disabled={retrying}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          minHeight: 48,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: radii.md,
+          backgroundColor: retrying ? colors.panelRaised : colors.signal,
+          marginTop: 4,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Text style={{ fontFamily: font.bold, fontSize: 15, letterSpacing: 0.3, color: retrying ? colors.ink3 : colors.onSignal }}>
+          {retrying ? "Connecting…" : "Try again"}
+        </Text>
+      </Pressable>
+    </View>
+  );
 }
 
 // The web build is for local iteration, not a real target platform — without
