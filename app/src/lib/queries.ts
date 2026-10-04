@@ -118,10 +118,19 @@ export function useNutritionPlans() {
   });
 }
 
+/**
+ * Completion is sent as a boolean, not a date — the server stamps the time,
+ * so a wrong device clock can't write a bogus one.
+ */
+export type ProfileUpdate = Partial<Omit<AuthUser, "id" | "email" | "onboardedAt" | "tourCompletedAt">> & {
+  onboarded?: boolean;
+  tourCompleted?: boolean;
+};
+
 export function useUpdateProfile() {
   const setUser = useAuthStore((s) => s.setUser);
   return useMutation({
-    mutationFn: (data: Partial<AuthUser>) => api.patch<AuthUser>("/auth/me", data),
+    mutationFn: (data: ProfileUpdate) => api.patch<AuthUser>("/auth/me", data),
     onSuccess: (user) => setUser(user),
   });
 }

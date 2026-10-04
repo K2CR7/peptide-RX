@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
+import { navRef } from "./src/navigation/navRef";
+import { FirstRun } from "./src/screens/FirstRun";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { useAuthStore } from "./src/store/authStore";
@@ -62,6 +64,13 @@ function AuthGate() {
     ) : (
       <SignInScreen onNavigateSignUp={() => setShowSignUp(true)} />
     );
+  }
+
+  // A new account goes through the survey, the quote beat and the tour before
+  // reaching the app. Both flags must be set to skip it, so finishing the
+  // survey and abandoning the tour resumes at the tour rather than the start.
+  if (!user.onboardedAt || !user.tourCompletedAt) {
+    return <FirstRun />;
   }
 
   return <MainTabs />;
@@ -127,7 +136,7 @@ export default function App() {
     <WebPhoneFrame>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navRef}>
             <AuthGate />
           </NavigationContainer>
         </SafeAreaProvider>

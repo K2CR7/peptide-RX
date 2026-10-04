@@ -44,6 +44,20 @@ model User {
   activityLevel ActivityLevel?
   nutritionGoal NutritionGoal?
 
+  // First-run state. A null onboardedAt is what routes a new account into the
+  // survey; tourCompletedAt is separate so someone can finish the survey, bail
+  // out of the tour, and not be sent back through both.
+  onboardedAt         DateTime?
+  tourCompletedAt     DateTime?
+
+  // Self-reported context from onboarding, all editable afterwards. `goals`
+  // uses the same vocabulary the peptide reference is tagged with, so a stated
+  // goal maps straight onto both peptides and nutrient priorities.
+  goals               String[] @default([])
+  medications         String[] @default([])
+  usedPeptidesBefore  Boolean?
+  priorExperienceNote String?
+
   refreshTokens  RefreshToken[]
   stackItems     StackItem[]
   checkins       Checkin[]

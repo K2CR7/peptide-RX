@@ -22,6 +22,9 @@ import {
   useStackItems,
 } from "../lib/queries";
 import { AsyncBlock, Button, ErrorText, Panel } from "../components/primitives";
+import { TourTarget, useTour } from "../components/tour";
+import { useAuthStore } from "../store/authStore";
+import { INTERACTION_DISCLAIMER, cautionsFor, type InteractionSeverity } from "../data/peptideInteractions";
 import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
@@ -71,24 +74,26 @@ export function StackScreen() {
             >
               <BookIcon size={20} color={colors.ink2} />
             </Pressable>
-            <Pressable
-              onPress={() => setAddOpen(true)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                minHeight: 44,
-                backgroundColor: colors.signal,
-                borderRadius: radii.md,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <PlusMark size={13} color={colors.onSignal} />
-              <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
-            </Pressable>
+            <TourTarget id="stack-add">
+              <Pressable
+                onPress={() => setAddOpen(true)}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 44,
+                  backgroundColor: colors.signal,
+                  borderRadius: radii.md,
+                  paddingHorizontal: 16,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <PlusMark size={13} color={colors.onSignal} />
+                <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
+              </Pressable>
+            </TourTarget>
           </View>
         </View>
 
@@ -263,6 +268,8 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
 function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () => void }) {
   const createItem = useCreateStackItem();
   const updateItem = useUpdateStackItem();
+  const { notifyAction } = useTour();
+  const declaredMeds = useAuthStore((s) => s.user?.medications ?? []);
   const editing = item !== undefined;
 
   const [peptideName, setPeptideName] = useState(item?.peptideName ?? "");
@@ -341,6 +348,9 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
         await updateItem.mutateAsync({ id: item.id, ...payload });
       } else {
         await createItem.mutateAsync(payload);
+        // During the tour this is the one step the user actually performs,
+        // so completing it is what releases the stop.
+        notifyAction("stack-add");
       }
       onClose();
     } catch (e) {
@@ -371,6 +381,10 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           customPlaceholder="Enter a peptide not listed"
           describe={(name) => PEPTIDE_REFERENCE[name]?.aka}
         />
+
+        {peptideName.trim() !== "" && (
+          <InteractionNotice peptideName={peptideName} medications={declaredMeds} />
+        )}
 
         <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
           <View style={{ flex: 1.4 }}>
@@ -616,6 +630,58 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
         {value}
       </Text>
+    </View>
+  );
+}
+
+/**
+ * Cautions for the peptide being added, against what the user said they take.
+ *
+ * Non-blocking by design. The product is a tracker and `PRODUCT.md` principle
+ * 1 forbids crossing into medical advice, so this reports a documented pairing
+ * and points at the prescriber — it never withholds the action and never tells
+ * anyone what to do. The "no established data" case is shown deliberately:
+ * saying nothing would read as "cleared".
+ */
+function InteractionNotice({
+  peptideName, medications,
+}: { peptideName: string; medications: string[] }) {
+  const notices = cautionsFor(peptideName, medications);
+  if (notices.length === 0) return null;
+
+  const worst: InteractionSeverity = notices.some((n) => n.severity === "avoid")
+    ? "avoid"
+    : notices.some((n) => n.severity === "caution")
+      ? "caution"
+      : "info";
+
+  const tone =
+    worst === "avoid" ? colors.red : worst === "caution" ? colors.amber : colors.ink3;
+  const heading =
+    worst === "avoid"
+      ? "Not intended to be combined"
+      : worst === "caution"
+        ? "Worth raising with your prescriber"
+        : "Good to know";
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: space.md,
+        marginTop: space.lg,
+      }}
+    >
+      <View style={{ width: 2, borderRadius: 1, backgroundColor: tone }} />
+      <View style={{ flex: 1, gap: space.sm }}>
+        <Text style={[type.label, { color: tone }]}>{heading}</Text>
+        {notices.map((n, i) => (
+          <Text key={i} style={type.bodySm}>
+            {n.note}
+          </Text>
+        ))}
+        <Text style={[type.metaSm, { lineHeight: 17 }]}>{INTERACTION_DISCLAIMER}</Text>
+      </View>
     </View>
   );
 }

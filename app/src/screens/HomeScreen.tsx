@@ -12,6 +12,7 @@ import { computeAdherence } from "../lib/adherence";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -171,23 +172,25 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        <View
-          style={[
-            panel,
-            {
-              padding: 24,
-              alignItems: "center",
-              backgroundColor: allDone ? colors.signalFaint : colors.panel,
-              borderColor: allDone ? colors.signalDim : colors.hairline,
-            },
-          ]}
-        >
-          <CircularProgress
-            progress={progress}
-            label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-            sublabel={allDone ? "protocol complete" : "doses logged"}
-          />
-        </View>
+        <TourTarget id="today-ring">
+          <View
+            style={[
+              panel,
+              {
+                padding: 24,
+                alignItems: "center",
+                backgroundColor: allDone ? colors.signalFaint : colors.panel,
+                borderColor: allDone ? colors.signalDim : colors.hairline,
+              },
+            ]}
+          >
+            <CircularProgress
+              progress={progress}
+              label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
+              sublabel={allDone ? "protocol complete" : "doses logged"}
+            />
+          </View>
+        </TourTarget>
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
