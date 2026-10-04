@@ -298,7 +298,9 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 
   const [error, setError] = useState<string | null>(null);
 
-  const valid = weightLb && heightIn && age && sex && activityLevel && nutritionGoal;
+  const hasBirthDate = !!user?.dateOfBirth;
+
+  const valid = weightLb && heightIn && (hasBirthDate || age) && sex && activityLevel && nutritionGoal;
 
   // Everything on this screen is derived from this save. Without a catch, a
   // failed request threw into nothing: onDone() never ran, no message
@@ -310,7 +312,7 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       await updateProfile.mutateAsync({
         weightKg: Number(weightLb) / LB_PER_KG,
         heightCm: Number(heightIn) / IN_PER_CM,
-        age: Number(age),
+        ...(hasBirthDate ? {} : { age: Number(age) }),
         sex: sex as "Male" | "Female",
         activityLevel: activityLevel as ActivityLevel,
         nutritionGoal: nutritionGoal as NutritionGoal,
@@ -330,8 +332,17 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <View style={{ flexDirection: "row", gap: 12 }}>
         <Field label="Weight (lb)" value={weightLb} onChangeText={setWeightLb} />
         <Field label="Height (in)" value={heightIn} onChangeText={setHeightIn} />
-        <Field label="Age" value={age} onChangeText={setAge} />
+        {/* Only ask when we don't already know. With a birth date on file the
+            age is derived and always current, so an editable box here would
+            be a second source of truth that immediately disagrees. */}
+        {!hasBirthDate && <Field label="Age" value={age} onChangeText={setAge} />}
       </View>
+
+      {hasBirthDate && (
+        <Text style={type.metaSm}>
+          Age {user?.age} — worked out from your date of birth.
+        </Text>
+      )}
 
       <Text style={type.label}>Sex</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>

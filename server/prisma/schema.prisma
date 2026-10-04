@@ -40,6 +40,11 @@ model User {
   // history (Checkin.weightKg is the tracked-over-time version of weight).
   weightKg      Float?
   heightCm      Float?
+  // dateOfBirth is the source of truth where it's set; `age` is derived from
+  // it on read. A stored age silently goes stale every birthday, which would
+  // quietly drift the calorie maths — a birth date never does. `age` stays
+  // for accounts that only ever gave a number.
+  dateOfBirth   DateTime?
   age           Int?
   activityLevel ActivityLevel?
   nutritionGoal NutritionGoal?

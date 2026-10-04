@@ -12,6 +12,19 @@ import {
 
 export const authRouter = Router();
 
+/**
+ * Whole years since a birth date. Derived rather than stored so it can't go
+ * stale on someone's birthday and quietly shift their calorie targets.
+ */
+function ageFromBirthDate(dob: Date, now = new Date()): number {
+  let years = now.getFullYear() - dob.getFullYear();
+  const beforeBirthdayThisYear =
+    now.getMonth() < dob.getMonth() ||
+    (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate());
+  if (beforeBirthdayThisYear) years -= 1;
+  return years;
+}
+
 function serializeUser(user: {
   id: string;
   email: string;
@@ -20,6 +33,7 @@ function serializeUser(user: {
   experience: string | null;
   weightKg: number | null;
   heightCm: number | null;
+  dateOfBirth: Date | null;
   age: number | null;
   activityLevel: string | null;
   nutritionGoal: string | null;
@@ -38,7 +52,8 @@ function serializeUser(user: {
     experience: user.experience,
     weightKg: user.weightKg,
     heightCm: user.heightCm,
-    age: user.age,
+    dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : null,
+    age: user.dateOfBirth ? ageFromBirthDate(user.dateOfBirth) : user.age,
     activityLevel: user.activityLevel,
     nutritionGoal: user.nutritionGoal,
     onboardedAt: user.onboardedAt ? user.onboardedAt.toISOString() : null,
@@ -63,6 +78,7 @@ const updateProfileSchema = z.object({
   weightKg: z.number().positive().optional(),
   heightCm: z.number().positive().optional(),
   age: z.number().int().positive().optional(),
+  dateOfBirth: z.string().datetime().optional(),
   activityLevel: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"]).optional(),
   nutritionGoal: z.enum(["CUT", "MAINTAIN", "BULK"]).optional(),
 
@@ -84,7 +100,7 @@ authRouter.patch("/me", requireAuth, async (req, res) => {
   // The client reports completion as a boolean and the server stamps the
   // time, so a wrong device clock can't write a bogus date — and re-sending
   // `onboarded: true` can't quietly move the original timestamp.
-  const { onboarded, tourCompleted, ...rest } = parsed.data;
+  const { onboarded, tourCompleted, dateOfBirth, ...rest } = parsed.data;
   const existing = await prisma.user.findUnique({
     where: { id: req.userId! },
     select: { onboardedAt: true, tourCompletedAt: true },
@@ -94,6 +110,7 @@ authRouter.patch("/me", requireAuth, async (req, res) => {
     where: { id: req.userId! },
     data: {
       ...rest,
+      ...(dateOfBirth !== undefined ? { dateOfBirth: new Date(dateOfBirth) } : {}),
       ...(onboarded !== undefined
         ? { onboardedAt: onboarded ? (existing?.onboardedAt ?? new Date()) : null }
         : {}),

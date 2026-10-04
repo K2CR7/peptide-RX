@@ -12,6 +12,8 @@ export interface AuthUser {
   experience?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | null;
   weightKg?: number | null;
   heightCm?: number | null;
+  /** Source of truth where set; `age` below is derived from it by the server. */
+  dateOfBirth?: string | null;
   age?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE" | null;
   nutritionGoal?: "CUT" | "MAINTAIN" | "BULK" | null;

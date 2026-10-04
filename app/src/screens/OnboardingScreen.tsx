@@ -14,13 +14,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GOAL_OPTIONS, deriveNutritionGoal } from "../data/goals";
 import { MEDICATION_OPTIONS } from "../data/medications";
 import { INTERACTION_DISCLAIMER } from "../data/peptideInteractions";
+import { type BirthDateParts, parseBirthDate } from "../lib/birthDate";
 import { useUpdateProfile } from "../lib/queries";
 import { Button, ErrorText } from "../components/primitives";
 import { Animated, Rise, useEntrance } from "../components/motion";
 import { CheckMark } from "../components/icons";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
-const STEPS = ["age", "goals", "history", "medications"] as const;
+const STEPS = ["birth", "goals", "history", "medications"] as const;
 type Step = (typeof STEPS)[number];
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
@@ -28,7 +29,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const updateProfile = useUpdateProfile();
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [age, setAge] = useState("");
+  const [dob, setDob] = useState<BirthDateParts>({ month: "", day: "", year: "" });
   const [goals, setGoals] = useState<string[]>([]);
   const [usedBefore, setUsedBefore] = useState<boolean | null>(null);
   const [priorNote, setPriorNote] = useState("");
@@ -36,6 +37,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [customMed, setCustomMed] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const parsedDob = parseBirthDate(dob);
   const step: Step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
 
@@ -48,7 +50,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     const meds = customMed.trim() ? [...medications, customMed.trim()] : medications;
     try {
       await updateProfile.mutateAsync({
-        ...(age.trim() && Number(age) ? { age: Number(age) } : {}),
+        ...(parsedDob.date ? { dateOfBirth: parsedDob.date.toISOString() } : {}),
         goals,
         medications: meds,
         ...(usedBefore !== null ? { usedPeptidesBefore: usedBefore } : {}),
@@ -90,31 +92,23 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       >
         {/* Keyed so every step remounts and replays its entrance. */}
         <View key={step} style={{ flex: 1 }}>
-          {step === "age" && (
+          {step === "birth" && (
             <StepBody
               label="About you"
-              question="How old are you?"
+              question="When were you born?"
               hint="Used to work out your calorie and macro targets. Nothing else."
             >
-              <TextInput
-                value={age}
-                onChangeText={setAge}
-                placeholder="Age"
-                placeholderTextColor={colors.ink3}
-                keyboardType="number-pad"
-                autoFocus
-                style={{
-                  backgroundColor: colors.panel,
-                  borderWidth: 1,
-                  borderColor: age ? colors.hairline2 : colors.hairline,
-                  borderRadius: radii.md,
-                  paddingHorizontal: space.lg,
-                  minHeight: 56,
-                  fontFamily: font.numeralMedium,
-                  fontSize: 20,
-                  color: colors.ink,
-                }}
-              />
+              <View style={{ gap: space.md }}>
+                <View style={{ flexDirection: "row", gap: space.md }}>
+                  <DobField label="Month" value={dob.month} onChange={(v) => setDob({ ...dob, month: v })} max={2} flex={1} autoFocus />
+                  <DobField label="Day" value={dob.day} onChange={(v) => setDob({ ...dob, day: v })} max={2} flex={1} />
+                  <DobField label="Year" value={dob.year} onChange={(v) => setDob({ ...dob, year: v })} max={4} flex={1.4} />
+                </View>
+                {parsedDob.error && <ErrorText>{parsedDob.error}</ErrorText>}
+                {parsedDob.date && parsedDob.age !== null && (
+                  <Text style={type.metaSm}>That makes you {parsedDob.age}.</Text>
+                )}
+              </View>
             </StepBody>
           )}
 
@@ -344,6 +338,51 @@ function ProgressRail({ step, total, topInset }: { step: number; total: number; 
       <Text style={[type.metaSm, { marginTop: space.sm }]}>
         Step {step + 1} of {total}
       </Text>
+    </View>
+  );
+}
+
+/**
+ * One part of a birth date. Three short numeric fields rather than a free-text
+ * date or a picker dependency: nothing to mis-parse, and the keyboard is
+ * already numeric on a phone.
+ */
+function DobField({
+  label, value, onChange, max, flex, autoFocus,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  max: number;
+  flex: number;
+  autoFocus?: boolean;
+}) {
+  return (
+    <View style={{ flex, gap: space.sm }}>
+      <Text style={type.label}>{label}</Text>
+      <TextInput
+        value={value}
+        // Digits only, capped at the field's width, so the value can never
+        // become something parseBirthDate has to defend against.
+        onChangeText={(v) => onChange(v.replace(/[^0-9]/g, "").slice(0, max))}
+        placeholder={"0".repeat(max)}
+        placeholderTextColor={colors.ink3}
+        keyboardType="number-pad"
+        autoFocus={autoFocus}
+        maxLength={max}
+        style={{
+          backgroundColor: colors.panel,
+          borderWidth: 1,
+          borderColor: value ? colors.hairline2 : colors.hairline,
+          borderRadius: radii.md,
+          paddingHorizontal: space.lg,
+          minHeight: 56,
+          fontFamily: font.numeralMedium,
+          fontSize: 20,
+          color: colors.ink,
+          textAlign: "center",
+        }}
+      />
     </View>
   );
 }
