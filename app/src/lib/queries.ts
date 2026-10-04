@@ -43,7 +43,8 @@ export function useArchiveStackItem() {
 export interface InjectionLog {
   id: string;
   stackItemId: string;
-  site: string;
+  /** Null for oral and nasal doses — nothing to pin. */
+  site: string | null;
   takenAt: string;
   notes: string | null;
 }
@@ -61,7 +62,7 @@ export function useInjectionLogs(stackItemId?: string) {
 export function useLogInjection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { stackItemId: string; site: string; notes?: string }) =>
+    mutationFn: (data: { stackItemId: string; site: string | null; notes?: string }) =>
       api.post<InjectionLog>("/injection-logs", data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["injectionLogs"] }),
   });

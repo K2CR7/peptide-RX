@@ -5,6 +5,7 @@ import { Select } from "../components/Select";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
+import { siteHistory } from "../lib/injectionSites";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
   CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
@@ -227,7 +228,7 @@ function StackItemRow({
 function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string; route: string | null; onClose: () => void }) {
   const { data: logs } = useInjectionLogs(stackItemId);
   const logInjection = useLogInjection();
-  const history = (logs ?? []).map((l) => l.site).reverse();
+  const history = siteHistory(logs ?? []).reverse();
 
   return (
     <InjectionSitePicker
@@ -236,7 +237,9 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
       history={history}
       onClose={onClose}
       onConfirm={(site) => {
-        if (site) logInjection.mutate({ stackItemId, site });
+        // site is null for oral and nasal routes — there is nowhere to pin,
+        // but the dose still happened, so it still gets logged.
+        logInjection.mutate({ stackItemId, site });
         onClose();
       }}
     />

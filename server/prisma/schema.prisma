@@ -89,7 +89,9 @@ model InjectionLog {
   id          String    @id @default(cuid())
   stackItemId String
   stackItem   StackItem @relation(fields: [stackItemId], references: [id], onDelete: Cascade)
-  site        String
+  // Null for routes with nowhere to pin — oral capsules, nasal sprays. The
+  // dose still happened, so the log still exists.
+  site        String?
   takenAt     DateTime  @default(now())
   notes       String?
 

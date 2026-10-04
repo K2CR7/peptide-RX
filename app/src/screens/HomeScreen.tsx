@@ -5,7 +5,7 @@ import { CircularProgress } from "../components/CircularProgress";
 import { ChevronRight, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
-import { getNextSite, getRouteKey, siteLabel } from "../lib/injectionSites";
+import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
 import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
@@ -93,7 +93,7 @@ export function HomeScreen() {
     const injectableIds = new Set(injectable.map((i) => i.id));
     const logs = (allLogs ?? []).filter((l) => injectableIds.has(l.stackItemId));
     const recent = [...logs].sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime());
-    const next = getNextSite(routeKey, [...recent].reverse().map((l) => l.site));
+    const next = getNextSite(routeKey, siteHistory([...recent].reverse()));
     return { next, recent: recent.slice(0, 3) };
   }, [items, allLogs]);
 
@@ -295,17 +295,30 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {adherence.pct !== null && (
+        {/* Shown as soon as there's a stack. A brand-new stack has no settled
+            days behind it yet, so the percentage reads "—" rather than the
+            whole panel vanishing — the streak still counts today, and a
+            missing panel reads like a bug. */}
+        {(items?.length ?? 0) > 0 && (
           <View style={{ gap: 10 }}>
             <Text style={type.label}>Consistency</Text>
             <View style={[panel, { padding: 18 }]}>
               <View style={{ flexDirection: "row", gap: 24 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 }}>
-                    {adherence.pct}
-                    <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>
+                  <Text
+                    style={{
+                      fontFamily: font.numeral,
+                      fontSize: 38,
+                      color: adherence.pct !== null ? colors.ink : colors.ink3,
+                      letterSpacing: -0.5,
+                    }}
+                  >
+                    {adherence.pct ?? "—"}
+                    {adherence.pct !== null && <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>}
                   </Text>
-                  <Text style={[type.meta, { fontSize: 12 }]}>last 7 days</Text>
+                  <Text style={[type.meta, { fontSize: 12 }]}>
+                    {adherence.pct !== null ? "last 7 days" : "no full days yet"}
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -350,7 +363,9 @@ export function HomeScreen() {
                 })}
               </View>
               <Text style={[type.meta, { fontSize: 11.5, marginTop: 7 }]}>
-                Last 7 days · thin marks are rest days
+                {adherence.pct !== null
+                  ? "Last 7 days · thin marks are rest days"
+                  : "Your first scheduled day will show here tomorrow"}
               </Text>
             </View>
           </View>
@@ -428,11 +443,11 @@ export function HomeScreen() {
 
               {rotation.recent.length > 0 && (
                 <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 9 }}>
-                  {rotation.recent.map((log) => (
+                  {rotation.recent.filter((l) => l.site).map((log) => (
                     <View key={log.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 9, flex: 1 }}>
                         <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.ink3 }} />
-                        <Text style={[type.body, { fontSize: 13.5 }]}>{siteLabel(log.site)}</Text>
+                        <Text style={[type.body, { fontSize: 13.5 }]}>{siteLabel(log.site!)}</Text>
                       </View>
                       <Text style={[type.meta, { fontSize: 12 }]}>{relativeDay(log.takenAt)}</Text>
                     </View>
@@ -455,10 +470,12 @@ export function HomeScreen() {
         <InjectionSitePicker
           visible
           route={injectFor.route}
-          history={(allLogs ?? []).filter((l) => l.stackItemId === injectFor.id).map((l) => l.site).reverse()}
+          history={siteHistory((allLogs ?? []).filter((l) => l.stackItemId === injectFor.id)).reverse()}
           onClose={() => setInjectFor(null)}
           onConfirm={(site) => {
-            if (site) logInjection.mutate({ stackItemId: injectFor.id, site });
+            // site is null for oral and nasal routes — there is nowhere to pin,
+            // but the dose still happened, so it still gets logged.
+            logInjection.mutate({ stackItemId: injectFor.id, site });
             setInjectFor(null);
           }}
         />

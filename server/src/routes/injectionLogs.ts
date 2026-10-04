@@ -18,7 +18,9 @@ injectionLogsRouter.get("/", async (req, res) => {
 
 const createSchema = z.object({
   stackItemId: z.string(),
-  site: z.string().min(1),
+  // Nullable: oral and nasal routes have no site to record, but the dose
+  // itself still needs logging.
+  site: z.string().min(1).nullish(),
   notes: z.string().optional(),
   takenAt: z.string().datetime().optional(),
 });
