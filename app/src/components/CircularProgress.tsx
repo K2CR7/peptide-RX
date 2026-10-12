@@ -56,8 +56,11 @@ export function CircularProgress({ size = 190, strokeWidth = 11, progress, label
       <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
         <Defs>
           <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            {/* Both stops come from the palette now. The second used to be a
+                hardcoded mint, which would have left a green tail on a blue
+                ring. Blue leads into the green it hands off to. */}
             <Stop offset="0" stopColor={colors.signal} />
-            <Stop offset="1" stopColor="#1FBF7E" />
+            <Stop offset="1" stopColor={colors.trace} />
           </LinearGradient>
         </Defs>
         <Circle

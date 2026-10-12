@@ -1,4 +1,5 @@
 import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
+import { colors } from "../theme";
 
 interface IconProps {
   size?: number;
@@ -107,7 +108,9 @@ export function MarkLogged({ size = 15, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={12} cy={12} r={10} fill={color} />
-      <Polyline points="7,12.5 10.5,16 17,8.5" stroke="#04140C" strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* The tick is knocked out of the filled disc, so it has to be the
+          surface behind the icon rather than the icon's own colour. */}
+      <Polyline points="7,12.5 10.5,16 17,8.5" stroke={colors.panel} strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </Svg>
   );
 }

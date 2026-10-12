@@ -558,7 +558,7 @@ function StackItemSheet({
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={onClose} />
+          <Pressable style={{ flex: 1, backgroundColor: "rgba(11,31,51,0.42)" }} onPress={onClose} />
           <View
             style={{
               backgroundColor: colors.panel,

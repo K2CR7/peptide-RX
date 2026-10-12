@@ -1,13 +1,10 @@
 import {
-  Barlow_400Regular,
-  Barlow_500Medium,
-  Barlow_600SemiBold,
-  Barlow_700Bold,
-} from "@expo-google-fonts/barlow";
-import {
-  BarlowSemiCondensed_300Light,
-  BarlowSemiCondensed_500Medium,
-} from "@expo-google-fonts/barlow-semi-condensed";
+  CormorantGaramond_300Light,
+  CormorantGaramond_400Regular,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from "@expo-google-fonts/cormorant-garamond";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
@@ -99,7 +96,7 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   if (width < 520 || height < 700) return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#DFE6EC" }}>
       <View
         style={{
           width: 430,
@@ -108,8 +105,8 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
           borderRadius: 34,
           overflow: "hidden",
           borderWidth: 1,
-          borderColor: "#1E242B",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
+          borderColor: "#C7D3DC",
+          boxShadow: "0 18px 50px rgba(11,31,51,0.18)",
         }}
       >
         {children}
@@ -120,12 +117,11 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Barlow_400Regular,
-    Barlow_500Medium,
-    Barlow_600SemiBold,
-    Barlow_700Bold,
-    BarlowSemiCondensed_300Light,
-    BarlowSemiCondensed_500Medium,
+    CormorantGaramond_300Light,
+    CormorantGaramond_400Regular,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
   });
 
   if (!fontsLoaded) {

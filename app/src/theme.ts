@@ -26,45 +26,87 @@ finish review, the verdict, DESIGN.md, and every shipping raster carrying its
 provenance.
 */
 
+/*
+Blue leads, green supports.
+
+The previous palette was near-black with a saturated mint accent. That pairing
+reads as console-game or fitness-tracker rather than clinical, and the green
+was doing four unrelated jobs at once — primary action, adherence, logged
+state and the streak — so it carried no particular meaning anywhere.
+
+Now: a near-white ground, a deep sea-blue that leads every action and
+measurement, and a single muted green reserved for "this is done". The
+neutrals carry a blue bias rather than being pure grey, so they read as
+chosen rather than defaulted.
+
+Every text colour below was checked against the surface it sits on. The
+tertiary ink is #5A7183 rather than something quieter because the obvious
+choice (#6B8296) measures 3.99:1 on white — under the 4.5:1 floor for body
+text, and this app puts real information in that step.
+*/
 export const colors = {
-  // Ground & surfaces (one-step elevation, hairline seams)
-  bg: "#0E1114",
-  panel: "#151A1F",
-  panelRaised: "#1B2129",
-  hairline: "#262D35",
-  hairline2: "#39424D",
+  // Ground & surfaces. The page is a hair off white so that true-white
+  // panels still read as raised without needing a shadow.
+  bg: "#FBFCFD",
+  panel: "#FFFFFF",
+  panelRaised: "#F2F6F8",
+  hairline: "#E1E8ED",
+  hairline2: "#C7D3DC",
 
-  // Ink. ink3 is the dimmest step that still clears 4.5:1 on both the page
-  // ground and the panel — anything quieter belongs to hairline, not to text.
-  ink: "#EAEEF2",
-  ink2: "#A9B4BF",
-  ink3: "#8A96A3",
+  // Ink, all blue-biased. Contrast on #FFFFFF: ink 16.9:1, ink2 7.6:1,
+  // ink3 5.1:1 — every step clears 4.5:1 for body text.
+  ink: "#0B1F33",
+  ink2: "#3C566E",
+  ink3: "#5A7183",
 
-  // Signal — adherence, success, primary action
-  signal: "#35E39B",
-  signalDim: "#1D5C43",
-  signalFaint: "#12281F",
-  onSignal: "#04140C",
+  // Signal — the lead. Primary action, adherence, anything measured.
+  // 7.0:1 on white as text, and white on it is the same 7.0:1 as a fill.
+  signal: "#15607F",
+  signalDim: "#A6C6D6",
+  signalFaint: "#E8F1F6",
+  onSignal: "#FFFFFF",
 
-  // Trace — data lines and charts only
-  trace: "#52C4FF",
-  traceFaint: "#12232E",
+  // Trace — the support. One job: this dose is logged, this day was kept.
+  // 5.2:1 on white, so it is safe as small text and not only as a fill.
+  trace: "#1F7A6C",
+  traceFaint: "#E6F2EF",
 
-  // Semantic
-  amber: "#F5B84A",
-  amberFaint: "#2A2113",
-  red: "#F27070",
-  redFaint: "#2B1717",
+  // Semantic. Both darkened from the dark-theme versions, which were tuned
+  // to glow on black and would have been illegible here.
+  amber: "#9A6207",
+  amberFaint: "#FBF2E3",
+  red: "#B3261E",
+  redFaint: "#FBEAE9",
 } as const;
 
+/*
+Cormorant Garamond throughout.
+
+Two things to know, because they are properties of the face rather than of
+this code, and they will show up on screen:
+
+  - It is a DISPLAY face, and an unusually delicate one. Cormorant was drawn
+    for large sizes; its own designer describes it as intended for display
+    use. The 11px tracked labels and 13px metadata sit far below that.
+  - It is very high-contrast. The hairlines are extremely fine, and light
+    text on a near-black ground thins them further, so they can drop out
+    altogether at small sizes. This is the hardest test any face on the
+    shortlist faces.
+
+It does have a 300 Light, so the big ring numeral keeps a thin weight — but
+there is no condensed cut, so doses set wider than the Barlow Semi-Condensed
+they replace.
+
+Reverting is one commit; the previous tokens were Barlow_400/500/600/700
+with BarlowSemiCondensed_300Light / _500Medium for the numerals.
+*/
 export const font = {
-  // Barlow: UI voice. BarlowSemiCondensed: instrument numerals.
-  regular: "Barlow_400Regular",
-  medium: "Barlow_500Medium",
-  semibold: "Barlow_600SemiBold",
-  bold: "Barlow_700Bold",
-  numeral: "BarlowSemiCondensed_300Light",
-  numeralMedium: "BarlowSemiCondensed_500Medium",
+  regular: "CormorantGaramond_400Regular",
+  medium: "CormorantGaramond_500Medium",
+  semibold: "CormorantGaramond_600SemiBold",
+  bold: "CormorantGaramond_700Bold",
+  numeral: "CormorantGaramond_300Light",
+  numeralMedium: "CormorantGaramond_500Medium",
 } as const;
 
 /*

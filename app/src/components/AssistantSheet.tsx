@@ -60,7 +60,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={close} />
+          <Pressable style={{ flex: 1, backgroundColor: "rgba(11,31,51,0.42)" }} onPress={close} />
 
           {/* Fixed height: the sheet shouldn't jump as answers arrive. */}
           <View

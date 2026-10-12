@@ -100,7 +100,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => { reset(); onClose(); }}>
       <PhoneModalFrame>
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(4,6,8,0.72)" }}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(11,31,51,0.42)" }}>
         <View
           style={[
             {

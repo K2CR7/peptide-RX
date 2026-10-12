@@ -204,7 +204,7 @@ function TourOverlay({
   const roomBelow = height - below;
   const captionBelow = !hole || roomBelow > 260;
 
-  const scrim = "rgba(6,8,10,0.86)";
+  const scrim = "rgba(11,31,51,0.62)";
 
   return (
     <View
