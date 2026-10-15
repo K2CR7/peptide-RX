@@ -5,6 +5,7 @@ import { MarkDue, MarkLogged, MarkMissed, MarkScheduled } from "../components/ic
 import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
 import { useInjectionLogs, useStackItems } from "../lib/queries";
 import { AsyncBlock, Panel } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { colors, font, panel, type, space } from "../theme";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -111,7 +112,8 @@ export function ScheduleScreen() {
           </Panel>
         </View>
       ) : (
-        <View style={[panel, { marginTop: 16, paddingVertical: 4, overflow: "hidden" }]}>
+        <TourTarget id="week-grid" style={{ marginTop: 16 }}>
+        <View style={[panel, { paddingVertical: 4, overflow: "hidden" }]}>
           {/* Day header */}
           <View style={{ flexDirection: "row", alignItems: "flex-end", paddingBottom: 8, paddingTop: 8 }}>
             <View style={{ width: NAME_COL }} />
@@ -237,6 +239,7 @@ export function ScheduleScreen() {
             })}
           </View>
         </View>
+        </TourTarget>
       )}
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 8, marginTop: 16, paddingHorizontal: 2 }}>

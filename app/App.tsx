@@ -1,13 +1,10 @@
 import {
-  Barlow_400Regular,
-  Barlow_500Medium,
-  Barlow_600SemiBold,
-  Barlow_700Bold,
-} from "@expo-google-fonts/barlow";
-import {
-  BarlowSemiCondensed_300Light,
-  BarlowSemiCondensed_500Medium,
-} from "@expo-google-fonts/barlow-semi-condensed";
+  CormorantGaramond_300Light,
+  CormorantGaramond_400Regular,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from "@expo-google-fonts/cormorant-garamond";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
@@ -15,6 +12,8 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MainTabs } from "./src/navigation/MainTabs";
+import { navRef } from "./src/navigation/navRef";
+import { FirstRun } from "./src/screens/FirstRun";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { useAuthStore } from "./src/store/authStore";
@@ -64,6 +63,13 @@ function AuthGate() {
     );
   }
 
+  // A new account goes through the survey, the quote beat and the tour before
+  // reaching the app. Both flags must be set to skip it, so finishing the
+  // survey and abandoning the tour resumes at the tour rather than the start.
+  if (!user.onboardedAt || !user.tourCompletedAt) {
+    return <FirstRun />;
+  }
+
   return <MainTabs />;
 }
 
@@ -90,7 +96,7 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   if (width < 520 || height < 700) return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#07090B" }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#DFE6EC" }}>
       <View
         style={{
           width: 430,
@@ -99,8 +105,8 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
           borderRadius: 34,
           overflow: "hidden",
           borderWidth: 1,
-          borderColor: "#1E242B",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
+          borderColor: "#C7D3DC",
+          boxShadow: "0 18px 50px rgba(11,31,51,0.18)",
         }}
       >
         {children}
@@ -111,12 +117,11 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Barlow_400Regular,
-    Barlow_500Medium,
-    Barlow_600SemiBold,
-    Barlow_700Bold,
-    BarlowSemiCondensed_300Light,
-    BarlowSemiCondensed_500Medium,
+    CormorantGaramond_300Light,
+    CormorantGaramond_400Regular,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
   });
 
   if (!fontsLoaded) {
@@ -127,7 +132,7 @@ export default function App() {
     <WebPhoneFrame>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navRef}>
             <AuthGate />
           </NavigationContainer>
         </SafeAreaProvider>

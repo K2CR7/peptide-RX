@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CircularProgress } from "../components/CircularProgress";
-import { ChevronRight, MarkLogged, SparkIcon } from "../components/icons";
+import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
+import { SettingsSheet } from "../components/SettingsSheet";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
 import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
@@ -12,6 +13,7 @@ import { computeAdherence } from "../lib/adherence";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -36,6 +38,7 @@ export function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
   const [askOpen, setAskOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const today = todayDow();
 
@@ -151,43 +154,66 @@ export function HomeScreen() {
             <Text style={type.title}>{user?.name ? `Hey, ${user.name}` : "Tonight's readout"}</Text>
             <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
           </View>
-          <Pressable
-            onPress={() => setAskOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Ask about your data"
-            style={({ pressed }) => ({
-              width: 44,
-              height: 44,
-              borderRadius: radii.md,
-              borderWidth: 1,
-              borderColor: colors.signalDim,
-              backgroundColor: colors.signalFaint,
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <SparkIcon size={20} color={colors.signal} />
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            {/* Quiet, bordered only — settings should never compete with the
+                assistant, which is the one thing up here worth reaching for. */}
+            <Pressable
+              onPress={() => setSettingsOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.hairline2,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <GearIcon size={19} color={colors.ink2} />
+            </Pressable>
+            <Pressable
+              onPress={() => setAskOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Ask about your data"
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                borderRadius: radii.md,
+                borderWidth: 1,
+                borderColor: colors.signalDim,
+                backgroundColor: colors.signalFaint,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <SparkIcon size={20} color={colors.signal} />
+            </Pressable>
+          </View>
         </View>
 
-        <View
-          style={[
-            panel,
-            {
-              padding: 24,
-              alignItems: "center",
-              backgroundColor: allDone ? colors.signalFaint : colors.panel,
-              borderColor: allDone ? colors.signalDim : colors.hairline,
-            },
-          ]}
-        >
-          <CircularProgress
-            progress={progress}
-            label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-            sublabel={allDone ? "protocol complete" : "doses logged"}
-          />
-        </View>
+        <TourTarget id="today-ring">
+          <View
+            style={[
+              panel,
+              {
+                padding: 24,
+                alignItems: "center",
+                backgroundColor: allDone ? colors.signalFaint : colors.panel,
+                borderColor: allDone ? colors.signalDim : colors.hairline,
+              },
+            ]}
+          >
+            <CircularProgress
+              progress={progress}
+              label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
+              sublabel={allDone ? "protocol complete" : "doses logged"}
+            />
+          </View>
+        </TourTarget>
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
@@ -473,6 +499,8 @@ export function HomeScreen() {
           </View>
         )}
       </ScrollView>
+
+      <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <AssistantSheet
         visible={askOpen}
