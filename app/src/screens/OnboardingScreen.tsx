@@ -293,18 +293,18 @@ function SelectRow({
         paddingVertical: space.md,
         borderRadius: radii.md,
         borderWidth: 1,
-        borderColor: selected ? colors.signal : colors.hairline2,
+        borderColor: selected ? colors.signalInk : colors.hairline2,
         backgroundColor: selected ? colors.signalFaint : colors.panel,
         opacity: pressed ? 0.72 : 1,
       })}
     >
       <View style={{ flex: 1 }}>
-        <Text style={[type.headingSm, { color: selected ? colors.signal : colors.ink }]}>
+        <Text style={[type.headingSm, { color: selected ? colors.signalInk : colors.ink }]}>
           {label}
         </Text>
         {sub && <Text style={[type.metaSm, { marginTop: 2 }]}>{sub}</Text>}
       </View>
-      {selected && <CheckMark size={15} color={colors.signal} />}
+      {selected && <CheckMark size={15} color={colors.signalInk} />}
     </Pressable>
   );
 }

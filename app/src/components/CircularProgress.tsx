@@ -59,7 +59,7 @@ export function CircularProgress({ size = 190, strokeWidth = 11, progress, label
             {/* Both stops come from the palette now. The second used to be a
                 hardcoded mint, which would have left a green tail on a blue
                 ring. Blue leads into the green it hands off to. */}
-            <Stop offset="0" stopColor={colors.signal} />
+            <Stop offset="0" stopColor={colors.signalInk} />
             <Stop offset="1" stopColor={colors.trace} />
           </LinearGradient>
         </Defs>
@@ -67,7 +67,7 @@ export function CircularProgress({ size = 190, strokeWidth = 11, progress, label
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.panelRaised}
+          stroke={colors.track}
           strokeWidth={strokeWidth}
           fill="none"
         />

@@ -67,8 +67,8 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
             style={{
               height: "74%",
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 14,
+              borderTopRightRadius: 14,
               borderTopWidth: 1,
               borderColor: colors.hairline2,
               paddingTop: 16,

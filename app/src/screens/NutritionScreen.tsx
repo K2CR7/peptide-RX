@@ -51,7 +51,7 @@ export function NutritionScreen() {
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 15 }}>Edit</Text>
+            <Text style={{ fontFamily: font.semibold, color: colors.signalInk, fontSize: 15 }}>Edit</Text>
           </Pressable>
         )}
       </View>
@@ -104,7 +104,7 @@ function PlanView() {
   };
   const kcalTotal = kcal.protein + kcal.carbs + kcal.fat || 1;
   const split = [
-    { key: "Protein", grams: macros.proteinG, share: kcal.protein / kcalTotal, tone: colors.signal },
+    { key: "Protein", grams: macros.proteinG, share: kcal.protein / kcalTotal, tone: colors.signalInk },
     { key: "Carbs", grams: macros.carbsG, share: kcal.carbs / kcalTotal, tone: colors.signalDim },
     { key: "Fat", grams: macros.fatG, share: kcal.fat / kcalTotal, tone: colors.hairline2 },
   ];
@@ -125,7 +125,7 @@ function PlanView() {
               style={{
                 fontFamily: font.numeralMedium,
                 fontSize: 17,
-                color: deficit > 0 ? colors.signal : deficit < 0 ? colors.amber : colors.ink2,
+                color: deficit > 0 ? colors.signalInk : deficit < 0 ? colors.amber : colors.ink2,
               }}
             >
               {deficit > 0 ? "−" : deficit < 0 ? "+" : "±"}

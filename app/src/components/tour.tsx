@@ -230,7 +230,7 @@ function TourOverlay({
               height: hole.height,
               borderRadius: radii.md,
               borderWidth: 1.5,
-              borderColor: colors.signal,
+              borderColor: colors.signalInk,
             }}
           />
         </>
@@ -272,7 +272,7 @@ function TourOverlay({
               Withholding it entirely made the tour feel stuck when the thing
               being asked for wasn't obvious. */}
           {waiting && (
-            <Text style={[type.bodySm, { color: colors.signal, marginTop: space.sm }]}>
+            <Text style={[type.bodySm, { color: colors.signalInk, marginTop: space.sm }]}>
               {stop.actionHint ?? "Give it a go — the tour continues once you do."}
             </Text>
           )}

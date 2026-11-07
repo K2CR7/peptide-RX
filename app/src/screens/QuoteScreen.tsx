@@ -32,8 +32,8 @@ export function QuoteScreen({ onContinue }: { onContinue: () => void }) {
         <Svg width={washSize} height={washSize}>
           <Defs>
             <RadialGradient id="wash" cx="50%" cy="50%" r="50%">
-              <Stop offset="0%" stopColor={colors.signal} stopOpacity={0.14} />
-              <Stop offset="55%" stopColor={colors.signal} stopOpacity={0.04} />
+              <Stop offset="0%" stopColor={colors.signalInk} stopOpacity={0.14} />
+              <Stop offset="55%" stopColor={colors.signalInk} stopOpacity={0.04} />
               <Stop offset="100%" stopColor={colors.bg} stopOpacity={0} />
             </RadialGradient>
           </Defs>
@@ -65,7 +65,7 @@ export function QuoteScreen({ onContinue }: { onContinue: () => void }) {
         </Rise>
 
         <Rise delay={1100} duration={DUR.slow}>
-          <Text style={[type.label, { color: colors.signal }]}>Lao Tzu</Text>
+          <Text style={[type.label, { color: colors.signalInk }]}>Lao Tzu</Text>
         </Rise>
 
         <Rise delay={1750} duration={DUR.step} style={{ marginTop: space.lg }}>

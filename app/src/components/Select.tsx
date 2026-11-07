@@ -106,8 +106,8 @@ export function Select({
           style={{
             maxHeight: "80%",
             backgroundColor: colors.panel,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
+            borderTopLeftRadius: 14,
+            borderTopRightRadius: 14,
             borderTopWidth: 1,
             borderColor: colors.hairline2,
             paddingTop: 16,
@@ -237,14 +237,14 @@ export function Select({
                         style={{
                           fontFamily: selected ? font.bold : font.medium,
                           fontSize: 15,
-                          color: selected ? colors.signal : colors.ink,
+                          color: selected ? colors.signalInk : colors.ink,
                         }}
                       >
                         {opt}
                       </Text>
                       {sub && <Text style={[type.meta, { marginTop: 1 }]}>{sub}</Text>}
                     </View>
-                    {selected && <CheckMark size={14} color={colors.signal} />}
+                    {selected && <CheckMark size={14} color={colors.signalInk} />}
                   </Pressable>
                 );
               })}

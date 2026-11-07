@@ -200,10 +200,10 @@ function StackItemRow({
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: off ? colors.amber : colors.signal,
+                backgroundColor: off ? colors.amber : colors.signalInk,
               }}
             />
-            <Text style={{ fontFamily: font.semibold, fontSize: 11, color: off ? colors.amber : colors.signal }}>
+            <Text style={{ fontFamily: font.semibold, fontSize: 11, color: off ? colors.amber : colors.signalInk }}>
               {describeCycle(cycle)}
             </Text>
             <Text style={type.metaSm}>· {describeRemaining(cycle)}</Text>
@@ -233,7 +233,7 @@ function StackItemRow({
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>Log</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signalInk, letterSpacing: 0.3 }}>Log</Text>
       </Pressable>
     </View>
   );
@@ -472,7 +472,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
                   justifyContent: "center",
                   backgroundColor: on ? colors.signal : colors.panel,
                   borderWidth: 1,
-                  borderColor: on ? colors.signal : colors.hairline2,
+                  borderColor: on ? colors.signalInk : colors.hairline2,
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
@@ -562,8 +562,8 @@ function StackItemSheet({
           <View
             style={{
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 14,
+              borderTopRightRadius: 14,
               borderTopWidth: 1,
               borderColor: colors.hairline2,
               paddingTop: 20,

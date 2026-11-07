@@ -1,10 +1,13 @@
 import {
-  CormorantGaramond_300Light,
-  CormorantGaramond_400Regular,
-  CormorantGaramond_500Medium,
-  CormorantGaramond_600SemiBold,
-  CormorantGaramond_700Bold,
-} from "@expo-google-fonts/cormorant-garamond";
+  IBMPlexSans_400Regular,
+  IBMPlexSans_500Medium,
+  IBMPlexSans_600SemiBold,
+  IBMPlexSans_700Bold,
+} from "@expo-google-fonts/ibm-plex-sans";
+import {
+  IBMPlexSansCondensed_300Light,
+  IBMPlexSansCondensed_500Medium,
+} from "@expo-google-fonts/ibm-plex-sans-condensed";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
@@ -43,7 +46,7 @@ function AuthGate() {
   if (!hydrated) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.signal} />
+        <ActivityIndicator color={colors.signalInk} />
       </View>
     );
   }
@@ -117,11 +120,12 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_300Light,
-    CormorantGaramond_400Regular,
-    CormorantGaramond_500Medium,
-    CormorantGaramond_600SemiBold,
-    CormorantGaramond_700Bold,
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexSans_700Bold,
+    IBMPlexSansCondensed_300Light,
+    IBMPlexSansCondensed_500Medium,
   });
 
   if (!fontsLoaded) {

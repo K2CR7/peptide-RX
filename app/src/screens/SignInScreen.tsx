@@ -70,7 +70,7 @@ export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => voi
       >
         <Text style={type.body}>
           Don't have an account?{" "}
-          <Text style={{ fontFamily: font.bold, color: colors.signal }}>Sign up</Text>
+          <Text style={{ fontFamily: font.bold, color: colors.signalInk }}>Sign up</Text>
         </Text>
       </Pressable>
     </View>

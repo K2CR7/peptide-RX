@@ -166,7 +166,7 @@ export function MealBuilderModal({
               <Text style={[type.heading, { marginBottom: 12 }]}>{meal.title}</Text>
               {meal.ingredients.map((ing, i) => (
                 <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
-                  <Text style={{ fontFamily: font.numeralMedium, fontSize: 15, color: colors.signal, minWidth: 62 }}>
+                  <Text style={{ fontFamily: font.numeralMedium, fontSize: 15, color: colors.signalInk, minWidth: 62 }}>
                     {ing.amount}
                   </Text>
                   <Text style={[type.body, { flex: 1, fontSize: 15 }]}>{ing.item}</Text>
@@ -249,7 +249,7 @@ function SliderField({
         step={step}
         value={value}
         onValueChange={onChange}
-        minimumTrackTintColor={colors.signal}
+        minimumTrackTintColor={colors.signalInk}
         maximumTrackTintColor={colors.panelRaised}
         thumbTintColor={colors.ink}
       />
@@ -259,7 +259,7 @@ function SliderField({
 
 function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstraint; onPress: () => void }) {
   const isMax = mode === "max";
-  const tint = isMax ? colors.amber : colors.signal;
+  const tint = isMax ? colors.amber : colors.signalInk;
   return (
     <Pressable
       onPress={onPress}

@@ -106,7 +106,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.signal }}>Done</Text>
+              <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.signalInk }}>Done</Text>
             </Pressable>
           </View>
 
@@ -138,18 +138,18 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
                       paddingVertical: space.md,
                       borderRadius: radii.md,
                       borderWidth: 1,
-                      borderColor: on ? colors.signal : colors.hairline2,
+                      borderColor: on ? colors.signalInk : colors.hairline2,
                       backgroundColor: on ? colors.signalFaint : colors.panel,
                       opacity: pressed ? 0.72 : 1,
                     })}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={[type.headingSm, { color: on ? colors.signal : colors.ink }]}>
+                      <Text style={[type.headingSm, { color: on ? colors.signalInk : colors.ink }]}>
                         {m.label}
                       </Text>
                       {m.examples && <Text style={[type.metaSm, { marginTop: 2 }]}>{m.examples}</Text>}
                     </View>
-                    {on && <CheckMark size={15} color={colors.signal} />}
+                    {on && <CheckMark size={15} color={colors.signalInk} />}
                   </Pressable>
                 );
               })}

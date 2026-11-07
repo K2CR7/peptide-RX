@@ -291,7 +291,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
                 }}
               >
                 {uploadingAngle === angle ? (
-                  <ActivityIndicator color={colors.signal} />
+                  <ActivityIndicator color={colors.signalInk} />
                 ) : photos[angle] ? (
                   <Image source={{ uri: photos[angle]!.localUri }} style={{ width: "100%", height: "100%" }} />
                 ) : (
@@ -371,7 +371,7 @@ function SliderField({ label, value, onChange }: { label: string; value: number;
         step={1}
         value={value}
         onValueChange={onChange}
-        minimumTrackTintColor={colors.signal}
+        minimumTrackTintColor={colors.signalInk}
         maximumTrackTintColor={colors.panelRaised}
         thumbTintColor={colors.ink}
       />
