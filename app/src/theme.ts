@@ -26,45 +26,119 @@ finish review, the verdict, DESIGN.md, and every shipping raster carrying its
 provenance.
 */
 
+/*
+Blue leads, green supports.
+
+The previous palette was near-black with a saturated mint accent. That pairing
+reads as console-game or fitness-tracker rather than clinical, and the green
+was doing four unrelated jobs at once — primary action, adherence, logged
+state and the streak — so it carried no particular meaning anywhere.
+
+Now: a near-white ground, a deep sea-blue that leads every action and
+measurement, and a single muted green reserved for "this is done". The
+neutrals carry a blue bias rather than being pure grey, so they read as
+chosen rather than defaulted.
+
+Every text colour below was checked against the surface it sits on. The
+tertiary ink is #5A7183 rather than something quieter because the obvious
+choice (#6B8296) measures 3.99:1 on white — under the 4.5:1 floor for body
+text, and this app puts real information in that step.
+*/
 export const colors = {
-  // Ground & surfaces (one-step elevation, hairline seams)
-  bg: "#0E1114",
-  panel: "#151A1F",
-  panelRaised: "#1B2129",
-  hairline: "#262D35",
-  hairline2: "#39424D",
+  /*
+    Ground & surfaces, carrying the brand teal rather than sitting next to it.
 
-  // Ink. ink3 is the dimmest step that still clears 4.5:1 on both the page
-  // ground and the panel — anything quieter belongs to hairline, not to text.
-  ink: "#EAEEF2",
-  ink2: "#A9B4BF",
-  ink3: "#8A96A3",
+    The page was #FBFCFD against #FFFFFF panels — about a 1% difference, so
+    the app read as one undifferentiated sheet of white and the teal had
+    nowhere to live except a few buttons. The page is now a pale teal wash,
+    which does two jobs at once: the colour is present on every screen
+    without being applied to anything, and white panels genuinely lift off
+    it (1.15:1 — slight, but enough to separate without a shadow).
 
-  // Signal — adherence, success, primary action
-  signal: "#35E39B",
-  signalDim: "#1D5C43",
-  signalFaint: "#12281F",
-  onSignal: "#04140C",
+    Hairlines and wells are tinted from the same hue, so nothing in the
+    neutral range is a plain grey.
+  */
+  bg: "#E6F2F1",
+  panel: "#FFFFFF",
+  panelRaised: "#F0F8F7",
+  hairline: "#CFE4E2",
+  hairline2: "#A5CCC9",
+  /** The unfilled part of the adherence ring. 1.51:1 on a white panel —
+      faint, but enough that the gauge reads as a gauge at 0%. */
+  track: "#BCD8D5",
 
-  // Trace — data lines and charts only
-  trace: "#52C4FF",
-  traceFaint: "#12232E",
+  /*
+    Ink, biased teal to match. Every step was checked against the PAGE, not
+    just the panel, because the page is the darker of the two and a value
+    that passes on white can still fail there.
 
-  // Semantic
-  amber: "#F5B84A",
-  amberFaint: "#2A2113",
-  red: "#F27070",
-  redFaint: "#2B1717",
+    ink 13.1:1 · ink2 6.1:1 · ink3 4.7:1 on the page. ink3 is #4D7174 rather
+    than anything lighter because the obvious choices (#5C8386, #52777A)
+    measure 3.6-4.3:1 on this ground — under the floor, and real information
+    lives in that step.
+  */
+  ink: "#0C2B2E",
+  ink2: "#3A5F62",
+  ink3: "#4D7174",
+
+  /*
+    Signal — the lead, and the brand colour.
+
+    #56B0AD is the chosen teal and it is a FILL, not a drawing colour: it
+    measures 2.56:1 on white, under the 4.5:1 floor for text and under even
+    the 3:1 floor for icons and hairlines. Navy on it is 6.53:1, so it holds
+    dark text comfortably — a light-teal button with navy type rather than
+    the usual saturated button with white type.
+
+    Anything that has to be legible against white — label text, an icon
+    stroke, a 2px rule — uses signalInk instead: the same hue darkened to
+    5.50:1. One colour family, two jobs, neither one guessed.
+  */
+  signal: "#56B0AD",
+  signalInk: "#257471",
+  signalDim: "#A9D8D6",
+  signalFaint: "#DCF0EE",
+  onSignal: "#0C2B2E",
+
+  // Trace — the support. One job: this dose is logged, this day was kept.
+  // 5.3:1 on the page, so it is safe as small text and not only as a fill.
+  trace: "#1C6E61",
+  traceFaint: "#DCEFEA",
+
+  // Semantic. Both checked against the tinted page rather than white:
+  // amber 5.3:1, red 6.3:1.
+  amber: "#8A5806",
+  amberFaint: "#F7EEDC",
+  red: "#A8231C",
+  redFaint: "#F8E6E4",
 } as const;
 
+/*
+IBM Plex Sans, with IBM Plex Sans Condensed for the instrument numerals.
+
+Drawn for IBM's own technical documentation, which is the reason to pick it
+here: it carries engineering credibility from what it was made for rather
+than from resembling something clinical. Low stroke contrast, so it holds its
+weight at the 11px tracked labels and 13px metadata this app is mostly made
+of — the specific thing Cormorant could not do. Slightly warmer than a pure
+grotesque, with real character in the a and g, so it reads precise without
+reading cold.
+
+The condensed cut matters more than it looks. Doses share a row with a
+peptide name on a 430px screen, and "1,250 mcg" set at full width pushes that
+row. Condensed numerals keep the column tight and the figures tabular.
+
+Previously Cormorant Garamond — a high-contrast display serif whose
+hairlines disappeared at small sizes and which had no condensed cut at all.
+Before that, Barlow_400/500/600/700 with BarlowSemiCondensed_300Light/_500Medium.
+*/
 export const font = {
-  // Barlow: UI voice. BarlowSemiCondensed: instrument numerals.
-  regular: "Barlow_400Regular",
-  medium: "Barlow_500Medium",
-  semibold: "Barlow_600SemiBold",
-  bold: "Barlow_700Bold",
-  numeral: "BarlowSemiCondensed_300Light",
-  numeralMedium: "BarlowSemiCondensed_500Medium",
+  regular: "IBMPlexSans_400Regular",
+  medium: "IBMPlexSans_500Medium",
+  semibold: "IBMPlexSans_600SemiBold",
+  bold: "IBMPlexSans_700Bold",
+  numeral: "IBMPlexSansCondensed_300Light",
+  numeralMedium: "IBMPlexSansCondensed_500Medium",
 } as const;
 
 /*
@@ -115,11 +189,22 @@ export const type = {
   error: { fontFamily: font.medium, fontSize: 13, color: colors.red, lineHeight: 19 },
 } as const;
 
+/*
+Tight corners.
+
+These were 8/12/16/20, which put 44 elements at a 12px radius and left the
+buttons reading as pills. Rounded corners everywhere is what makes an
+interface feel like a friendly app rather than an instrument — it was doing
+more of that work than either the palette or the typeface.
+
+Clinical software sits around 4-6px: enough to avoid a hard CAD edge,
+not enough to read as soft.
+*/
 export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 10,
 } as const;
 
 /*

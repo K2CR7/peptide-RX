@@ -12,9 +12,21 @@ export interface AuthUser {
   experience?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | null;
   weightKg?: number | null;
   heightCm?: number | null;
+  /** Source of truth where set; `age` below is derived from it by the server. */
+  dateOfBirth?: string | null;
   age?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE" | null;
   nutritionGoal?: "CUT" | "MAINTAIN" | "BULK" | null;
+
+  // First-run state and the answers given during onboarding. onboardedAt is
+  // what routes a new account into the survey; tourCompletedAt is separate so
+  // skipping the tour doesn't send you back through the survey.
+  onboardedAt?: string | null;
+  tourCompletedAt?: string | null;
+  goals?: string[];
+  medications?: string[];
+  usedPeptidesBefore?: boolean | null;
+  priorExperienceNote?: string | null;
 }
 
 interface AuthTokens {

@@ -9,6 +9,7 @@ import { WeightChart } from "../components/WeightChart";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { type Checkin, useCheckinUploadUrl, useCheckins, useCreateCheckin, useDeleteCheckin } from "../lib/queries";
 import { AsyncBlock, ErrorText, SectionLabel } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const LB_PER_KG = 2.20462;
@@ -25,26 +26,28 @@ export function CheckinScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={type.title}>Progress</Text>
-          <Pressable
-            onPress={() => setAddOpen(true)}
-            accessibilityRole="button"
-            style={({ pressed }) => ({
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              minHeight: 44,
-              backgroundColor: colors.signal,
-              borderRadius: radii.md,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <PlusMark size={13} color={colors.onSignal} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.onSignal, letterSpacing: 0.3 }}>
-              Check in
-            </Text>
-          </Pressable>
+          <TourTarget id="progress-checkin">
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                minHeight: 44,
+                backgroundColor: colors.signal,
+                borderRadius: radii.md,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <PlusMark size={13} color={colors.onSignal} />
+              <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.onSignal, letterSpacing: 0.3 }}>
+                Check in
+              </Text>
+            </Pressable>
+          </TourTarget>
         </View>
 
         {/* Held back until the data lands — the chart's own empty copy
@@ -288,7 +291,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
                 }}
               >
                 {uploadingAngle === angle ? (
-                  <ActivityIndicator color={colors.signal} />
+                  <ActivityIndicator color={colors.signalInk} />
                 ) : photos[angle] ? (
                   <Image source={{ uri: photos[angle]!.localUri }} style={{ width: "100%", height: "100%" }} />
                 ) : (
@@ -368,7 +371,7 @@ function SliderField({ label, value, onChange }: { label: string; value: number;
         step={1}
         value={value}
         onValueChange={onChange}
-        minimumTrackTintColor={colors.signal}
+        minimumTrackTintColor={colors.signalInk}
         maximumTrackTintColor={colors.panelRaised}
         thumbTintColor={colors.ink}
       />

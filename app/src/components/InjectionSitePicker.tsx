@@ -100,14 +100,14 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => { reset(); onClose(); }}>
       <PhoneModalFrame>
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(4,6,8,0.72)" }}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(11,31,51,0.42)" }}>
         <View
           style={[
             {
               width: "100%",
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 14,
+              borderTopRightRadius: 14,
               borderTopWidth: 1,
               borderColor: colors.hairline2,
               maxHeight: "92%",
@@ -148,11 +148,11 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   {selectedSite ? (
                     <>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.signal }}>
+                        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.signalInk }}>
                           {selectedSite.label}
                         </Text>
                         {selectedSite.id === recommended?.id && (
-                          <Text style={[type.label, { color: colors.signal }]}>Next up</Text>
+                          <Text style={[type.label, { color: colors.signalInk }]}>Next up</Text>
                         )}
                       </View>
                       <Text style={[type.bodySm, { marginTop: 3 }]}>{selectedSite.desc}</Text>
@@ -206,7 +206,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                               style={{
                                 fontFamily: font.semibold,
                                 fontSize: 15,
-                                color: isSel ? colors.signal : colors.ink,
+                                color: isSel ? colors.signalInk : colors.ink,
                               }}
                             >
                               {site.label}
@@ -327,7 +327,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                   accessibilityRole="button"
                   style={({ pressed }) => ({ minHeight: 44, justifyContent: "center", paddingLeft: 12, opacity: pressed ? 0.7 : 1 })}
                 >
-                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.signal }}>Done</Text>
+                  <Text style={{ fontFamily: font.semibold, fontSize: 13, color: colors.signalInk }}>Done</Text>
                 </Pressable>
               </View>
 
@@ -339,7 +339,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                       flex: 1,
                       height: 2.5,
                       borderRadius: 2,
-                      backgroundColor: i <= step ? colors.signal : colors.hairline2,
+                      backgroundColor: i <= step ? colors.signalInk : colors.hairline2,
                     }}
                   />
                 ))}
@@ -359,7 +359,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                 }}
               >
                 <View style={{ marginBottom: 16 }}>
-                  {STEP_ICONS[steps[step].mark]({ size: 38, color: colors.signal })}
+                  {STEP_ICONS[steps[step].mark]({ size: 38, color: colors.signalInk })}
                 </View>
                 <Text style={[type.heading, { marginBottom: 8, textAlign: "center" }]}>
                   {steps[step].title}
@@ -445,7 +445,7 @@ function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: BodyView
               style={{
                 fontFamily: font.semibold,
                 fontSize: 13,
-                color: on ? colors.signal : colors.ink3,
+                color: on ? colors.signalInk : colors.ink3,
                 textTransform: "capitalize",
               }}
             >

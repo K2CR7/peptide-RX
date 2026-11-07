@@ -9,7 +9,7 @@ import { colors, font, panel, radii, type, space } from "../theme";
 // carries "supported", one carries "thin", one carries "speculative". Trace
 // blue is reserved for data lines and never appears here.
 const TIER_TONE: Record<string, string> = {
-  "FDA Approved": colors.signal,
+  "FDA Approved": colors.signalInk,
   "Clinical Trials": colors.ink2,
   "Limited Human": colors.amber,
   Preclinical: colors.amber,
@@ -63,7 +63,7 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 15 }}>Done</Text>
+              <Text style={{ fontFamily: font.semibold, color: colors.signalInk, fontSize: 15 }}>Done</Text>
             </Pressable>
           )}
         </View>

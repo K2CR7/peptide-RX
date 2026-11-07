@@ -15,6 +15,7 @@ import {
 } from "../lib/nutrition";
 import { useAuthStore } from "../store/authStore";
 import { Button, Chip, ErrorText } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { Disclosure } from "../components/icons";
 import { colors, font, panel, radii, space, type } from "../theme";
 
@@ -50,7 +51,7 @@ export function NutritionScreen() {
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontFamily: font.semibold, color: colors.signal, fontSize: 15 }}>Edit</Text>
+            <Text style={{ fontFamily: font.semibold, color: colors.signalInk, fontSize: 15 }}>Edit</Text>
           </Pressable>
         )}
       </View>
@@ -103,7 +104,7 @@ function PlanView() {
   };
   const kcalTotal = kcal.protein + kcal.carbs + kcal.fat || 1;
   const split = [
-    { key: "Protein", grams: macros.proteinG, share: kcal.protein / kcalTotal, tone: colors.signal },
+    { key: "Protein", grams: macros.proteinG, share: kcal.protein / kcalTotal, tone: colors.signalInk },
     { key: "Carbs", grams: macros.carbsG, share: kcal.carbs / kcalTotal, tone: colors.signalDim },
     { key: "Fat", grams: macros.fatG, share: kcal.fat / kcalTotal, tone: colors.hairline2 },
   ];
@@ -124,7 +125,7 @@ function PlanView() {
               style={{
                 fontFamily: font.numeralMedium,
                 fontSize: 17,
-                color: deficit > 0 ? colors.signal : deficit < 0 ? colors.amber : colors.ink2,
+                color: deficit > 0 ? colors.signalInk : deficit < 0 ? colors.amber : colors.ink2,
               }}
             >
               {deficit > 0 ? "−" : deficit < 0 ? "+" : "±"}
@@ -161,20 +162,22 @@ function PlanView() {
         <Text style={[type.metaSm, { marginTop: 8 }]}>Resting burn {macros.bmr} kcal</Text>
       </View>
 
-      <Pressable
-        onPress={() => setBuilderOpen(true)}
-        style={({ pressed }) => ({
-          backgroundColor: colors.signal,
-          borderRadius: radii.md,
-          padding: 16,
-          alignItems: "center",
-          opacity: pressed ? 0.7 : 1,
-        })}
-      >
-        <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
-          Build a meal
-        </Text>
-      </Pressable>
+      <TourTarget id="fuel-builder">
+        <Pressable
+          onPress={() => setBuilderOpen(true)}
+          style={({ pressed }) => ({
+            backgroundColor: colors.signal,
+            borderRadius: radii.md,
+            padding: 16,
+            alignItems: "center",
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>
+            Build a meal
+          </Text>
+        </Pressable>
+      </TourTarget>
 
       <MealBuilderModal
         visible={builderOpen}
@@ -295,7 +298,9 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 
   const [error, setError] = useState<string | null>(null);
 
-  const valid = weightLb && heightIn && age && sex && activityLevel && nutritionGoal;
+  const hasBirthDate = !!user?.dateOfBirth;
+
+  const valid = weightLb && heightIn && (hasBirthDate || age) && sex && activityLevel && nutritionGoal;
 
   // Everything on this screen is derived from this save. Without a catch, a
   // failed request threw into nothing: onDone() never ran, no message
@@ -307,7 +312,7 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       await updateProfile.mutateAsync({
         weightKg: Number(weightLb) / LB_PER_KG,
         heightCm: Number(heightIn) / IN_PER_CM,
-        age: Number(age),
+        ...(hasBirthDate ? {} : { age: Number(age) }),
         sex: sex as "Male" | "Female",
         activityLevel: activityLevel as ActivityLevel,
         nutritionGoal: nutritionGoal as NutritionGoal,
@@ -327,8 +332,17 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       <View style={{ flexDirection: "row", gap: 12 }}>
         <Field label="Weight (lb)" value={weightLb} onChangeText={setWeightLb} />
         <Field label="Height (in)" value={heightIn} onChangeText={setHeightIn} />
-        <Field label="Age" value={age} onChangeText={setAge} />
+        {/* Only ask when we don't already know. With a birth date on file the
+            age is derived and always current, so an editable box here would
+            be a second source of truth that immediately disagrees. */}
+        {!hasBirthDate && <Field label="Age" value={age} onChangeText={setAge} />}
       </View>
+
+      {hasBirthDate && (
+        <Text style={type.metaSm}>
+          Age {user?.age} — worked out from your date of birth.
+        </Text>
+      )}
 
       <Text style={type.label}>Sex</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
