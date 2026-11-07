@@ -211,3 +211,21 @@ export function useResetAccount() {
     },
   });
 }
+
+/**
+ * Records that the app was opened today and returns every day it has been
+ * opened on — which is what a rest day in the streak is counted from.
+ *
+ * Modelled as a query despite issuing a POST, because the endpoint is an
+ * upsert against a (user, day) unique key: calling it twice on one day is
+ * the same as calling it once. That makes it safe to treat as a read, and
+ * it gives the streak a reactive, cached value instead of a one-shot
+ * mutation result the UI would have to re-read by hand.
+ */
+export function useAppOpens() {
+  return useQuery({
+    queryKey: ["appOpens"],
+    queryFn: async () => (await api.post<{ days: string[] }>("/app-opens")).days,
+    staleTime: 1000 * 60 * 30,
+  });
+}

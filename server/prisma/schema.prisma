@@ -63,6 +63,7 @@ model User {
   usedPeptidesBefore  Boolean?
   priorExperienceNote String?
 
+  appOpens       AppOpen[]
   refreshTokens  RefreshToken[]
   stackItems     StackItem[]
   checkins       Checkin[]
@@ -72,6 +73,27 @@ model User {
 
 // Allows logging out of a single device and rotating refresh tokens without
 // invalidating every session — a bare "one secret in the JWT" approach can't do that.
+/*
+One row per day the user opened the app.
+
+A rest day asks nothing of the protocol, so there is no dose to log and
+nothing that could prove the day was kept. Showing up is the only signal
+available, which is why "days on protocol" counts it.
+
+Stored as a date at midnight rather than a timestamp, with a unique
+constraint on the pair, so repeated opens on one day collapse to a single
+row and the streak can't be inflated by relaunching.
+*/
+model AppOpen {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day    DateTime @db.Date
+
+  @@unique([userId, day])
+  @@index([userId])
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String

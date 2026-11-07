@@ -5,11 +5,13 @@ import { CircularProgress } from "../components/CircularProgress";
 import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
+import { StreakCard } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
-import { type StackItem, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
+import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
+import { computeStreak } from "../lib/streak";
 import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
@@ -102,6 +104,15 @@ export function HomeScreen() {
     return { next, recent: recent.slice(0, 3) };
   }, [items, allLogs]);
 
+  // Opening the app is what a rest day is counted from, so this fires on
+  // mount and seeds the streak.
+  const { data: openDays } = useAppOpens();
+
+  const streak = useMemo(
+    () => computeStreak(items ?? [], allLogs ?? [], openDays ?? []),
+    [items, allLogs, openDays],
+  );
+
   const adherence = useMemo(
     () => computeAdherence(items ?? [], allLogs ?? [], 7),
     [items, allLogs],
@@ -190,7 +201,7 @@ export function HomeScreen() {
                 opacity: pressed ? 0.7 : 1,
               })}
             >
-              <SparkIcon size={20} color={colors.signal} />
+              <SparkIcon size={20} color={colors.signalInk} />
             </Pressable>
           </View>
         </View>
@@ -265,7 +276,7 @@ export function HomeScreen() {
                   ]}
                 >
                   {done ? (
-                    <MarkLogged size={24} color={colors.signal} />
+                    <MarkLogged size={24} color={colors.signalInk} />
                   ) : (
                     <View
                       style={{
@@ -287,7 +298,7 @@ export function HomeScreen() {
                     style={{
                       fontFamily: font.numeralMedium,
                       fontSize: 17,
-                      color: done ? colors.signal : colors.ink2,
+                      color: done ? colors.signalInk : colors.ink2,
                       letterSpacing: 0.3,
                     }}
                   >
@@ -300,7 +311,7 @@ export function HomeScreen() {
                       style={{
                         fontFamily: font.semibold,
                         fontSize: 11,
-                        color: colors.signal,
+                        color: colors.signalInk,
                         letterSpacing: 1.2,
                         textTransform: "uppercase",
                         marginLeft: 8,
@@ -324,10 +335,10 @@ export function HomeScreen() {
                         backgroundColor: colors.signalFaint,
                       }}
                     >
-                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>
+                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signalInk, letterSpacing: 0.3 }}>
                         Log
                       </Text>
-                      <ChevronRight size={13} color={colors.signal} />
+                      <ChevronRight size={13} color={colors.signalInk} />
                     </View>
                   )}
                 </Pressable>
@@ -336,80 +347,11 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/* Shown as soon as there's a stack. A brand-new stack has no settled
-            days behind it yet, so the percentage reads "—" rather than the
-            whole panel vanishing — the streak still counts today, and a
-            missing panel reads like a bug. */}
+        {/* Days on protocol, in place of the old consistency percentage.
+            A percentage reports on the past; a run of days is something
+            you would rather not break. Same data, pointed forward. */}
         {(items?.length ?? 0) > 0 && (
-          <View style={{ gap: 12 }}>
-            <Text style={type.label}>Consistency</Text>
-            <View style={[panel, { padding: 20 }]}>
-              <View style={{ flexDirection: "row", gap: 24 }}>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontFamily: font.numeral,
-                      fontSize: 38,
-                      color: adherence.pct !== null ? colors.ink : colors.ink3,
-                      letterSpacing: -0.5,
-                    }}
-                  >
-                    {adherence.pct ?? "—"}
-                    {adherence.pct !== null && <Text style={{ fontSize: 17, color: colors.ink3 }}>%</Text>}
-                  </Text>
-                  <Text style={type.meta}>
-                    {adherence.pct !== null ? "last 7 days" : "no full days yet"}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontFamily: font.numeral,
-                      fontSize: 38,
-                      letterSpacing: -0.5,
-                      color: adherence.streak > 0 ? colors.signal : colors.ink2,
-                    }}
-                  >
-                    {adherence.streak}
-                  </Text>
-                  <Text style={type.meta}>
-                    day{adherence.streak === 1 ? "" : "s"} in a row
-                  </Text>
-                </View>
-              </View>
-
-              {/* The same seven days the percentage covers, newest on the
-                  right, ending yesterday. A day with nothing due
-                  reads as a recessed rule, not a miss. */}
-              <View style={{ flexDirection: "row", gap: 3, marginTop: 16, alignItems: "flex-end" }}>
-                {adherence.days.map((d, i) => {
-                  // Every day here is settled, so a miss is simply a miss.
-                  const complete = d.due > 0 && d.done >= d.due;
-                  const missed = d.due > 0 && d.done < d.due;
-                  return (
-                    <View
-                      key={i}
-                      style={{
-                        flex: 1,
-                        height: d.due === 0 ? 3 : 18,
-                        borderRadius: 2,
-                        backgroundColor: complete
-                          ? colors.signal
-                          : missed
-                            ? colors.amber
-                            : colors.hairline2,
-                      }}
-                    />
-                  );
-                })}
-              </View>
-              <Text style={[type.metaSm, { marginTop: 8 }]}>
-                {adherence.pct !== null
-                  ? "Last 7 days · thin marks are rest days"
-                  : "Your first scheduled day will show here tomorrow"}
-              </Text>
-            </View>
-          </View>
+          <StreakCard streak={streak} settled={allLogs !== undefined && openDays !== undefined} />
         )}
 
         {cycles.length > 0 && (
@@ -418,7 +360,7 @@ export function HomeScreen() {
             <View style={[panel, { overflow: "hidden" }]}>
               {cycles.map(({ item, cycle }, i) => {
                 const off = cycle.phase === "off";
-                const tone = off ? colors.amber : colors.signal;
+                const tone = off ? colors.amber : colors.signalInk;
                 return (
                   <View
                     key={item.id}
@@ -478,7 +420,7 @@ export function HomeScreen() {
             <Text style={type.label}>Site rotation</Text>
             <View style={[panel, { padding: 16 }]}>
               <Text style={type.meta}>Next site up</Text>
-              <Text style={[type.heading, { color: colors.signal, marginTop: 3 }]}>
+              <Text style={[type.heading, { color: colors.signalInk, marginTop: 3 }]}>
                 {rotation.next.label}
               </Text>
 
