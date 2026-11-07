@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import { Button, ErrorText } from "../components/primitives";
+import { LogoTile } from "../components/Logo";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
 export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => void }) {
@@ -26,7 +27,10 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: "center", padding: 24, gap: 12 }}>
-      <Text style={type.label}>PEPTIDE RX</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+        <LogoTile size={40} />
+        <Text style={type.label}>PEPTIDE RX</Text>
+      </View>
       <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 }}>
         Create account
       </Text>

@@ -6,15 +6,25 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "splash": {
-      "backgroundColor": "#F4F7F8"
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E6F2F1"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.peptiderx.app"
     },
     "android": {
-      "package": "com.peptiderx.app"
+      "package": "com.peptiderx.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#56B0AD"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }
