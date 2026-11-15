@@ -50,7 +50,8 @@ const KG_TO_LB = 2.20462;
 const HEIGHT = 178;
 /** Room for the y labels. Measured for a four-character figure at 10px. */
 const PAD_L = 34;
-const PAD_R = 10;
+/** Wide enough that the last point's halo doesn't touch the panel edge. */
+const PAD_R = 18;
 const PAD_T = 12;
 const PAD_B = 18;
 
@@ -167,6 +168,19 @@ export function WeightChart({
   const first = points[0];
   const delta = points.length >= 2 ? latest.weightLb - first.weightLb : null;
 
+  /*
+    The ring around each point is the thing that says "press me", and it is
+    worth roughly 20px of width. Past a dozen or so points they start to
+    overlap into a band and the chart stops being a chart, so above that the
+    points keep the filled halo and lose the outline — by then the line is
+    dense enough to read as a row of nodes on its own, and the caption
+    underneath is carrying the message either way.
+  */
+  const haloRings = points.length <= 14;
+
+  /* Two identical dates under a chart is just the same word twice. */
+  const sameDay = new Date(t0).toDateString() === new Date(tEnd).toDateString();
+
   return (
     <View style={[panel, { padding: 20 }]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
@@ -224,7 +238,11 @@ export function WeightChart({
                     fontFamily={font.medium}
                     textAnchor="end"
                   >
-                    {step < 1 ? v.toFixed(1) : String(Math.round(v))}
+                    {/* The 2.5 tier puts half-pounds on the axis. Rounding
+                        them printed 162.5 as "163" on a gridline that is not
+                        163 — a label that disagrees with the line it sits on
+                        is worse than one extra character. */}
+                    {Number.isInteger(step) ? String(Math.round(v)) : v.toFixed(1)}
                   </SvgText>
                 ))}
 
@@ -252,9 +270,12 @@ export function WeightChart({
                       key={`h${p.checkin.id}`}
                       cx={xAt(p.t)}
                       cy={yAt(p.weightLb)}
-                      r={on ? 13 : 9}
+                      r={on ? 13 : 9.5}
                       fill={colors.signalInk}
-                      opacity={on ? 0.22 : 0.1}
+                      fillOpacity={on ? 0.2 : 0.09}
+                      stroke={haloRings ? colors.signalInk : "none"}
+                      strokeWidth={1}
+                      strokeOpacity={on ? 0.55 : 0.3}
                     />
                   );
                 })}
@@ -305,9 +326,15 @@ export function WeightChart({
         months.
       */}
       {points.length > 0 && (
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 2 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: sameDay ? "center" : "space-between",
+            marginTop: 2,
+          }}
+        >
           <Text style={type.metaSm}>{shortDate(t0)}</Text>
-          <Text style={type.metaSm}>{shortDate(tEnd)}</Text>
+          {!sameDay && <Text style={type.metaSm}>{shortDate(tEnd)}</Text>}
         </View>
       )}
 
