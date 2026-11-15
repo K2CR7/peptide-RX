@@ -37,11 +37,24 @@ import type { CellState, Matrix } from "../lib/lanes";
 import { EASE, DUR } from "./motion";
 import { colors, space, type } from "../theme";
 
-/** Cell geometry, in SVG user units that match layout points 1:1. */
-const CELL = 11;
-const GAP = 2;
+/*
+  Cell geometry, in SVG user units that match layout points 1:1.
+
+  These were 11 and 2, chosen so four weeks would fit. On a phone that put
+  each cell at about ten points with a two-point gutter, and at that size a
+  grid of outlined squares stops reading as a row of marks and starts reading
+  as hatching — the eye takes it as one grey texture and skips it. Counting
+  anything in it is impossible.
+
+  Fourteen points with a three-point gutter is a mark you can see and count.
+  It costs a week of window, which is the right trade: the pattern worth
+  spotting is which weekday keeps slipping, and three weeks shows that three
+  times over.
+*/
+const CELL = 14;
+const GAP = 3;
 const LANE_H = CELL;
-const LANE_GAP = 5;
+const LANE_GAP = 6;
 const STEP = CELL + GAP;
 
 /** Builds one path string covering every cell in `picked`. */
@@ -149,12 +162,21 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
 
   return (
     <View style={{ gap: space.sm }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+        <Text style={type.label}>Last three weeks</Text>
+        <Text style={type.metaSm}>
+          {recordDays === null
+            ? "nothing logged yet"
+            : `${logged} of ${due} logged`}
+        </Text>
+      </View>
+
       <View style={{ flexDirection: "row", gap: space.sm }}>
         {/* Lane names, outside the drawing, so the SVG stays pure geometry. */}
         <View style={{ justifyContent: "flex-start", paddingTop: 1 }}>
           {lanes.map((lane) => (
             <View key={lane.id} style={{ height: LANE_H, marginBottom: LANE_GAP, justifyContent: "center" }}>
-              <Text style={[type.metaSm, { color: colors.ink2 }]} numberOfLines={1}>
+              <Text style={[type.meta, { color: colors.ink2 }]} numberOfLines={1}>
                 {lane.name}
               </Text>
             </View>
@@ -248,12 +270,9 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
         {offDays > 0 && <LegendItem state="off" label="Off-cycle" />}
       </View>
 
-      <Text style={type.metaSm}>
-        {recordDays === null
-          ? `${cols} days shown · nothing logged yet`
-          : `${recordDays} ${recordDays === 1 ? "day" : "days"} on record · ${logged} of ${due} logged`}
-        {offDays > 0 ? ` · ${offDays} off-cycle` : ""}
-      </Text>
+      {offDays > 0 && (
+        <Text style={type.metaSm}>{offDays} off-cycle {offDays === 1 ? "day" : "days"} in this window</Text>
+      )}
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CircularProgress } from "../components/CircularProgress";
+import { TodayHero } from "../components/TodayHero";
 import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
@@ -117,7 +117,11 @@ export function HomeScreen() {
   );
 
   const matrix = useMemo(
-    () => buildMatrix(items ?? [], allLogs ?? [], 28),
+    // Three weeks, not four. The window is set by how big a cell can be
+    // and still be a cell: 28 columns across a phone is 10px each, which
+    // renders as a texture rather than as marks you can count. See the
+    // geometry note in ProtocolMatrix.
+    () => buildMatrix(items ?? [], allLogs ?? [], 21),
     [items, allLogs],
   );
 
@@ -214,43 +218,29 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/*
-          The ring used to be a 190px hero holding one number. It was the
-          largest object on the screen answering the smallest question, and
-          structurally it was the same object as a wearable's "recovery
-          score" — a filled ring, a big unitless figure, a one-word verdict.
-          The thing that keeps this honest is that adherence is a ratio of
-          two countable things, so it is now printed as that ratio, inline,
-          at the size the fact deserves.
-        */}
         <TourTarget id="today-ring">
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.lg }}>
-            <CircularProgress progress={progress} size={56} stroke={5} />
-            <View style={{ flex: 1 }}>
-              <Text style={type.statMd}>
-                {dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-              </Text>
-              <Text style={type.metaSm}>
-                {dueToday.length === 0
-                  ? "nothing due today"
-                  : allDone
-                    ? "logged today"
-                    : "logged today"}
-              </Text>
-            </View>
-          </View>
+          <TodayHero
+            done={doneCount}
+            due={dueToday.length}
+            dueNames={dueToday.filter((i) => !loggedTodayIds.has(i.id)).map((i) => i.peptideName)}
+            restingToday={restingToday.length > 0}
+          />
         </TourTarget>
 
         {/*
-          The dominant graphic. Full-bleed on the page ground with no panel
-          around it — it is the heaviest thing on the screen by occupying the
-          ground directly rather than by being louder.
+          In a panel, like everything else that holds data.
+
+          This sat directly on the page ground on the theory that occupying
+          the ground made it the heaviest thing on screen. It did the
+          opposite: with no edge to sit inside, three rows of small outlined
+          cells read as texture drifting under the header rather than as a
+          chart. Weight comes from containment and cell size, not from the
+          absence of a border.
         */}
         {matrix.lanes.length > 0 && (
-          <View style={{ gap: space.sm }}>
-            <SectionLabel>Last four weeks</SectionLabel>
+          <Panel pad={space.lg}>
             <ProtocolMatrix matrix={matrix} />
-          </View>
+          </Panel>
         )}
 
         <View style={{ gap: space.md }}>

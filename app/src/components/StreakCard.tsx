@@ -97,8 +97,8 @@ export function StreakCard({
         borderWidth: 1,
         borderColor: colors.hairline,
         borderRadius: radii.xl,
-        padding: space.xl,
-        gap: space.md,
+        padding: space.lg,
+        gap: space.sm,
         overflow: "hidden",
       }}
     >
@@ -124,8 +124,8 @@ export function StreakCard({
           flexDirection: "row",
           alignItems: "baseline",
           justifyContent: "center",
-          gap: space.md,
-          paddingVertical: space.sm,
+          gap: space.sm,
+          paddingVertical: 2,
         }}
       >
         <View style={{ justifyContent: "center" }}>
