@@ -42,7 +42,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
       {
         onSuccess: (r) => setTurns((t) => [...t, { role: "assistant", text: r.answer }]),
         onError: (e) =>
-          setError(e instanceof Error ? e.message : "Couldn't get an answer — try again."),
+          setError(e instanceof Error ? e.message : "Couldn't get an answer. Try again."),
       },
     );
   }
@@ -112,7 +112,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
               {empty && (
                 <View style={{ gap: 8 }}>
                   <Text style={[type.bodySm, { marginBottom: 2 }]}>
-                    Answers come from what you've logged. It won't advise on doses or anything medical.
+                    Answers come from what you've logged. No dosing or medical advice.
                   </Text>
                   {suggestions.map((s) => (
                     <Pressable

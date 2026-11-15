@@ -22,7 +22,7 @@ const GROUP_NOTE: Record<string, string> = {
   "FDA Approved": "Approved by the FDA for at least one indication.",
   "Clinical Trials": "Under active study in humans.",
   "Limited Human": "Some human data, but not conclusive.",
-  Preclinical: "Animal or lab data only — no human trials.",
+  Preclinical: "Animal or lab data only. No human trials.",
   Speculative: "Little or no published evidence.",
 };
 
@@ -47,7 +47,7 @@ export function LearnScreen({ onClose }: { onClose?: () => void }) {
           <View style={{ flex: 1 }}>
             <Text style={type.title}>Reference</Text>
             <Text style={[type.bodySm, { marginTop: 4 }]}>
-              Grouped by how strong the evidence is. Information only — not a recommendation to take anything.
+              Information only. Not a recommendation to take anything.
             </Text>
           </View>
           {onClose && (

@@ -46,12 +46,12 @@ export const NUTRIENT_GUIDANCE: NutrientGuidance[] = [
   { nutrient: "Calcium", amount: "1000-1200mg", benefits: "Bone density, especially under training load.", foods: ["Dairy", "Fortified plant milk", "Sardines", "Leafy greens"] },
   { nutrient: "B Vitamins", amount: "Varies by type (e.g. B12: 2.4mcg, B6: 1.3-1.7mg)", benefits: "Energy metabolism, neuron function.", foods: ["Whole grains", "Leafy greens", "Eggs", "Legumes"] },
   { nutrient: "Choline", amount: "425-550mg", benefits: "Neurotransmitter production, cognitive function.", foods: ["Eggs", "Liver", "Soybeans"] },
-  { nutrient: "Polyphenols / Antioxidants", amount: "No formal RDA — aim for variety daily", benefits: "Combats cellular aging, anti-inflammatory.", foods: ["Berries", "Green tea", "Dark chocolate", "Olive oil"] },
-  { nutrient: "Probiotics", amount: "No formal RDA — aim for regular intake", benefits: "Gut microbiome diversity.", foods: ["Yogurt", "Kefir", "Sauerkraut", "Kimchi"] },
+  { nutrient: "Polyphenols / Antioxidants", amount: "No formal RDA, aim for variety daily", benefits: "Combats cellular aging, anti-inflammatory.", foods: ["Berries", "Green tea", "Dark chocolate", "Olive oil"] },
+  { nutrient: "Probiotics", amount: "No formal RDA, aim for regular intake", benefits: "Gut microbiome diversity.", foods: ["Yogurt", "Kefir", "Sauerkraut", "Kimchi"] },
   { nutrient: "Prebiotic Fiber", amount: "Counts toward total fiber (25-38g)", benefits: "Feeds the probiotic bacteria above.", foods: ["Garlic", "Onion", "Leeks", "Asparagus"] },
   { nutrient: "Creatine-Rich Foods", amount: "~3-5g/day (supplemental reference)", benefits: "Strength & power output.", foods: ["Red meat", "Salmon", "Herring"] },
   { nutrient: "Healthy Fats", amount: "20-35% of daily calories", benefits: "Steroid hormone synthesis.", foods: ["Avocado", "Olive oil", "Nuts", "Egg yolks"] },
-  { nutrient: "Tryptophan", amount: "~250-425mg", benefits: "Precursor to melatonin/serotonin — supports sleep onset.", foods: ["Turkey", "Oats", "Milk", "Bananas"] },
+  { nutrient: "Tryptophan", amount: "~250-425mg", benefits: "Precursor to melatonin/serotonin, supports sleep onset.", foods: ["Turkey", "Oats", "Milk", "Bananas"] },
 ];
 
 // Which nutrients matter most for each wellness goal — used only to flag

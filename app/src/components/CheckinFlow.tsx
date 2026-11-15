@@ -40,12 +40,7 @@ const STEP_TITLES = [
   "Want a photo?",
 ] as const;
 
-const STEP_SUBS = [
-  "Skip it if you haven't weighed yourself today.",
-  "Your own read on it. There's no right answer.",
-  "Add anything that fits — or nothing.",
-  "Optional, and only ever stored against this check-in.",
-] as const;
+const STEP_SUBS = ["", "", "", "Stored with this check-in only."] as const;
 
 export function CheckinFlow({ onClose }: { onClose: () => void }) {
   const insets = useSafeAreaInsets();
@@ -173,7 +168,7 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
       onClose();
     } catch (e) {
       setSaving(false);
-      setError(e instanceof Error ? e.message : "Couldn't save that — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't save that. Try again.");
     }
   }
 
@@ -225,7 +220,7 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
                 value={notes}
                 onChangeText={setNotes}
                 multiline
-                placeholder="Anything worth remembering about today."
+                placeholder="Optional"
                 placeholderTextColor={colors.ink3}
                 style={{
                   backgroundColor: colors.panel,
@@ -328,7 +323,9 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
         <Text style={{ fontFamily: font.display, fontSize: 32, lineHeight: 36, color: colors.ink }}>
           {STEP_TITLES[step]}
         </Text>
-        <Text style={[type.body, { color: colors.ink2, marginTop: 6 }]}>{STEP_SUBS[step]}</Text>
+        {STEP_SUBS[step] !== "" && (
+          <Text style={[type.body, { color: colors.ink2, marginTop: 6 }]}>{STEP_SUBS[step]}</Text>
+        )}
       </View>
 
       {/* ------------------------------------------------------------ stage */}

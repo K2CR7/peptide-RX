@@ -95,8 +95,8 @@ export function BodyDiagram({
         }}
       >
         {view === "front"
-          ? "Front view — your left is on the right"
-          : "Back view — your left is on the left"}
+          ? "Front view. Your left is on the right."
+          : "Back view. Your left is on the left."}
       </Text>
     </View>
   );

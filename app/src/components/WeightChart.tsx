@@ -134,7 +134,7 @@ export function WeightChart({
     return (
       <View style={[panel, { padding: 20, alignItems: "center" }]}>
         <Text style={[type.body, { textAlign: "center" }]}>
-          Your check-ins will chart here as you log them.
+          Nothing charted yet.
         </Text>
       </View>
     );
@@ -351,13 +351,11 @@ export function WeightChart({
       )}
 
       {/*
-        Said in words, because an affordance you have to discover is one most
-        people never do. It sits under the chart rather than over it so it
-        isn't competing with the figure for the first look.
+        The halo ring around each point is the affordance now. This used to
+        say 'Tap a point to open that day's check-in' underneath, which is
+        the same instructional caption the rest of the app just lost: a ring
+        drawn around a dot is already the universal mark for a hit target.
       */}
-      <Text style={[type.metaSm, { marginTop: space.md }]}>
-        Tap a point to open that day's check-in.
-      </Text>
     </View>
   );
 }

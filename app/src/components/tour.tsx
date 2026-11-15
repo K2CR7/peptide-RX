@@ -273,7 +273,7 @@ function TourOverlay({
               being asked for wasn't obvious. */}
           {waiting && (
             <Text style={[type.bodySm, { color: colors.signalInk, marginTop: space.sm }]}>
-              {stop.actionHint ?? "Give it a go — the tour continues once you do."}
+              {stop.actionHint ?? "The tour continues once you do."}
             </Text>
           )}
 

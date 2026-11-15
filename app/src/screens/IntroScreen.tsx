@@ -288,7 +288,7 @@ const SLIDES: Slide[] = [
   {
     key: "stack",
     title: "Everything you're running",
-    body: "Each compound with its dose, its schedule and any on-off cycle — and three weeks of whether you actually took it.",
+    body: "Each compound with its dose, its schedule and any on-off cycle, plus three weeks of whether you took it.",
     stage: ({ now }) => <StackStage now={now} />,
   },
   {
@@ -441,7 +441,7 @@ export function IntroScreen({ onDone }: { onDone: () => void }) {
           buried in a settings screen.
         */}
         <Text style={[type.metaSm, { textAlign: "center", lineHeight: 15 }]}>
-          peptide-RX is a tracking tool. It records what you choose to take and when — it does not
+          peptide-RX is a tracking tool. It records what you choose to take and when. It does not
           recommend compounds, doses or schedules, and it is not medical advice.
         </Text>
       </View>

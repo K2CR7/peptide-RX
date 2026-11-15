@@ -83,7 +83,7 @@ export function StackScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={type.title}>My stack</Text>
+          <Text style={type.title}>Stack</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Pressable
               onPress={() => setLearnOpen(true)}
@@ -131,7 +131,7 @@ export function StackScreen() {
               loading={isLoading}
               error={isError}
               isEmpty={items?.length === 0}
-              emptyText="Nothing in your stack yet. Add what you're already taking."
+              emptyText="Nothing here yet. Add what you're taking."
               onRetry={refetch}
             >
               <View />
@@ -156,11 +156,6 @@ export function StackScreen() {
           </View>
         )}
 
-        {items && items.length > 0 && (
-          <Text style={[type.metaSm, { paddingHorizontal: 2 }]}>
-            Tap an item to edit or remove it.
-          </Text>
-        )}
       </ScrollView>
 
       {detailFor && (
@@ -333,7 +328,7 @@ function InjectionLogger({
         // treatment, not a new one.
         logInjection.mutate(
           { stackItemId, site },
-          { onError: () => onError("Couldn't log that dose — check your connection and try again.") },
+          { onError: () => onError("Couldn't log that dose. Check your connection and try again.") },
         );
         onClose();
       }}
@@ -439,8 +434,8 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
         e instanceof Error
           ? e.message
           : editing
-            ? "Couldn't save those changes — try again."
-            : "Failed to add to stack — try again.",
+            ? "Couldn't save those changes. Try again."
+            : "Couldn't add that to your stack. Try again.",
       );
     }
   }
@@ -519,7 +514,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
             options={cycleOptionLabels()}
             value={cycleLabel}
             onChange={setCycleLabel}
-            placeholder="No cycle — continuous"
+            placeholder="No cycle"
             customPlaceholder="Enter a cycle"
           />
         </View>
@@ -629,7 +624,7 @@ function StackItemSheet({
     archive.mutate(item.id, {
       onSuccess: onClose,
       onError: () => {
-        setError("Couldn't remove that — check your connection and try again.");
+        setError("Couldn't remove that. Check your connection and try again.");
         setConfirming(false);
       },
     });

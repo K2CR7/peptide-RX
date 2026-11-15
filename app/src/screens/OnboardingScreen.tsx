@@ -70,7 +70,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       });
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save that — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't save that. Try again.");
     }
   }
 
@@ -106,7 +106,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <StepBody
               label="About you"
               question="When were you born?"
-              hint="Used to work out your calorie and macro targets. Nothing else."
+              hint="Used for your calorie and macro targets."
             >
               <View style={{ gap: space.md }}>
                 <View style={{ flexDirection: "row", gap: space.md }}>
@@ -126,7 +126,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <StepBody
               label="Goals"
               question="What are you working toward?"
-              hint="Pick as many as apply. This shapes which peptides are relevant and what the nutrition screen prioritises."
+              hint="Pick as many as apply."
             >
               <View style={{ gap: space.sm }}>
                 {GOAL_OPTIONS.map((g, i) => (
@@ -147,7 +147,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <StepBody
               label="Check-ins"
               question="How often do you want to check in?"
-              hint="A check-in is a weight, how you're feeling, and optionally a photo. Pick what you'll actually keep up — you can change it in settings whenever."
+              hint="A weight, how you're feeling, and optionally a photo."
             >
               <View style={{ gap: space.sm }}>
                 {CADENCE_OPTIONS.map((c, i) => (
@@ -168,7 +168,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <StepBody
               label="Experience"
               question="Have you used peptides or GLP-1s before?"
-              hint="So the app can pitch things at the right level."
+              hint="Sets how much the app explains."
             >
               <View style={{ gap: space.sm }}>
                 <SelectRow
@@ -215,7 +215,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <StepBody
               label="Medications"
               question="Are you taking any of these?"
-              hint="Some are worth knowing about alongside certain peptides. You can change this any time."
+              hint="Cautions on a peptide are checked against this list."
             >
               <View style={{ gap: space.sm }}>
                 {MEDICATION_OPTIONS.map((m, i) => (

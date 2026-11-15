@@ -120,7 +120,7 @@ export function ScheduleScreen() {
         <Text style={{ fontFamily: font.numeralMedium, fontSize: 15, color: colors.ink }}>
           {totals.logged}/{totals.owed}
         </Text>
-        {"  logged so far"}
+        {"  logged"}
       </Text>
 
       {isLoading || isError || rows.length === 0 ? (
@@ -130,7 +130,7 @@ export function ScheduleScreen() {
               loading={isLoading}
               error={isError}
               isEmpty={rows.length === 0}
-              emptyText="Nothing scheduled yet. Add items to your stack to build a week."
+              emptyText="Nothing scheduled yet. Add items in Stack."
               onRetry={refetch}
             >
               <View />
@@ -273,7 +273,7 @@ export function ScheduleScreen() {
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 8, marginTop: 16, paddingHorizontal: 2 }}>
         <LegendItem state="logged" label="Logged" />
-        <LegendItem state="due" label="Due today" />
+        <LegendItem state="due" label="Due" />
         <LegendItem state="missed" label="Not logged" />
         <LegendItem state="scheduled" label="Upcoming" />
         <LegendItem state="none" label="Off day" />

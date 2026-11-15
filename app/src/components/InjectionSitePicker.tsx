@@ -158,12 +158,12 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                       <Text style={[type.bodySm, { marginTop: 3 }]}>{selectedSite.desc}</Text>
                       {(usage[selectedSite.id] ?? 0) > 0 && (
                         <Text style={{ fontFamily: font.medium, fontSize: 13, color: colors.amber, marginTop: 8 }}>
-                          Used {usage[selectedSite.id]}× recently — rotating reduces irritation and lipohypertrophy.
+                          Used {usage[selectedSite.id]}× recently. Rotate to avoid irritation.
                         </Text>
                       )}
                     </>
                   ) : (
-                    <Text style={type.body}>Tap a site on the diagram to pin it.</Text>
+                    <Text style={type.body}>Tap a site to pin it.</Text>
                   )}
                 </View>
 
@@ -275,10 +275,10 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
           {!showGuide && !hasSites && (
             <>
               <Text style={type.heading}>
-                {routeKey === "Oral" ? "Oral — no injection site" : "Nasal spray — no injection site"}
+                {routeKey === "Oral" ? "Oral" : "Nasal spray"}
               </Text>
               <Text style={[type.body, { marginTop: 8 }]}>
-                Nothing to pin for this route. Confirm to log today's dose.
+                No injection site.
               </Text>
 
               <Pressable

@@ -48,7 +48,7 @@ const GLP1_CAUTIONS: PeptideMedInteraction[] = [
     severity: "caution",
     note:
       "Combining with insulin raises the risk of hypoglycaemia. Prescribers " +
-      "routinely reduce insulin doses when starting a GLP-1 — worth confirming yours has.",
+      "routinely reduce insulin doses when starting a GLP-1. Worth confirming yours has.",
   },
   {
     substance: "sulfonylurea",
@@ -61,8 +61,8 @@ const GLP1_CAUTIONS: PeptideMedInteraction[] = [
     substance: "glp1",
     severity: "avoid",
     note:
-      "Two GLP-1 receptor agonists are not intended to be taken together — " +
-      "they act on the same receptor and the side effects stack.",
+      "Two GLP-1 receptor agonists are not intended to be taken together. " +
+      "They act on the same receptor and the side effects stack.",
   },
   {
     substance: "levothyroxine",
@@ -90,7 +90,7 @@ const GLP1_CAUTIONS: PeptideMedInteraction[] = [
     severity: "info",
     note:
       "Delayed gastric emptying can affect absorption of oral medication, " +
-      "including the pill. Guidance varies by drug — check yours.",
+      "including the pill. Guidance varies by drug. Check yours.",
   },
 ];
 
@@ -122,7 +122,7 @@ const GH_AXIS_CAUTIONS: PeptideMedInteraction[] = [
     severity: "caution",
     note:
       "This stimulates your own growth hormone on top of prescribed " +
-      "somatropin. The effects are additive — your prescriber should know.",
+      "somatropin. The effects are additive. Your prescriber should know.",
   },
   {
     substance: "corticosteroid",
@@ -146,7 +146,7 @@ export const PEPTIDE_MED_INTERACTIONS: Record<string, PeptideMedInteraction[]> =
       substance: "*",
       severity: "info",
       note:
-        "Retatrutide is still investigational — it is not an approved medicine, " +
+        "Retatrutide is still investigational. It is not an approved medicine, " +
         "so its interaction profile is less established than the approved GLP-1s.",
     },
   ],
@@ -251,4 +251,4 @@ export function cautionsFor(
 export const INTERACTION_DISCLAIMER =
   "This is a short list of well-known pairings, not a complete interaction " +
   "screen, and not medical advice. Nothing here stops you tracking what you " +
-  "take — check anything that matters with whoever prescribes for you.";
+  "take. Check anything that matters with whoever prescribes for you.";

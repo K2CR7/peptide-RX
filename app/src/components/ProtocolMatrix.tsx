@@ -266,7 +266,7 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
       */}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md, rowGap: space.xs }}>
         <LegendItem state="logged" label="Logged" />
-        {hasMissed && <LegendItem state="missed" label="Due, not logged" />}
+        {hasMissed && <LegendItem state="missed" label="Not logged" />}
         {offDays > 0 && <LegendItem state="off" label="Off-cycle" />}
       </View>
 

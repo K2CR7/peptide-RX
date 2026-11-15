@@ -79,7 +79,7 @@ export function CheckinScreen() {
           loading={isLoading}
           error={isError}
           isEmpty={checkins?.length === 0}
-          emptyText="No check-ins yet. Your first one starts the chart."
+          emptyText="No check-ins yet."
           onRetry={refetch}
         >
           <WeightChart checkins={checkins ?? []} onOpen={(c) => setOpen(c.id)} />

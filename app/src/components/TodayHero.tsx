@@ -48,7 +48,7 @@ export function TodayHero({
       }}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-        <Text style={type.label}>Today</Text>
+        <Text style={type.label}>Doses</Text>
         {complete && (
           <Text style={{ fontFamily: font.semibold, fontSize: 11, letterSpacing: 0.5, color: colors.signalInk }}>
             ALL LOGGED
@@ -64,11 +64,7 @@ export function TodayHero({
         */
         <View style={{ gap: 2 }}>
           <Text style={[type.statLg, { color: colors.ink }]}>Rest day</Text>
-          <Text style={type.meta}>
-            {restingToday
-              ? "Your protocol is off-cycle today. Nothing is due."
-              : "Nothing is scheduled for today."}
-          </Text>
+          <Text style={type.meta}>{restingToday ? "Off-cycle" : "Nothing scheduled"}</Text>
         </View>
       ) : (
         <>
@@ -81,7 +77,7 @@ export function TodayHero({
             </Text>
             <Text style={[type.statSm, { color: colors.ink3 }]}>of {due}</Text>
             <Text style={[type.body, { color: colors.ink2, marginLeft: 2 }]}>
-              {due === 1 ? "dose logged" : "doses logged"}
+              {due === 1 ? "dose" : "doses"}
             </Text>
           </View>
 
@@ -112,11 +108,6 @@ export function TodayHero({
             ))}
           </View>
 
-          {dueNames.length > 0 && (
-            <Text style={type.meta}>
-              Still due: <Text style={{ fontFamily: font.semibold, color: colors.ink2 }}>{dueNames.join(" · ")}</Text>
-            </Text>
-          )}
         </>
       )}
     </View>

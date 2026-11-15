@@ -63,7 +63,7 @@ function Body({ checkin, onClose }: { checkin: Checkin; onClose: () => void }) {
     deleteCheckin.mutate(checkin.id, {
       onSuccess: onClose,
       onError: () => {
-        setError("Couldn't delete that check-in — try again.");
+        setError("Couldn't delete that check-in. Try again.");
         setConfirming(false);
       },
     });
@@ -234,7 +234,7 @@ function Body({ checkin, onClose }: { checkin: Checkin; onClose: () => void }) {
 
         {nothingRecorded && (
           <Text style={[type.body, { color: colors.ink2 }]}>
-            You checked in on this day but skipped every question.
+            Nothing recorded.
           </Text>
         )}
       </ScrollView>

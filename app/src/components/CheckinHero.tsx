@@ -132,12 +132,12 @@ function weekDates(now: Date): Date[] {
   });
 }
 
-function greeting(now: Date): string {
-  const h = now.getHours();
-  if (h < 12) return "How are you feeling this morning?";
-  if (h < 18) return "How are you feeling this afternoon?";
-  return "How are you feeling this evening?";
-}
+/*
+  Flat, not time-aware. It used to read "this morning" / "this afternoon" /
+  "this evening", which personalised the sentence without changing what was
+  being asked: a check-in logged at 11pm records the same day either way.
+*/
+const QUESTION = "How are you feeling?";
 
 export function CheckinHero({
   checkinDays,
@@ -219,7 +219,7 @@ export function CheckinHero({
           paddingHorizontal: space.md,
         }}
       >
-        {greeting(now)}
+        {QUESTION}
       </Text>
 
       {/*

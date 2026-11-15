@@ -69,7 +69,7 @@ export function MealBuilderModal({
       });
       setMeal(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't build a meal — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't build a meal. Try again.");
     }
   }
 
@@ -93,7 +93,7 @@ export function MealBuilderModal({
       setMeal(result);
       setFeedback("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't update the meal — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't update the meal. Try again.");
     }
   }
 
@@ -111,7 +111,7 @@ export function MealBuilderModal({
         {!meal && (
           <>
             <Text style={[type.bodySm, { marginTop: -6 }]}>
-              Tap a label to switch it between a max and a min limit.
+              Tap a label to switch between max and min.
             </Text>
 
             <SliderField
@@ -131,7 +131,7 @@ export function MealBuilderModal({
               value={fatG} onChange={setFatG} min={0} max={80} step={5} unit="g"
             />
 
-            <Text style={type.label}>Prioritize any nutrients (optional)</Text>
+            <Text style={type.label}>Prioritize nutrients (optional)</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {NUTRIENT_GUIDANCE.map((n) => (
                 <Chip
@@ -183,7 +183,7 @@ export function MealBuilderModal({
               )}
             </View>
 
-            <Text style={type.label}>Something not work? Tell it what to change.</Text>
+            <Text style={type.label}>What to change</Text>
             <TextInput
               placeholder="e.g. I don't have eggs"
               placeholderTextColor={colors.ink3}
@@ -264,7 +264,7 @@ function ModeToggle({ name, mode, onPress }: { name: string; mode: MacroConstrai
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${name} is a ${isMax ? "maximum" : "minimum"} — tap to switch`}
+      accessibilityLabel={`${name} is a ${isMax ? "maximum" : "minimum"}, tap to switch`}
       style={({ pressed }) => ({
         flexDirection: "row",
         alignItems: "center",

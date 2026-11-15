@@ -66,7 +66,7 @@ export const ROUTE_SITES: Record<RouteKey, InjectionSite[]> = {
   "SubQ or IM": [
     ...ABDOMEN,
     ...THIGHS,
-    ...DELTOIDS("Outer upper arm — if going IM"),
+    ...DELTOIDS("Outer upper arm, if going IM"),
   ],
   "Nasal spray": [],
   Oral: [],
@@ -96,7 +96,7 @@ const SUBQ_STEPS: InjectStep[] = [
   { mark: "wash", title: "Wash hands", body: "Wash thoroughly with soap and water for 20 seconds. Dry completely." },
   { mark: "swab", title: "Prep the site", body: "Swab the injection site with an alcohol wipe. Wait 30 seconds for it to fully dry." },
   { mark: "needle", title: "Pinch & angle", body: "Pinch 1–2 inches of skin firmly. Insert the needle at a 45° angle (90° if you have more body fat at the site)." },
-  { mark: "timer", title: "Inject slowly", body: "Push the plunger steadily over 5–10 seconds. Do not rush — slow delivery reduces discomfort." },
+  { mark: "timer", title: "Inject slowly", body: "Push the plunger steadily over 5–10 seconds. Slow delivery reduces discomfort." },
   { mark: "press", title: "Remove & press", body: "Pull the needle out at the same angle it entered. Apply gentle pressure with a cotton ball. Do not rub." },
   { mark: "dispose", title: "Dispose safely", body: "Cap the needle immediately and place in a sharps container. Never reuse needles." },
 ];

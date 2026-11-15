@@ -33,45 +33,40 @@ const STOPS: TourStop[] = [
   {
     id: "today-ring",
     tab: "Today",
-    title: "Tonight's readout",
+    title: "Today",
     body:
-      "This is the one number that matters day to day: how many of today's doses you've logged. " +
-      "Tap a dose below the ring to log it — the row itself is the button.",
+      "The ring is today's doses, logged against due. Tap a dose below it to log one.",
   },
   {
     id: "stack-add",
     tab: "Stack",
-    title: "Your stack",
+    title: "Stack",
     body:
-      "Everything you're running lives here, with its dose, schedule and any on/off cycle. " +
-      "Let's add your first one.",
+      "Everything you're running, with its dose, schedule and any on/off cycle.",
     requiresAction: true,
-    actionHint: "Tap Add and enter something you're taking. The tour picks up once it's saved.",
+    actionHint: "Tap Add and enter something you're taking.",
   },
   {
     id: "week-grid",
     tab: "Week",
-    title: "The week at a glance",
+    title: "Week",
     body:
-      "One row per peptide, one column per day. Logged, missed, due and off-cycle days each " +
-      "carry their own mark, so you can see a pattern forming without reading any numbers.",
+      "One row per peptide, one column per day. Logged, missed, due and off-cycle each carry their own mark.",
   },
   {
     id: "progress-checkin",
     tab: "Progress",
-    title: "Check in on yourself",
+    title: "Progress",
     body:
-      "Log weight, energy and mood, with photos if you want them. The chart builds a trend " +
-      "over time, which is what tells you whether any of this is doing anything.",
+      "Weight, energy and mood, with photos if you want them. The chart builds the trend.",
   },
   {
     id: "fuel-builder",
     tab: "Fuel",
-    title: "What you eat matters here",
+    title: "Fuel",
     body:
-      "Diet does a lot of the work alongside peptides and GLP-1s — this screen sets calorie and " +
-      "macro targets from your profile, flags the nutrients your goals lean on, and can build a " +
-      "meal that fits them.",
+      "Calorie and macro targets from your profile, the nutrients your goals lean on, and a " +
+      "meal builder that works to them.",
   },
 ];
 

@@ -57,7 +57,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
       setCustomMed("");
       setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save that — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't save that. Try again.");
     }
   }
 
@@ -67,7 +67,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
       await resetAccount.mutateAsync({ replayFirstRun: true });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't restart the tutorial — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't restart the tutorial. Try again.");
     }
   }
 
@@ -81,7 +81,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
       await resetAccount.mutateAsync({ clearData: true, replayFirstRun: true });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't reset — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't reset. Try again.");
       setConfirmWipe(false);
     }
   }
@@ -127,9 +127,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
           <View style={{ gap: space.md }}>
             <SectionLabel>Check-ins</SectionLabel>
             <Text style={type.bodySm}>
-              How often the Progress screen expects one. Nothing is blocked or marked late if
-              you check in more or less often than this — it only decides when the screen says
-              you're due.
+              Sets when Progress says you're due. Nothing is blocked or marked late.
             </Text>
 
             <View style={{ gap: space.sm }}>
@@ -143,7 +141,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
                       setCadenceError(null);
                       updateProfile.mutate(
                         { checkinCadence: c.id },
-                        { onError: () => setCadenceError("Couldn't save that — try again.") },
+                        { onError: () => setCadenceError("Couldn't save that. Try again.") },
                       );
                     }}
                     accessibilityRole="radio"
@@ -181,8 +179,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
           <View style={{ gap: space.md }}>
             <SectionLabel>Medications</SectionLabel>
             <Text style={type.bodySm}>
-              What you're taking alongside your stack. This is what the cautions on a peptide are
-              checked against.
+              Cautions on a peptide are checked against this list.
             </Text>
 
             <View style={{ gap: space.sm }}>
@@ -290,8 +287,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
           <View style={{ gap: space.md }}>
             <SectionLabel>Tutorial</SectionLabel>
             <Text style={type.bodySm}>
-              Run the setup questions and the guided tour again. This doesn't touch anything
-              you've logged.
+              Nothing you've logged is affected.
             </Text>
             <Button
               label="Replay the tutorial"

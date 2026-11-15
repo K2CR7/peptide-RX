@@ -141,19 +141,10 @@ export function StreakCard({
           )}
         </View>
         <Text style={[type.body, { color: colors.ink2, paddingBottom: 6 }]}>
-          {current === 1 ? "day" : "days"} in a row
+          {current === 1 ? "day" : "days"}
         </Text>
       </View>
 
-      <Text style={[type.metaSm, { lineHeight: 17, textAlign: "center" }]}>
-        {celebration
-          ? celebration.by === "rest"
-            ? "Rest day kept. Nothing was due — showing up is the whole job."
-            : "Dose logged. Day kept."
-          : todayPending
-            ? "Today's dose is still open — log it to move the count."
-            : "Rest days count: the protocol asks for nothing, so showing up keeps it."}
-      </Text>
     </View>
   );
 }

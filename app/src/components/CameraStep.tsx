@@ -173,9 +173,7 @@ export function CameraStep({
         </Pressable>
       </Animated.View>
 
-      {shots.length === 0 ? (
-        <Text style={[type.metaSm, { textAlign: "center" }]}>Up to {MAX_PHOTOS}, kept with this check-in.</Text>
-      ) : (
+      {shots.length === 0 ? null : (
         <View style={{ flexDirection: "row", gap: space.sm, alignSelf: "stretch" }}>
           {shots.map((s, n) => (
             <Thumb key={s.uri} uri={s.uri} index={n} onRemove={() => onRemove(n)} />
