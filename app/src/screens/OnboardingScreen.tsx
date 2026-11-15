@@ -8,7 +8,7 @@ that is asking fairly personal questions.
 Nothing here is required. Every step can be skipped, because an onboarding
 survey that holds the app hostage is worse than a thin profile.
 */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GOAL_OPTIONS, deriveNutritionGoal } from "../data/goals";
@@ -17,7 +17,7 @@ import { INTERACTION_DISCLAIMER } from "../data/peptideInteractions";
 import { type BirthDateParts, parseBirthDate } from "../lib/birthDate";
 import { useUpdateProfile } from "../lib/queries";
 import { Button, ErrorText } from "../components/primitives";
-import { Animated, Rise, useEntrance } from "../components/motion";
+import { Animated, DUR, EASE, Rise, dur, useReduceMotion } from "../components/motion";
 import { CheckMark } from "../components/icons";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
@@ -321,10 +321,37 @@ function SelectRow({
 
 /** A hairline that fills as you move through the survey. */
 function ProgressRail({ step, total, topInset }: { step: number; total: number; topInset: number }) {
-  // Width can't ride the native driver, so this one interpolates on the JS
-  // thread — it's a 2px rule, not something anyone will see drop a frame.
-  const progress = useEntrance(400);
   const pct = ((step + 1) / total) * 100;
+  const reduced = useReduceMotion();
+
+  /*
+    This animates to the current fill, not from zero to it. The rail used to
+    run a one-shot 0-to-1 entrance on mount, which meant it filled once and
+    then every subsequent step JUMPED: the interpolation output changed under
+    a value already parked at 1. A rail that fills is only worth drawing if
+    the filling is the thing you see.
+
+    Width can't ride the native driver, so this interpolates on the JS thread.
+    It's a 2px rule, not something anyone will notice dropping a frame.
+  */
+  const fill = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Deliberately NOT reset to zero first: the start value is wherever the
+    // previous step left it, which is the whole point.
+    const anim = Animated.timing(fill, {
+      toValue: pct,
+      duration: dur(DUR.move, reduced),
+      easing: EASE,
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      // The rail must show the step the user is actually on.
+      fill.setValue(pct);
+    };
+  }, [fill, pct, reduced]);
 
   return (
     <View
@@ -347,7 +374,11 @@ function ProgressRail({ step, total, topInset }: { step: number; total: number; 
             height: 2,
             borderRadius: radii.hair,
             backgroundColor: colors.signalInk,
-            width: progress.interpolate({ inputRange: [0, 1], outputRange: ["0%", `${pct}%`] }),
+            width: fill.interpolate({
+              inputRange: [0, 100],
+              outputRange: ["0%", "100%"],
+              extrapolate: "clamp",
+            }),
           }}
         />
       </View>

@@ -252,7 +252,7 @@ function TourOverlay({
       >
         <Fade
           key={stop.id}
-          duration={DUR.step}
+          duration={DUR.enter}
           style={{
             backgroundColor: colors.panel,
             borderWidth: 1,

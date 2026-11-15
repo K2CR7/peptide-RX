@@ -17,9 +17,21 @@ const ROW_H = 44;
 
 type CellState = "logged" | "missed" | "due" | "scheduled" | "none";
 
+/*
+  A missed dose is drawn in the same muted edge colour as an unfilled cell on
+  the home screen, not in amber.
+
+  Amber is the app's warning colour and it has to keep meaning something that
+  needs acting on. A dose that wasn't logged last Tuesday is not actionable —
+  it is history — and on a week of two daily peptides it was most of the
+  grid, which turned the one screen that shows the schedule into a wall of
+  alerts. The glyph already separates the states by shape: a check inside a
+  ring is logged, an empty ring is due, a barred ring is not logged, a dot is
+  upcoming. Colour was doing no work that shape wasn't already doing better.
+*/
 function StateMark({ state }: { state: CellState }) {
   if (state === "logged") return <MarkLogged size={16} color={colors.signalInk} />;
-  if (state === "missed") return <MarkMissed size={16} color={colors.amber} />;
+  if (state === "missed") return <MarkMissed size={16} color={colors.edge} />;
   if (state === "due") return <MarkDue size={16} color={colors.signalInk} />;
   if (state === "scheduled") return <MarkScheduled size={16} color={colors.ink3} />;
   // Not scheduled — a rule, not a mark, so the eye skips it.

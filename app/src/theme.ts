@@ -102,13 +102,48 @@ export const colors = {
   signalFaint: "#DCF0EE",
   onSignal: "#0C2B2E",
 
-  // Trace — the support. One job: this dose is logged, this day was kept.
-  // 5.3:1 on the page, so it is safe as small text and not only as a fill.
+  /*
+    Trace — the support. One job: this dose is logged, this day was kept.
+    5.3:1 on the page, so it is safe as small text and not only as a fill.
+
+    MEASURED LIMIT: trace and signalInk are 2.9 ΔE apart (OKLab, ×100). The
+    separability floor for two colours carrying different identities in one
+    graphic is 15. These two are, to a viewer, the same colour. They are both
+    fine as INK — each is legible on its own — but they cannot be the two
+    series in a chart, and a gradient from one to the other renders as a flat
+    fill. Never pair them to mean two different things.
+  */
   trace: "#1C6E61",
   traceFaint: "#DCEFEA",
 
-  // Semantic. Both checked against the tinted page rather than white:
-  // amber 5.3:1, red 6.3:1.
+  /*
+    Ordinal ramp, for anything that encodes "more" vs "less" — density of
+    doses, recency of an injection site.
+
+    These are new tokens because NO existing pale teal can be the light end:
+    signalFaint is 1.18:1 on white, signalDim 1.56:1, track 1.51:1, all under
+    the 2:1 floor, so a three-step ramp built from them would have an
+    invisible lightest step. #56B0AD can't be a step either — there is no room
+    between "clears 2:1" and "0.06 lighter than the next step down". It stays
+    the brand fill and nothing else.
+
+    Validated: monotone lightness, every adjacent pair ≥0.06 ΔL, one hue,
+    light end 2.12:1 on white. The dark end is signalInk.
+  */
+  rampLight: "#74BFBC",
+  rampMid: "#3F918E",
+
+  /*
+    Semantic. Both checked against the tinted page rather than white:
+    amber 5.3:1, red 6.3:1.
+
+    MEASURED LIMIT: under deuteranopia these two are 2.2 ΔE apart — "site used
+    recently" and "dose missed" become the same colour for roughly one man in
+    twelve. They are 11.9 apart in normal vision, which is itself under the
+    floor. So neither may ever be the only difference between two states: both
+    always ship with a drawn mark. The direction contract at the top of this
+    file already said that; this is the measurement proving it load-bearing.
+  */
   amber: "#8A5806",
   amberFaint: "#F7EEDC",
   red: "#A8231C",
@@ -196,8 +231,16 @@ const TABULAR = { fontVariant: ["tabular-nums"] as FontVariant[] };
 export const type = {
   // Instrument readouts. The numerals ARE the product on this surface —
   // density is the point, not a pattern to be designed away.
-  display: { fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
-  statLg: { fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
+  /*
+    display and statLg are PROPORTIONAL on purpose. Tabular figures exist to
+    make a column line up; at 52px, standing alone, they just make a number
+    like 121 look gappy, because the 1s are padded out to the width of a 0.
+    The rule is: tabular wherever figures stack, proportional wherever one
+    figure stands by itself.
+  */
+  display: { fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -0.5 },
+  statLg: { fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 },
+  // These two do appear in columns — dose lists, stat pairs, chart ticks.
   statMd: { fontFamily: font.numeral, fontSize: 32, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
   statSm: { fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3, ...TABULAR },
 

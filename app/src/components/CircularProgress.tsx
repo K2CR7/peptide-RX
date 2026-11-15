@@ -1,111 +1,108 @@
+/*
+A small gauge, not a hero.
+
+This used to be a 190px ring with a 52px numeral inside it and a one-word
+verdict underneath — which is, structurally, a wearable's "recovery score":
+a filled ring, a big unitless figure, a colour that reads as a grade. That
+form converts a measurement into a quota to fill, and its numbers can't be
+interrogated. The protective difference here is that adherence is a ratio of
+two countable things, so the screen now prints the ratio and uses this only
+as a small figure beside it.
+
+Two bugs fixed in the demotion:
+
+The ring was drawn with a gradient from signalInk to trace. Those two
+colours measure 2.9 ΔE apart — far under the ~15 needed for two colours to
+read as different — so the gradient rendered as a flat fill and the <Defs>
+and <LinearGradient> nodes were paying for nothing. Flat colour now.
+
+The animated circle was mounted conditionally on `clamped > 0`. Going from
+zero to any value therefore remounted it fresh, with its dash props flipping
+from absent to set — the documented trigger for strokeDashoffset breaking on
+iOS. It is always mounted now, and "empty" is expressed by a dash offset
+equal to the full circumference. One node, one class of platform bug gone.
+
+The sweep was 700ms on Easing.out(Easing.exp), which spends roughly the last
+85% of its duration visually still — the arc snaps to almost its final length
+and then creeps. That curve suits a hero ring filling as the one event on a
+screen. At 56px beside a ratio it reads as a stutter, so it now uses the
+app's standard arrival: one curve, one duration, same as everything else.
+*/
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Text, View } from "react-native";
-import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
-import { colors, font } from "../theme";
+import { Animated, View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
+import { DUR, EASE, dur, useReduceMotion } from "./motion";
+import { colors } from "../theme";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface Props {
   size?: number;
-  strokeWidth?: number;
-  progress: number; // 0-1
-  label: string;
-  sublabel: string;
+  stroke?: number;
+  /** 0–1. */
+  progress: number;
 }
 
-/**
- * Signature motion: the instrument powers on. The ring sweeps from empty to
- * its reading once on mount and on every change, exponential ease-out, and
- * the readout fades up under it. Native driver is off because
- * strokeDashoffset is an SVG prop, not a transform.
- */
-export function CircularProgress({ size = 190, strokeWidth = 11, progress, label, sublabel }: Props) {
-  const radius = (size - strokeWidth) / 2;
+export function CircularProgress({ size = 56, stroke = 5, progress }: Props) {
+  const radius = (size - stroke) / 2;
+  // Computed, never measured. getTotalLength() on react-native-svg returns 0
+  // during init on iOS and the library's own source calls it likely broken.
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(1, progress));
 
+  const reduced = useReduceMotion();
+  // Starts where the reading starts. The first value to arrive sweeps up from
+  // empty; a later change moves from the old reading, not from zero.
   const sweep = useRef(new Animated.Value(0)).current;
-  const readout = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(sweep, {
+    const anim = Animated.timing(sweep, {
       toValue: clamped,
-      duration: 950,
-      easing: Easing.out(Easing.exp),
+      duration: dur(DUR.enter, reduced),
+      easing: EASE,
+      // strokeDashoffset is an SVG prop, so this drives setNativeProps on the
+      // JS thread. react-native-svg has no native-driver integration at all.
       useNativeDriver: false,
-    }).start();
-  }, [clamped, sweep]);
-
-  useEffect(() => {
-    Animated.timing(readout, {
-      toValue: 1,
-      duration: 600,
-      delay: 120,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [readout]);
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      // The reading must survive an interrupted animation.
+      sweep.setValue(clamped);
+    };
+  }, [clamped, reduced, sweep]);
 
   const dashoffset = sweep.interpolate({
     inputRange: [0, 1],
     outputRange: [circumference, 0],
+    extrapolate: "clamp",
   });
 
   return (
-    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-      <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
-        <Defs>
-          <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            {/* Both stops come from the palette now. The second used to be a
-                hardcoded mint, which would have left a green tail on a blue
-                ring. Blue leads into the green it hands off to. */}
-            <Stop offset="0" stopColor={colors.signalInk} />
-            <Stop offset="1" stopColor={colors.trace} />
-          </LinearGradient>
-        </Defs>
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke={colors.track}
-          strokeWidth={strokeWidth}
+          strokeWidth={stroke}
           fill="none"
         />
-        {clamped > 0 && (
-          <AnimatedCircle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="url(#ringGrad)"
-            strokeWidth={strokeWidth}
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashoffset}
-            strokeLinecap="round"
-          />
-        )}
+        <AnimatedCircle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={colors.signalInk}
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashoffset}
+          // A round cap on a ring at 1-2% draws a dot that overstates the
+          // value. Butt below a threshold where the cap would be most of it.
+          strokeLinecap={clamped > 0.04 ? "round" : "butt"}
+        />
       </Svg>
-      <Animated.View
-        style={{
-          alignItems: "center",
-          opacity: readout,
-          transform: [{ translateY: readout.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-        }}
-      >
-        <Text style={{ fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -1 }}>{label}</Text>
-        <Text
-          style={{
-            fontFamily: font.semibold,
-            fontSize: 11,
-            color: colors.ink2,
-            textTransform: "uppercase",
-            letterSpacing: 1.4,
-            marginTop: 2,
-          }}
-        >
-          {sublabel}
-        </Text>
-      </Animated.View>
     </View>
   );
 }

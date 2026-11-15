@@ -9,6 +9,8 @@ import { StreakCard } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
 import { doseParts, speakDose } from "../lib/dose";
+import { ProtocolMatrix } from "../components/ProtocolMatrix";
+import { buildMatrix } from "../lib/lanes";
 import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
@@ -114,6 +116,11 @@ export function HomeScreen() {
     [items, allLogs, openDays],
   );
 
+  const matrix = useMemo(
+    () => buildMatrix(items ?? [], allLogs ?? [], 28),
+    [items, allLogs],
+  );
+
   const adherence = useMemo(
     () => computeAdherence(items ?? [], allLogs ?? [], 7),
     [items, allLogs],
@@ -207,25 +214,44 @@ export function HomeScreen() {
           </View>
         </View>
 
+        {/*
+          The ring used to be a 190px hero holding one number. It was the
+          largest object on the screen answering the smallest question, and
+          structurally it was the same object as a wearable's "recovery
+          score" — a filled ring, a big unitless figure, a one-word verdict.
+          The thing that keeps this honest is that adherence is a ratio of
+          two countable things, so it is now printed as that ratio, inline,
+          at the size the fact deserves.
+        */}
         <TourTarget id="today-ring">
-          <View
-            style={[
-              panel,
-              {
-                padding: 24,
-                alignItems: "center",
-                backgroundColor: allDone ? colors.signalFaint : colors.panel,
-                borderColor: allDone ? colors.signalDim : colors.hairline,
-              },
-            ]}
-          >
-            <CircularProgress
-              progress={progress}
-              label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-              sublabel={allDone ? "protocol complete" : "doses logged"}
-            />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.lg }}>
+            <CircularProgress progress={progress} size={56} stroke={5} />
+            <View style={{ flex: 1 }}>
+              <Text style={type.statMd}>
+                {dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
+              </Text>
+              <Text style={type.metaSm}>
+                {dueToday.length === 0
+                  ? "nothing due today"
+                  : allDone
+                    ? "logged today"
+                    : "logged today"}
+              </Text>
+            </View>
           </View>
         </TourTarget>
+
+        {/*
+          The dominant graphic. Full-bleed on the page ground with no panel
+          around it — it is the heaviest thing on the screen by occupying the
+          ground directly rather than by being louder.
+        */}
+        {matrix.lanes.length > 0 && (
+          <View style={{ gap: space.sm }}>
+            <SectionLabel>Last four weeks</SectionLabel>
+            <ProtocolMatrix matrix={matrix} />
+          </View>
+        )}
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
