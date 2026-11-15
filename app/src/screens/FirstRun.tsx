@@ -1,5 +1,10 @@
 /*
-The first-run sequence: survey → quote → tour → app.
+The first-run sequence: intro → survey → quote → tour → app.
+
+The intro came later than the rest and fixed something embarrassing: the app
+opened on a form. The very first thing anyone saw was a question about their
+date of birth, asked by a product that had not yet said a word about what it
+was for or what it would do with the answer.
 
 Phase is derived from the server, not held only in local state, so closing the
 app mid-way resumes in the right place rather than starting over or skipping
@@ -10,6 +15,7 @@ questions.
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { MainTabs } from "../navigation/MainTabs";
+import { IntroScreen } from "./IntroScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
 import { QuoteScreen } from "./QuoteScreen";
 import { TourProvider, type TourStop } from "../components/tour";
@@ -69,7 +75,7 @@ const STOPS: TourStop[] = [
   },
 ];
 
-type Phase = "survey" | "quote" | "tour";
+type Phase = "intro" | "survey" | "quote" | "tour";
 
 export function FirstRun() {
   const user = useAuthStore((s) => s.user);
@@ -77,7 +83,7 @@ export function FirstRun() {
 
   // Someone who already answered the survey but bailed on the tour resumes
   // at the tour, not back at the questions.
-  const [phase, setPhase] = useState<Phase>(user?.onboardedAt ? "tour" : "survey");
+  const [phase, setPhase] = useState<Phase>(user?.onboardedAt ? "tour" : "intro");
 
   const goToTab = useCallback((tab: TourStop["tab"]) => {
     navigateToTab(tab);
@@ -88,6 +94,14 @@ export function FirstRun() {
     // is a far better failure than blocking entry to the app.
     updateProfile.mutate({ tourCompleted: true });
   }, [updateProfile]);
+
+  if (phase === "intro") {
+    return (
+      <Fade style={{ flex: 1 }}>
+        <IntroScreen onDone={() => setPhase("survey")} />
+      </Fade>
+    );
+  }
 
   if (phase === "survey") {
     return (
