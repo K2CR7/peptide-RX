@@ -87,68 +87,91 @@ const ORB = 236;
 /* Past root-two (1.414), so a corner can never reach the visible circle. */
 const OVERFILL = 1.46;
 
-function GrainOrb() {
-  const spin = useRef(new Animated.Value(0)).current;
-  const breathe = useRef(new Animated.Value(0)).current;
+/*
+  One animated value per node, never two.
+
+  The first version drove rotation and scale from two Animated.Values in a
+  single transform array on one image. That is legal on the native driver
+  and does not survive react-native-web, which compiles a node's transform
+  into one Web Animation: the second loop to start claimed the transform
+  and the rotation froze at zero. It looked static because it WAS static,
+  on the one platform I could see it on.
+
+  So the scale lives on an outer view and each rotation on its own image
+  inside it. One value per node, and the composition comes from nesting.
+*/
+function useLoop(duration: number, easing: (t: number) => number = Easing.linear) {
+  const v = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    /*
-      Both drive transforms only, so both ride the native driver and the
-      loop costs nothing on the JS thread. A minute per revolution is slow
-      enough that you never catch it moving and fast enough that the screen
-      is never twice the same.
-    */
-    const turn = Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 60000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
+    const anim = Animated.loop(
+      Animated.timing(v, { toValue: 1, duration, easing, useNativeDriver: true }),
     );
-    const swell = Animated.loop(
-      Animated.sequence([
-        Animated.timing(breathe, {
-          toValue: 1,
-          duration: 4200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(breathe, {
-          toValue: 0,
-          duration: 4200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    turn.start();
-    swell.start();
-    return () => {
-      turn.stop();
-      swell.stop();
-    };
-  }, [spin, breathe]);
+    anim.start();
+    return () => anim.stop();
+  }, [v, duration, easing]);
+
+  return v;
+}
+
+const spinTo = (v: Animated.Value, deg: number) =>
+  v.interpolate({ inputRange: [0, 1], outputRange: ["0deg", `${deg}deg`] });
+
+function GrainOrb() {
+  /*
+    Two copies of the same field turning against each other at different
+    rates. One turning blur is close to invisible, because a soft radial
+    smear looks much the same at every angle; two of them drifting apart
+    churn the colour where they overlap, which is the part you can see.
+
+    Opposed directions, and rates that do not divide into one another, so
+    the pattern does not repeat on any interval anyone will sit through.
+  */
+  const spinA = useLoop(26000);
+  const spinB = useLoop(37000);
+  const breathe = useLoop(11000, Easing.inOut(Easing.sin));
 
   return (
     <>
-      <Animated.Image
-        source={FIELD}
+      <Animated.View
         style={{
           position: "absolute",
           width: ORB,
           height: ORB,
           transform: [
-            { rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) },
             {
+              /*
+                0 -> 1 -> 0 across the loop, so the swell comes back on
+                itself without the jump a sawtooth would give at the seam.
+              */
               scale: breathe.interpolate({
-                inputRange: [0, 1],
-                outputRange: [OVERFILL, OVERFILL + 0.07],
+                inputRange: [0, 0.5, 1],
+                outputRange: [OVERFILL, OVERFILL + 0.15, OVERFILL],
               }),
             },
           ],
         }}
-      />
+      >
+        <Animated.Image
+          source={FIELD}
+          style={{
+            position: "absolute",
+            width: ORB,
+            height: ORB,
+            transform: [{ rotate: spinTo(spinA, 360) }],
+          }}
+        />
+        <Animated.Image
+          source={FIELD}
+          style={{
+            position: "absolute",
+            width: ORB,
+            height: ORB,
+            opacity: 0.55,
+            transform: [{ rotate: spinTo(spinB, -360) }],
+          }}
+        />
+      </Animated.View>
 
       {/*
         Static, and deliberately so. Film grain sits on the print, not on
