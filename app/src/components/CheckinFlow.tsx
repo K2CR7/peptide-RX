@@ -20,10 +20,10 @@ Nothing is required except that the check-in says something. Every step is
 skippable, and `canSubmit` only asks that one field somewhere was filled —
 an empty check-in is not a record of a day, it is a row.
 */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CameraStep, MAX_PHOTOS, type Shot } from "./CameraStep";
+import { CameraOverlay, CameraStep, MAX_PHOTOS, type Rect, type Shot } from "./CameraStep";
 import { ScalePicker, TagChips } from "./CheckinInputs";
 import { Dissolve } from "./Dissolve";
 import { ErrorText } from "./primitives";
@@ -59,6 +59,24 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [shots, setShots] = useState<Shot[]>([]);
+
+  /*
+    The camera is opened from the photo step but rendered by the flow.
+
+    Anything absolutely positioned inside a scroll view is clipped by it, so
+    a camera parented to the step could never leave the step. This view is
+    the first ancestor covering the whole modal. The origin rect is the
+    button's position at the moment it was pressed, which is what the
+    overlay swells out of.
+  */
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraOrigin, setCameraOrigin] = useState<Rect | null>(null);
+  /*
+    The frame the camera grows inside, and the frame its origin is measured
+    against. One ref for both, so the two can never disagree about which
+    coordinate space they are in.
+  */
+  const root = useRef<View>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -253,19 +271,24 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
         <View style={{ paddingTop: space.lg }}>
           <CameraStep
             shots={shots}
-            onCapture={(s) => setShots((p) => [...p, s].slice(0, MAX_PHOTOS))}
+            relativeTo={root}
+            disabled={i !== step}
+            onOpen={(origin) => {
+              setCameraOrigin(origin);
+              setCameraOpen(true);
+            }}
             onRemove={(idx) => setShots((p) => p.filter((_, n) => n !== idx))}
           />
         </View>
       );
     },
-    [energy, mark, mood, notes, shots, tags, toggleTag, weightLb],
+    [energy, mark, mood, notes, shots, step, tags, toggleTag, weightLb],
   );
 
   const progress = useMemo(() => (step + 1) / STEP_TITLES.length, [step]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+    <View ref={root} style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
       {/* ------------------------------------------------------- top chrome */}
       <View style={{ paddingHorizontal: space.xl, paddingTop: space.md, gap: space.md }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -374,6 +397,14 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
           </Text>
         </Pressable>
       </View>
+
+      <CameraOverlay
+        visible={cameraOpen}
+        origin={cameraOrigin}
+        shots={shots}
+        onCapture={(s) => setShots((p) => [...p, s].slice(0, MAX_PHOTOS))}
+        onClose={() => setCameraOpen(false)}
+      />
     </View>
   );
 }

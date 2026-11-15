@@ -301,3 +301,47 @@ export function GearIcon({ size = 20, color }: IconProps) {
     </Svg>
   );
 }
+
+/*
+An iris diaphragm — the mechanism, not a cartoon camera.
+
+Generated as SVG and kept at its native 1024 viewBox rather than being
+redrawn at 24, because the geometry is the point and it is exact: the six
+blade chords all terminate on the enclosing circle, which is what makes it
+read as a real aperture instead of a hexagon with spokes. Rescaling it by
+hand would have introduced rounding into precisely the part that carries the
+likeness.
+
+`stroke` is expressed in that 1024 space, so it is derived from the rendered
+size rather than fixed — a constant would be a hairline at 30px and a slab at
+120px.
+*/
+export function ApertureIcon({ size = 30, color, weight = 1.8 }: IconProps & { weight?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 1024 1024" fill="none">
+      <Circle
+        cx={512}
+        cy={512}
+        r={444}
+        stroke={color}
+        strokeWidth={(weight * 1024) / size}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M412 338.795H612L712 512L612 685.205H412L312 512Z"
+        stroke={color}
+        strokeWidth={(weight * 1024) / size}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M612 338.795H920.842 M712 512L866.421 779.459 M612 685.205L457.579 952.664 M412 685.205H103.158 M312 512L157.579 244.541 M412 338.795L566.421 71.336"
+        stroke={color}
+        strokeWidth={(weight * 1024) / size}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
