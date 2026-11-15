@@ -200,6 +200,20 @@ export const font = {
   bold: "IBMPlexSans_700Bold",
   numeral: "IBMPlexSansCondensed_300Light",
   numeralMedium: "IBMPlexSansCondensed_500Medium",
+  /*
+    The display voice, and the only serif in the app.
+
+    Everything was one sans at six weights, which leaves a screen no way to
+    say "this is the question" except by making the sans bigger. A second
+    voice does it in one move, and a high-contrast serif against IBM Plex's
+    even, engineered sans is a contrast of kind rather than of degree.
+
+    Display sizes only. Instrument Serif has a single weight and a hairline
+    thin stroke, so below about 24px it goes grey and loses legibility. There
+    is no serif body role and there should not be one: titles and questions
+    take it, every number, label and sentence stays sans.
+  */
+  display: "InstrumentSerif_400Regular",
 } as const;
 
 /*

@@ -8,6 +8,7 @@ import {
   IBMPlexSansCondensed_300Light,
   IBMPlexSansCondensed_500Medium,
 } from "@expo-google-fonts/ibm-plex-sans-condensed";
+import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
@@ -126,6 +127,7 @@ export default function App() {
     IBMPlexSans_700Bold,
     IBMPlexSansCondensed_300Light,
     IBMPlexSansCondensed_500Medium,
+    InstrumentSerif_400Regular,
   });
 
   if (!fontsLoaded) {

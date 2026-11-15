@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Slider from "@react-native-community/slider";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -9,6 +9,7 @@ import { WeightChart } from "../components/WeightChart";
 import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { type Checkin, useCheckinUploadUrl, useCheckins, useCreateCheckin, useDeleteCheckin } from "../lib/queries";
 import { AsyncBlock, ErrorText, SectionLabel } from "../components/primitives";
+import { CheckinCount, CheckinHero } from "../components/CheckinHero";
 import { TourTarget } from "../components/tour";
 import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
@@ -21,39 +22,44 @@ export function CheckinScreen() {
   const { data: checkins, isLoading, isError, refetch } = useCheckins();
   const [addOpen, setAddOpen] = useState(false);
 
+  const checkinDays = useMemo(() => {
+    const out = new Set<number>();
+    (checkins ?? []).forEach((c) => out.add(new Date(c.createdAt).setHours(0, 0, 0, 0)));
+    return out;
+  }, [checkins]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={type.title}>Progress</Text>
-          <TourTarget id="progress-checkin">
-            <Pressable
-              onPress={() => setAddOpen(true)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                minHeight: 44,
-                backgroundColor: colors.signal,
-                borderRadius: radii.md,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <PlusMark size={13} color={colors.onSignal} />
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.onSignal, letterSpacing: 0.3 }}>
-                Check in
-              </Text>
-            </Pressable>
-          </TourTarget>
-        </View>
+{/*
+          No "Progress" title and no button in the corner.
 
-        {/* Held back until the data lands — the chart's own empty copy
-            ("log a couple check-ins") was otherwise shown during loading to
-            someone who already had months of them. */}
-        {!isLoading && !isError && <WeightChart checkins={checkins ?? []} />}
+          The screen asks for one thing, so it asks for it: the question is
+          the heading, and the action is the largest object under it. A tab
+          title restating the tab you just tapped, plus a 13px button holding
+          the entire purpose of the screen, had those two the wrong way round.
+        */}
+        <TourTarget id="progress-checkin">
+          <CheckinHero checkinDays={checkinDays} onCheckIn={() => setAddOpen(true)} />
+        </TourTarget>
+
+        {!isLoading && !isError && checkins != null && (
+          <CheckinCount total={checkins.length} lastAt={checkins[0]?.createdAt ?? null} />
+        )}
+
+        {/*
+          Held back until the data lands — the chart's own empty copy ("log a
+          couple check-ins") was otherwise shown during loading to someone who
+          already had months of them.
+
+          And held back entirely below two points. The invitation above is
+          already asking for a check-in; a card underneath it asking again, in
+          smaller type, is the same request twice and makes an empty screen
+          look like a broken one.
+        */}
+        {!isLoading && !isError && (checkins?.length ?? 0) >= 2 && (
+          <WeightChart checkins={checkins ?? []} />
+        )}
 
         <View style={{ gap: space.md }}>
           <SectionLabel>History</SectionLabel>
