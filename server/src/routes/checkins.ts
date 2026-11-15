@@ -38,6 +38,19 @@ const createSchema = z.object({
   energy: z.number().int().min(1).max(10).optional(),
   mood: z.number().int().min(1).max(10).optional(),
   notes: z.string().optional(),
+  /*
+    Capped and de-duplicated server-side, not just in the picker.
+
+    The chips are a fixed list in the client today, but this is a public
+    endpoint and the next client — or a replayed request — can send anything.
+    The bound keeps an unbounded array out of the row and the length cap keeps
+    a single tag from being a paragraph.
+  */
+  tags: z
+    .array(z.string().trim().min(1).max(32))
+    .max(12)
+    .default([])
+    .transform((t) => [...new Set(t)]),
   photos: z
     .array(z.object({ angle: z.enum(["front", "side", "back"]), url: z.string().url() }))
     .default([]),

@@ -75,6 +75,7 @@ export interface Checkin {
   energy: number | null;
   mood: number | null;
   notes: string | null;
+  tags: string[];
   createdAt: string;
   photos: { id: string; angle: string; url: string }[];
 }

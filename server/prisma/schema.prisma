@@ -148,6 +148,10 @@ model Checkin {
   energy       Int?
   mood         Int?
   notes        String?
+  /// Feeling words picked from chips during check-in. A Postgres text[]
+  /// rather than a join table: they are a closed-ish vocabulary with no
+  /// attributes of their own, and nothing will ever ask who felt tired.
+  tags         String[] @default([])
   createdAt    DateTime @default(now())
 
   photos CheckinPhoto[]
