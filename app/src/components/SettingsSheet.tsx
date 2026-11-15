@@ -17,6 +17,7 @@ and is kept well away from them, because conflating "show me that again" with
 */
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { CADENCE_OPTIONS, DEFAULT_CADENCE } from "../data/checkinCadence";
 import { MEDICATION_OPTIONS, isCustomMedication } from "../data/medications";
 import { INTERACTION_DISCLAIMER } from "../data/peptideInteractions";
 import { useResetAccount, useUpdateProfile } from "../lib/queries";
@@ -30,6 +31,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const updateProfile = useUpdateProfile();
+  const [cadenceError, setCadenceError] = useState<string | null>(null);
   const resetAccount = useResetAccount();
 
   const [meds, setMeds] = useState<string[]>(user?.medications ?? []);
@@ -111,6 +113,69 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
           </View>
 
           {user && <Text style={type.metaSm}>Signed in as {user.email}</Text>}
+
+          {/* ------------------------------------------------------ Check-ins */}
+          {/*
+            Saved on tap, with no Save button.
+
+            Medications below needs one because it is a multi-select and an
+            each-tap write would fire a request per checkbox. This is one
+            choice out of four: the tap IS the decision, and a button asking
+            you to confirm a radio button is a button asking you to agree
+            with yourself.
+          */}
+          <View style={{ gap: space.md }}>
+            <SectionLabel>Check-ins</SectionLabel>
+            <Text style={type.bodySm}>
+              How often the Progress screen expects one. Nothing is blocked or marked late if
+              you check in more or less often than this — it only decides when the screen says
+              you're due.
+            </Text>
+
+            <View style={{ gap: space.sm }}>
+              {CADENCE_OPTIONS.map((c) => {
+                const on = (user?.checkinCadence ?? DEFAULT_CADENCE) === c.id;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => {
+                      if (on) return;
+                      setCadenceError(null);
+                      updateProfile.mutate(
+                        { checkinCadence: c.id },
+                        { onError: () => setCadenceError("Couldn't save that — try again.") },
+                      );
+                    }}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={c.label}
+                    style={({ pressed }) => ({
+                      gap: 2,
+                      minHeight: HIT,
+                      paddingHorizontal: space.lg,
+                      paddingVertical: space.md,
+                      borderRadius: radii.md,
+                      borderWidth: 1,
+                      borderColor: on ? colors.signalInk : colors.hairline2,
+                      backgroundColor: on ? colors.signalFaint : colors.panel,
+                      opacity: pressed ? 0.72 : 1,
+                    })}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+                      <Text
+                        style={[type.headingSm, { flex: 1, color: on ? colors.signalInk : colors.ink }]}
+                      >
+                        {c.label}
+                      </Text>
+                      {on && <CheckMark size={15} color={colors.signalInk} />}
+                    </View>
+                    <Text style={type.metaSm}>{c.blurb}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <ErrorText>{cadenceError}</ErrorText>
+          </View>
 
           {/* ---------------------------------------------------- Medications */}
           <View style={{ gap: space.md }}>

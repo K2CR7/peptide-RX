@@ -38,6 +38,13 @@ import { Text, View } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
 import { Pressable } from "react-native";
 import { PlusMark } from "./icons";
+import {
+  CADENCE_SHORT,
+  DEFAULT_CADENCE,
+  type CheckinCadence,
+  cadenceState,
+  cadenceTail,
+} from "../data/checkinCadence";
 import { colors, font, radii, space, type } from "../theme";
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -135,11 +142,17 @@ function greeting(now: Date): string {
 export function CheckinHero({
   checkinDays,
   onCheckIn,
+  cadence = DEFAULT_CADENCE,
+  lastAt = null,
   now = new Date(),
 }: {
   /** Start-of-day timestamps that already have a check-in. */
   checkinDays: Set<number>;
   onCheckIn: () => void;
+  /** What the user said in onboarding, or changed in settings. */
+  cadence?: CheckinCadence;
+  /** The most recent check-in, which is what the cadence is measured from. */
+  lastAt?: string | null;
   now?: Date;
 }) {
   const week = weekDates(now);
@@ -207,6 +220,19 @@ export function CheckinHero({
         }}
       >
         {greeting(now)}
+      </Text>
+
+      {/*
+        The cadence they chose, and where they are in it.
+
+        Stated rather than enforced. Nothing on this screen refuses an early
+        check-in or marks a late one — a number somebody picked for
+        themselves in their first five minutes is not a standard to hold them
+        to. It is here so "due today" means something they agreed to, instead
+        of the app deciding on their behalf that every day is a check-in day.
+      */}
+      <Text style={[type.metaSm, { marginTop: -space.md }]}>
+        {CADENCE_SHORT[cadence]} · {cadenceTail(cadenceState(lastAt, cadence))}
       </Text>
 
       {/* ------------------------------------------------------------ wheel */}

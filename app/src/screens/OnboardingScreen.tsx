@@ -11,6 +11,7 @@ survey that holds the app hostage is worse than a thin profile.
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CADENCE_OPTIONS, DEFAULT_CADENCE, type CheckinCadence } from "../data/checkinCadence";
 import { GOAL_OPTIONS, deriveNutritionGoal } from "../data/goals";
 import { MEDICATION_OPTIONS } from "../data/medications";
 import { INTERACTION_DISCLAIMER } from "../data/peptideInteractions";
@@ -21,7 +22,14 @@ import { Animated, DUR, EASE, Rise, dur, useReduceMotion } from "../components/m
 import { CheckMark } from "../components/icons";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
-const STEPS = ["birth", "goals", "history", "medications"] as const;
+/*
+  Cadence sits straight after goals.
+
+  "What are you working toward" and "how often will you look at whether it's
+  working" are one thought, and asking the second anywhere else makes it read
+  as a notification setting — which is the one thing it isn't.
+*/
+const STEPS = ["birth", "goals", "cadence", "history", "medications"] as const;
 type Step = (typeof STEPS)[number];
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
@@ -31,6 +39,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [dob, setDob] = useState<BirthDateParts>({ month: "", day: "", year: "" });
   const [goals, setGoals] = useState<string[]>([]);
+  const [cadence, setCadence] = useState<CheckinCadence>(DEFAULT_CADENCE);
   const [usedBefore, setUsedBefore] = useState<boolean | null>(null);
   const [priorNote, setPriorNote] = useState("");
   const [medications, setMedications] = useState<string[]>([]);
@@ -56,6 +65,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         ...(usedBefore !== null ? { usedPeptidesBefore: usedBefore } : {}),
         ...(priorNote.trim() ? { priorExperienceNote: priorNote.trim() } : {}),
         ...(goals.length > 0 ? { nutritionGoal: deriveNutritionGoal(goals) } : {}),
+        checkinCadence: cadence,
         onboarded: true,
       });
       onDone();
@@ -126,6 +136,27 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
                       sub={g.blurb}
                       selected={goals.includes(g.id)}
                       onPress={() => toggle(goals, g.id, setGoals)}
+                    />
+                  </Rise>
+                ))}
+              </View>
+            </StepBody>
+          )}
+
+          {step === "cadence" && (
+            <StepBody
+              label="Check-ins"
+              question="How often do you want to check in?"
+              hint="A check-in is a weight, how you're feeling, and optionally a photo. Pick what you'll actually keep up — you can change it in settings whenever."
+            >
+              <View style={{ gap: space.sm }}>
+                {CADENCE_OPTIONS.map((c, i) => (
+                  <Rise key={c.id} delay={60 + i * 28}>
+                    <SelectRow
+                      label={c.label}
+                      sub={c.blurb}
+                      selected={cadence === c.id}
+                      onPress={() => setCadence(c.id)}
                     />
                   </Rise>
                 ))}

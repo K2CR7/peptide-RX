@@ -27,6 +27,26 @@ enum NutritionGoal {
   BULK
 }
 
+/*
+How often the user intends to check in.
+
+Asked during onboarding and changeable afterwards, because the right answer
+depends entirely on what someone is running. Weekly weigh-ins on an eight-week
+cut and a two-year maintenance dose are not the same commitment, and an app
+that asks daily of someone who meant to give it monthly is teaching them to
+ignore it.
+
+Not nullable, with a default. Every account has a cadence — the survey only
+changes it — which keeps "has this been set yet" out of every screen that
+reads it.
+*/
+enum CheckinCadence {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -52,6 +72,8 @@ model User {
   // First-run state. A null onboardedAt is what routes a new account into the
   // survey; tourCompletedAt is separate so someone can finish the survey, bail
   // out of the tour, and not be sent back through both.
+  checkinCadence      CheckinCadence @default(WEEKLY)
+
   onboardedAt         DateTime?
   tourCompletedAt     DateTime?
 

@@ -9,10 +9,13 @@ import { CheckinCount, CheckinHero } from "../components/CheckinHero";
 import { CheckinDetail } from "../components/CheckinDetail";
 import { CheckinFlow } from "../components/CheckinFlow";
 import { TourTarget } from "../components/tour";
+import { DEFAULT_CADENCE } from "../data/checkinCadence";
+import { useAuthStore } from "../store/authStore";
 import { colors } from "../theme";
 
 export function CheckinScreen() {
   const insets = useSafeAreaInsets();
+  const user = useAuthStore((s) => s.user);
   const { data: checkins, isLoading, isError, refetch } = useCheckins();
   const [addOpen, setAddOpen] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -48,7 +51,12 @@ export function CheckinScreen() {
           the entire purpose of the screen, had those two the wrong way round.
         */}
         <TourTarget id="progress-checkin">
-          <CheckinHero checkinDays={checkinDays} onCheckIn={() => setAddOpen(true)} />
+          <CheckinHero
+            checkinDays={checkinDays}
+            onCheckIn={() => setAddOpen(true)}
+            cadence={user?.checkinCadence ?? DEFAULT_CADENCE}
+            lastAt={checkins?.[0]?.createdAt ?? null}
+          />
         </TourTarget>
 
         {!isLoading && !isError && checkins != null && (

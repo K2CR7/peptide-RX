@@ -37,6 +37,7 @@ function serializeUser(user: {
   age: number | null;
   activityLevel: string | null;
   nutritionGoal: string | null;
+  checkinCadence: string;
   onboardedAt: Date | null;
   tourCompletedAt: Date | null;
   goals: string[];
@@ -56,6 +57,7 @@ function serializeUser(user: {
     age: user.dateOfBirth ? ageFromBirthDate(user.dateOfBirth) : user.age,
     activityLevel: user.activityLevel,
     nutritionGoal: user.nutritionGoal,
+    checkinCadence: user.checkinCadence,
     onboardedAt: user.onboardedAt ? user.onboardedAt.toISOString() : null,
     tourCompletedAt: user.tourCompletedAt ? user.tourCompletedAt.toISOString() : null,
     goals: user.goals,
@@ -81,6 +83,7 @@ const updateProfileSchema = z.object({
   dateOfBirth: z.string().datetime().optional(),
   activityLevel: z.enum(["SEDENTARY", "LIGHT", "MODERATE", "ACTIVE", "VERY_ACTIVE"]).optional(),
   nutritionGoal: z.enum(["CUT", "MAINTAIN", "BULK"]).optional(),
+  checkinCadence: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"]).optional(),
 
   // Onboarding. Dates come over as booleans — the client says "this is done"
   // and the server stamps the time, so a client clock can't set it.
