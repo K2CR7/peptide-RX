@@ -15,14 +15,16 @@ The question, set in the serif at display size. "How are you feeling this
 evening?" is a question, so it is written as one and typeset as one, rather
 than being a tab titled "Progress" with a button in the corner.
 
-The wheel. In the reference it is a full 360 degrees of mood colour with the
-action in the middle, and — this is the part worth being precise about — it
-is NOT a gauge. It fills no proportion and scores nothing. It is identity,
-the same way a logo is. That distinction is the whole reason this is
-allowable here: the ring I removed from the home screen was a filled arc
-reporting a number, which is a score, and a score on adherence turns a
-medical record into a leaderboard. A closed ring that is always closed can't
-do that.
+The disc of colour, with the action in the middle. This is the part worth
+being precise about: it is NOT a gauge. It fills no proportion and scores
+nothing. It is identity, the same way a logo is. That distinction is the
+whole reason it is allowable here — the ring I removed from the home screen
+was a filled arc reporting a number, which is a score, and a score on
+adherence turns a medical record into a leaderboard. A shape that is always
+the same shape can't do that.
+
+It started as a conic gradient ring and is now a grainy colour field; see
+GrainOrb below for why the grain is a separate file from the colour.
 
 The week strip. Seven days, each either carrying a check-in or not. It tells
 you where you are in the week and what the gaps look like without asking for
@@ -34,10 +36,9 @@ What does NOT carry over is the reference's streak pill. The app already
 counts days on protocol, and a second count, on a second screen, measuring a
 second thing, is how an instrument turns into a game.
 */
-import { Text, View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
-import { Pressable } from "react-native";
-import { PlusMark } from "./icons";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, Image, Pressable, Text, View } from "react-native";
+import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 import {
   CADENCE_SHORT,
   DEFAULT_CADENCE,
@@ -50,74 +51,133 @@ import { colors, font, radii, space, type } from "../theme";
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 /*
-  The wheel's colours.
+  The orb.
 
-  Not from the UI palette, deliberately. Those colours are load-bearing —
-  signalInk means "logged", amber means "needs attention" — and borrowing
-  them for decoration would mean a user learning that teal means done and
-  then meeting a teal that means nothing. These exist only here, chosen to
-  sit in the same family so the screen doesn't look pasted in from another
-  app: warm gold through the teals into a deep sea blue, and back.
+  What was here was a conic gradient drawn as sixty flat arc segments,
+  because SVG has no conic gradient and react-native-svg has no polyfill for
+  one. It was a clean piece of geometry, and it looked like a clean piece of
+  geometry: four evenly spaced stops, a perfect annulus, and a white disc
+  punched through the middle of it.
 
-  Four stops around 360 degrees, with the last wrapping to the first, so the
-  sweep closes without a seam.
+  This is the same idea with the edges taken off, in three layers.
+
+    the field    a generated colour field, where the colours bleed into one
+                 another in a way four stops and an interpolator do not
+    the grain    a tile of neutral noise, repeated at display resolution
+                 rather than baked into the field: grain baked into a 1024px
+                 render is averaged into a smooth blur the moment that image
+                 is drawn at 236 points, which is the whole reason the two
+                 are separate files
+    the feather  a radial wash of page colour from 66% out, which melts the
+                 circle into the page instead of cutting it against it
+
+  The field is oversized by more than root-two and turns once a minute, so
+  the colour is always moving and the corners of a square rotating inside a
+  circle never swing into view.
+
+  What has not changed is that none of it reports anything. It fills no
+  proportion and scores nothing; it is identity, the same way a logo is,
+  which is the only reason a ring is allowable on this screen at all.
 */
-const WHEEL = ["#D4A03C", "#5BAFAB", "#246F72", "#1D4E63"];
+const FIELD = require("../../assets/checkin-field.png");
+const GRAIN = require("../../assets/checkin-grain.png");
 
-function hex(c: string): [number, number, number] {
-  return [
-    Number.parseInt(c.slice(1, 3), 16),
-    Number.parseInt(c.slice(3, 5), 16),
-    Number.parseInt(c.slice(5, 7), 16),
-  ];
-}
+const ORB = 236;
 
-function mix(a: string, b: string, t: number): string {
-  const [ar, ag, ab] = hex(a);
-  const [br, bg, bb] = hex(b);
-  const to = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, "0");
-  return `#${to(ar, br)}${to(ag, bg)}${to(ab, bb)}`;
-}
+/* Past root-two (1.414), so a corner can never reach the visible circle. */
+const OVERFILL = 1.46;
 
-/*
-  A conic gradient, built the only way SVG allows one.
+function GrainOrb() {
+  const spin = useRef(new Animated.Value(0)).current;
+  const breathe = useRef(new Animated.Value(0)).current;
 
-  There is no conic gradient in SVG and react-native-svg has no polyfill, so
-  the sweep is drawn as a run of short arc segments, each a flat colour
-  interpolated along the wheel. Sixty segments at six degrees apiece is past
-  the point where the steps are visible at this diameter.
-
-  Each segment overlaps the next by a fraction of a degree. Without that,
-  antialiasing leaves a hairline of background between neighbours and the
-  ring renders as a dotted circle on a high-density screen.
-*/
-function ConicRing({ cx, cy, r, width }: { cx: number; cy: number; r: number; width: number }) {
-  const N = 60;
-  const step = 360 / N;
-  const segments = [];
-
-  for (let i = 0; i < N; i++) {
-    const t = i / N;
-    const scaled = t * WHEEL.length;
-    const idx = Math.floor(scaled);
-    const color = mix(WHEEL[idx % WHEEL.length], WHEEL[(idx + 1) % WHEEL.length], scaled - idx);
-
-    // -90 puts the first stop at twelve o'clock rather than at three.
-    const a0 = ((i * step - 90) * Math.PI) / 180;
-    const a1 = (((i + 1) * step + 0.4 - 90) * Math.PI) / 180;
-
-    segments.push(
-      <Path
-        key={i}
-        d={`M${cx + r * Math.cos(a0)} ${cy + r * Math.sin(a0)}A${r} ${r} 0 0 1 ${cx + r * Math.cos(a1)} ${cy + r * Math.sin(a1)}`}
-        stroke={color}
-        strokeWidth={width}
-        fill="none"
-      />,
+  useEffect(() => {
+    /*
+      Both drive transforms only, so both ride the native driver and the
+      loop costs nothing on the JS thread. A minute per revolution is slow
+      enough that you never catch it moving and fast enough that the screen
+      is never twice the same.
+    */
+    const turn = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 60000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
     );
-  }
+    const swell = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, {
+          toValue: 1,
+          duration: 4200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathe, {
+          toValue: 0,
+          duration: 4200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    turn.start();
+    swell.start();
+    return () => {
+      turn.stop();
+      swell.stop();
+    };
+  }, [spin, breathe]);
 
-  return <>{segments}</>;
+  return (
+    <>
+      <Animated.Image
+        source={FIELD}
+        style={{
+          position: "absolute",
+          width: ORB,
+          height: ORB,
+          transform: [
+            { rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] }) },
+            {
+              scale: breathe.interpolate({
+                inputRange: [0, 1],
+                outputRange: [OVERFILL, OVERFILL + 0.07],
+              }),
+            },
+          ],
+        }}
+      />
+
+      {/*
+        Static, and deliberately so. Film grain sits on the print, not on
+        the thing photographed: grain that rotated with the field would read
+        as a texture painted onto a spinning object rather than as grain.
+      */}
+      <Image
+        source={GRAIN}
+        resizeMode="repeat"
+        style={{ position: "absolute", width: ORB, height: ORB, opacity: 0.6 }}
+      />
+
+      <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
+        <Defs>
+          <RadialGradient id="orbFeather" cx="50%" cy="50%" r="50%">
+            <Stop offset="0.66" stopColor={colors.bg} stopOpacity={0} />
+            <Stop offset="0.87" stopColor={colors.bg} stopOpacity={0.5} />
+            <Stop offset="1" stopColor={colors.bg} stopOpacity={1} />
+          </RadialGradient>
+        </Defs>
+        {/*
+          A square filled with a radial gradient, not a circle: everything
+          past the inscribed circle, the four corners included, takes the
+          last stop and so is solid page colour.
+        */}
+        <Rect width={ORB} height={ORB} fill="url(#orbFeather)" />
+      </Svg>
+    </>
+  );
 }
 
 /** Sunday-first, matching the strip above, because JS getDay() is too. */
@@ -157,10 +217,6 @@ export function CheckinHero({
 }) {
   const week = weekDates(now);
   const todayKey = new Date(now).setHours(0, 0, 0, 0);
-
-  const RING = 208;
-  const STROKE = 26;
-  const r = (RING - STROKE) / 2;
 
   return (
     <View style={{ gap: space.xl, alignItems: "center" }}>
@@ -235,44 +291,60 @@ export function CheckinHero({
         {CADENCE_SHORT[cadence]} · {cadenceTail(cadenceState(lastAt, cadence))}
       </Text>
 
-      {/* ------------------------------------------------------------ wheel */}
-      <View style={{ width: RING, height: RING, alignItems: "center", justifyContent: "center" }}>
-        <Svg width={RING} height={RING} style={{ position: "absolute" }}>
-          <ConicRing cx={RING / 2} cy={RING / 2} r={r} width={STROKE} />
-        </Svg>
+      {/* -------------------------------------------------------------- orb */}
+      {/*
+        The whole orb is the control, not a button sitting inside one. The
+        hit area is the full 236 points rather than the 66pt disc the old
+        layout gave it, which is three times the target for the one thing
+        this screen exists to do.
+      */}
+      <Pressable
+        onPress={onCheckIn}
+        accessibilityRole="button"
+        accessibilityLabel="Add a check-in"
+        style={({ pressed }) => ({
+          width: ORB,
+          height: ORB,
+          alignItems: "center",
+          justifyContent: "center",
+          /*
+            The field is oversized and rotating, so without this it spills
+            past the orb as a turning diamond. Clipping to the square is
+            enough: everything outside the inscribed circle is solid page
+            colour by the time the feather is drawn over it.
+          */
+          overflow: "hidden",
+          transform: [{ scale: pressed ? 0.985 : 1 }],
+        })}
+      >
+        <GrainOrb />
 
-        <Pressable
-          onPress={onCheckIn}
-          accessibilityRole="button"
-          accessibilityLabel="Add a check-in"
-          style={({ pressed }) => ({
-            alignItems: "center",
-            gap: space.sm,
-            opacity: pressed ? 0.75 : 1,
-          })}
+        {/*
+          Sat on the orb rather than punched through it. The old button was
+          a white disc with a hairline, which read as a control dropped on
+          top of a picture. This one is the colour of what is behind it,
+          only darker, so it belongs to the thing it sits on.
+        */}
+        <View
+          style={{
+            paddingHorizontal: 24,
+            paddingVertical: 13,
+            borderRadius: 999,
+            backgroundColor: "rgba(10,38,41,0.34)",
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.28)",
+          }}
         >
-          <View
-            style={{
-              width: 66,
-              height: 66,
-              borderRadius: 999,
-              backgroundColor: colors.panel,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: colors.hairline,
-            }}
-          >
-            <PlusMark size={20} color={colors.ink} />
-          </View>
-          <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink }}>Check in</Text>
-        </Pressable>
-      </View>
+          <Text style={{ fontFamily: font.semibold, fontSize: 16, color: "#FFFFFF", letterSpacing: 0.2 }}>
+            Check in
+          </Text>
+        </View>
+      </Pressable>
     </View>
   );
 }
 
-/** The pill under the wheel: a fact, not a score. */
+/** The pill under the orb: a fact, not a score. */
 export function CheckinCount({ total, lastAt }: { total: number; lastAt: string | null }) {
   if (total === 0) return null;
 
