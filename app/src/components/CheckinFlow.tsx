@@ -20,12 +20,14 @@ Nothing is required except that the check-in says something. Every step is
 skippable, and `canSubmit` only asks that one field somewhere was filled —
 an empty check-in is not a record of a day, it is a row.
 */
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GrainWash } from "./grain";
 import { CameraOverlay, CameraStep, MAX_PHOTOS, type Rect, type Shot } from "./CameraStep";
 import { ScalePicker, TagChips } from "./CheckinInputs";
 import { Dissolve } from "./Dissolve";
+import { EASE } from "./motion";
 import { ErrorText } from "./primitives";
 import { useCheckinUploadUrl, useCreateCheckin } from "../lib/queries";
 import { colors, font, radii, space, type } from "../theme";
@@ -48,6 +50,7 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
   const getUploadUrl = useCheckinUploadUrl();
 
   const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
   const [weightLb, setWeightLb] = useState("");
   const [energy, setEnergy] = useState(5);
   const [mood, setMood] = useState(5);
@@ -102,10 +105,18 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
     setTags((t) => (t.includes(tag) ? t.filter((x) => x !== tag) : [...t, tag]));
   }, []);
 
+  /*
+    Which way through the form the last move went, so the step and its
+    title travel in the direction the user is actually going. Set here
+    rather than worked out downstream from the index, because this is the
+    one place that already knows: it is the difference between Continue and
+    Back, not something to infer afterwards.
+  */
   const go = useCallback((next: number) => {
     setError(null);
+    setDir(next >= step ? 1 : -1);
     setStep(next);
-  }, []);
+  }, [step]);
 
   async function submit() {
     if (saving) return;
@@ -282,8 +293,28 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
 
   const progress = useMemo(() => (step + 1) / STEP_TITLES.length, [step]);
 
+  const fill = useRef(new Animated.Value(progress)).current;
+  useEffect(() => {
+    const anim = Animated.timing(fill, {
+      toValue: progress,
+      duration: 340,
+      easing: EASE,
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [fill, progress]);
+
   return (
     <View ref={root} style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
+      {/*
+        The flow is what the orb opens, so it is laid on the same texture:
+        the same colour field turning above the top edge and the same noise
+        tile over the page. Behind everything and untouchable, so nothing
+        below changes its hit behaviour.
+      */}
+      <GrainWash />
+
       {/* ------------------------------------------------------- top chrome */}
       <View style={{ paddingHorizontal: space.xl, paddingTop: space.md, gap: space.md }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -304,13 +335,18 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
           </Text>
         </View>
 
-        {/* A rule that fills. It is the only thing that moves between steps
-            other than the content itself. */}
+        {/*
+          A rule that fills, and now actually fills: it used to be a width
+          in per cent recomputed on render, so it jumped a quarter of the
+          bar per step. Width cannot ride the native driver, but this is a
+          2px rule and nothing else is animating on the JS thread while it
+          runs.
+        */}
         <View style={{ height: 2, backgroundColor: colors.track, borderRadius: radii.hair, overflow: "hidden" }}>
-          <View
+          <Animated.View
             style={{
               height: 2,
-              width: `${progress * 100}%`,
+              width: fill.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
               backgroundColor: colors.signalInk,
               borderRadius: radii.hair,
             }}
@@ -319,13 +355,28 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
       </View>
 
       {/* ------------------------------------------------------------ title */}
+      {/*
+        The title travels with its step rather than being swapped under a
+        stage that slides beneath it. A question that cuts while its answer
+        slides reads as two separate screens disagreeing about what is
+        happening.
+      */}
       <View style={{ paddingHorizontal: space.xl, paddingTop: space.xl, minHeight: 104 }}>
-        <Text style={{ fontFamily: font.display, fontSize: 32, lineHeight: 36, color: colors.ink }}>
-          {STEP_TITLES[step]}
-        </Text>
-        {STEP_SUBS[step] !== "" && (
-          <Text style={[type.body, { color: colors.ink2, marginTop: 6 }]}>{STEP_SUBS[step]}</Text>
-        )}
+        <Dissolve
+          step={step}
+          dir={dir}
+          fill={false}
+          render={(i) => (
+            <>
+              <Text style={{ fontFamily: font.display, fontSize: 32, lineHeight: 36, color: colors.ink }}>
+                {STEP_TITLES[i]}
+              </Text>
+              {STEP_SUBS[i] !== "" && (
+                <Text style={[type.body, { color: colors.ink2, marginTop: 6 }]}>{STEP_SUBS[i]}</Text>
+              )}
+            </>
+          )}
+        />
       </View>
 
       {/* ------------------------------------------------------------ stage */}
@@ -334,7 +385,7 @@ export function CheckinFlow({ onClose }: { onClose: () => void }) {
         contentContainerStyle={{ paddingHorizontal: space.xl, paddingVertical: space.lg }}
         keyboardShouldPersistTaps="handled"
       >
-        <Dissolve step={step} render={renderStep} />
+        <Dissolve step={step} dir={dir} render={renderStep} />
       </ScrollView>
 
       {/* ----------------------------------------------------------- action */}

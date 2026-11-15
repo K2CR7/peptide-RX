@@ -1,5 +1,5 @@
 /*
-A real dissolve.
+A real dissolve, with travel.
 
 The app's `Fade` only animates a thing in. That is a fade, not a dissolve:
 the previous content is already gone by the time the new content starts
@@ -14,6 +14,20 @@ also made untouchable for the duration, because a half-faded step that still
 answers taps is a step that can take input the user cannot see they are
 giving.
 
+It travels now, and that is not decoration. A cross-fade between two steps
+of a four-step form is almost unreadable as motion: the two frames occupy
+the same place, the change is in opacity alone, and on a step whose body is
+a text field and a unit label there is barely anything to cross-fade. The
+answer most forms reach for is to move the content in the direction of
+travel, so Continue pushes the page left and Back pushes it right, which
+tells you which way through the form you just went without a word of copy.
+The old frame scaled up 1.5% instead, which is a direction-free gesture
+nobody reads as progress.
+
+`dir` is +1 going forward and -1 going back. It is passed rather than
+inferred from the step index because the caller already knows: it is the
+difference between Continue and Back, not something to work out afterwards.
+
 The step is addressed by index with a render function rather than by passing
 children. Children are a new element on every parent render, so an effect
 watching them fires continuously and a dissolve keyed on them never settles.
@@ -24,13 +38,22 @@ import type { ReactNode } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { EASE, dur, useReduceMotion } from "./motion";
 
+/* How far the content travels, in points. Far enough to read as a push. */
+const TRAVEL = 38;
+
 export function Dissolve({
   step,
   render,
-  duration = 280,
+  dir = 1,
+  fill = true,
+  duration = 340,
 }: {
   step: number;
   render: (step: number) => ReactNode;
+  /** +1 forward through the form, -1 back. */
+  dir?: number;
+  /** False for a block of fixed height, such as a title, rather than a stage. */
+  fill?: boolean;
   duration?: number;
 }) {
   const reduced = useReduceMotion();
@@ -67,8 +90,17 @@ export function Dissolve({
     };
   }, [duration, p, reduced, step]);
 
+  /*
+    Both frames read their opacity and their travel off the same `p`. One
+    animated value per node is the rule: two values sharing a node's
+    transform array is legal on the native driver and silently freezes one
+    of them on react-native-web, which compiles a node's transform into a
+    single Web Animation.
+  */
+  const travel = reduced ? 0 : TRAVEL * dir;
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={fill ? { flex: 1 } : undefined}>
       {leaving !== null && (
         <Animated.View
           pointerEvents="none"
@@ -78,9 +110,9 @@ export function Dissolve({
               opacity: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0], extrapolate: "clamp" }),
               transform: [
                 {
-                  scale: p.interpolate({
+                  translateX: p.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [1, reduced ? 1 : 1.015],
+                    outputRange: [0, -travel],
                     extrapolate: "clamp",
                   }),
                 },
@@ -94,13 +126,13 @@ export function Dissolve({
 
       <Animated.View
         style={{
-          flex: 1,
+          flex: fill ? 1 : undefined,
           opacity: p,
           transform: [
             {
-              scale: p.interpolate({
+              translateX: p.interpolate({
                 inputRange: [0, 1],
-                outputRange: [reduced ? 1 : 0.985, 1],
+                outputRange: [travel, 0],
                 extrapolate: "clamp",
               }),
             },

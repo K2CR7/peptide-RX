@@ -24,7 +24,7 @@ adherence turns a medical record into a leaderboard. A shape that is always
 the same shape can't do that.
 
 It started as a conic gradient ring and is now a grainy colour field; see
-GrainOrb below for why the grain is a separate file from the colour.
+grain.tsx for why the grain is a separate file from the colour.
 
 The week strip. Seven days, each either carrying a check-in or not. It tells
 you where you are in the week and what the gaps look like without asking for
@@ -36,9 +36,8 @@ What does NOT carry over is the reference's streak pill. The app already
 counts days on protocol, and a second count, on a second screen, measuring a
 second thing, is how an instrument turns into a game.
 */
-import { useEffect, useRef } from "react";
-import { Animated, Easing, Image, Pressable, Text, View } from "react-native";
-import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
+import { Pressable, Text, View } from "react-native";
+import { GrainOrb, ORB } from "./grain";
 import {
   CADENCE_SHORT,
   DEFAULT_CADENCE,
@@ -51,157 +50,11 @@ import { colors, font, radii, space, type } from "../theme";
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 /*
-  The orb.
-
-  What was here was a conic gradient drawn as sixty flat arc segments,
-  because SVG has no conic gradient and react-native-svg has no polyfill for
-  one. It was a clean piece of geometry, and it looked like a clean piece of
-  geometry: four evenly spaced stops, a perfect annulus, and a white disc
-  punched through the middle of it.
-
-  This is the same idea with the edges taken off, in three layers.
-
-    the field    a generated colour field, where the colours bleed into one
-                 another in a way four stops and an interpolator do not
-    the grain    a tile of neutral noise, repeated at display resolution
-                 rather than baked into the field: grain baked into a 1024px
-                 render is averaged into a smooth blur the moment that image
-                 is drawn at 236 points, which is the whole reason the two
-                 are separate files
-    the feather  a radial wash of page colour from 66% out, which melts the
-                 circle into the page instead of cutting it against it
-
-  The field is oversized by more than root-two and turns once a minute, so
-  the colour is always moving and the corners of a square rotating inside a
-  circle never swing into view.
-
-  What has not changed is that none of it reports anything. It fills no
-  proportion and scores nothing; it is identity, the same way a logo is,
-  which is the only reason a ring is allowable on this screen at all.
+  The orb lives in grain.tsx now, next to the backdrop the check-in flow
+  uses, because the two have to agree about what the texture is: one pair
+  of files, one set of rotation rules, one reason the grain is a separate
+  image from the colour. All three are written up there.
 */
-const FIELD = require("../../assets/checkin-field.png");
-const GRAIN = require("../../assets/checkin-grain.png");
-
-const ORB = 236;
-
-/* Past root-two (1.414), so a corner can never reach the visible circle. */
-const OVERFILL = 1.46;
-
-/*
-  One animated value per node, never two.
-
-  The first version drove rotation and scale from two Animated.Values in a
-  single transform array on one image. That is legal on the native driver
-  and does not survive react-native-web, which compiles a node's transform
-  into one Web Animation: the second loop to start claimed the transform
-  and the rotation froze at zero. It looked static because it WAS static,
-  on the one platform I could see it on.
-
-  So the scale lives on an outer view and each rotation on its own image
-  inside it. One value per node, and the composition comes from nesting.
-*/
-function useLoop(duration: number, easing: (t: number) => number = Easing.linear) {
-  const v = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(v, { toValue: 1, duration, easing, useNativeDriver: true }),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [v, duration, easing]);
-
-  return v;
-}
-
-const spinTo = (v: Animated.Value, deg: number) =>
-  v.interpolate({ inputRange: [0, 1], outputRange: ["0deg", `${deg}deg`] });
-
-function GrainOrb() {
-  /*
-    Two copies of the same field turning against each other at different
-    rates. One turning blur is close to invisible, because a soft radial
-    smear looks much the same at every angle; two of them drifting apart
-    churn the colour where they overlap, which is the part you can see.
-
-    Opposed directions, and rates that do not divide into one another, so
-    the pattern does not repeat on any interval anyone will sit through.
-  */
-  const spinA = useLoop(26000);
-  const spinB = useLoop(37000);
-  const breathe = useLoop(11000, Easing.inOut(Easing.sin));
-
-  return (
-    <>
-      <Animated.View
-        style={{
-          position: "absolute",
-          width: ORB,
-          height: ORB,
-          transform: [
-            {
-              /*
-                0 -> 1 -> 0 across the loop, so the swell comes back on
-                itself without the jump a sawtooth would give at the seam.
-              */
-              scale: breathe.interpolate({
-                inputRange: [0, 0.5, 1],
-                outputRange: [OVERFILL, OVERFILL + 0.15, OVERFILL],
-              }),
-            },
-          ],
-        }}
-      >
-        <Animated.Image
-          source={FIELD}
-          style={{
-            position: "absolute",
-            width: ORB,
-            height: ORB,
-            transform: [{ rotate: spinTo(spinA, 360) }],
-          }}
-        />
-        <Animated.Image
-          source={FIELD}
-          style={{
-            position: "absolute",
-            width: ORB,
-            height: ORB,
-            opacity: 0.55,
-            transform: [{ rotate: spinTo(spinB, -360) }],
-          }}
-        />
-      </Animated.View>
-
-      {/*
-        Static, and deliberately so. Film grain sits on the print, not on
-        the thing photographed: grain that rotated with the field would read
-        as a texture painted onto a spinning object rather than as grain.
-      */}
-      <Image
-        source={GRAIN}
-        resizeMode="repeat"
-        style={{ position: "absolute", width: ORB, height: ORB, opacity: 0.6 }}
-      />
-
-      <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
-        <Defs>
-          <RadialGradient id="orbFeather" cx="50%" cy="50%" r="50%">
-            <Stop offset="0.66" stopColor={colors.bg} stopOpacity={0} />
-            <Stop offset="0.87" stopColor={colors.bg} stopOpacity={0.5} />
-            <Stop offset="1" stopColor={colors.bg} stopOpacity={1} />
-          </RadialGradient>
-        </Defs>
-        {/*
-          A square filled with a radial gradient, not a circle: everything
-          past the inscribed circle, the four corners included, takes the
-          last stop and so is solid page colour.
-        */}
-        <Rect width={ORB} height={ORB} fill="url(#orbFeather)" />
-      </Svg>
-    </>
-  );
-}
 
 /** Sunday-first, matching the strip above, because JS getDay() is too. */
 function weekDates(now: Date): Date[] {
