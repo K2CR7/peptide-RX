@@ -100,7 +100,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={() => { reset(); onClose(); }}>
       <PhoneModalFrame>
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(11,31,51,0.42)" }}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.scrim }}>
         <View
           style={[
             {
@@ -109,7 +109,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
               borderTopLeftRadius: 14,
               borderTopRightRadius: 14,
               borderTopWidth: 1,
-              borderColor: colors.hairline2,
+              borderColor: colors.edge,
               maxHeight: "92%",
               paddingTop: 20,
               paddingHorizontal: 20,
@@ -374,7 +374,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
                     accessibilityRole="button"
                     style={({ pressed }) => ({
                       borderWidth: 1,
-                      borderColor: colors.hairline2,
+                      borderColor: colors.edge,
                       borderRadius: radii.md,
                       minHeight: 48,
                       paddingHorizontal: 24,
@@ -419,7 +419,7 @@ function ViewToggle({ view, onChange }: { view: BodyView; onChange: (v: BodyView
       style={{
         flexDirection: "row",
         borderWidth: 1,
-        borderColor: colors.hairline2,
+        borderColor: colors.edge,
         borderRadius: radii.md,
         overflow: "hidden",
       }}

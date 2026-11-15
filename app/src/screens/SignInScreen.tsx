@@ -84,7 +84,7 @@ export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => voi
 const inputStyle = {
   backgroundColor: colors.panel,
   borderWidth: 1,
-  borderColor: colors.hairline2,
+  borderColor: colors.edge,
   borderRadius: radii.md,
   padding: 16,
   fontFamily: font.regular,

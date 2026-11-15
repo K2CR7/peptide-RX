@@ -190,7 +190,7 @@ export function MealBuilderModal({
               value={feedback}
               onChangeText={setFeedback}
               style={{
-                backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.hairline2,
+                backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.edge,
                 borderRadius: radii.md, padding: 12, fontFamily: font.regular, fontSize: 15, color: colors.ink,
               }}
             />

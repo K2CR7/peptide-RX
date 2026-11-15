@@ -101,7 +101,7 @@ export function Select({
       <Modal visible={open} animationType="slide" transparent onRequestClose={close}>
         <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        <Pressable style={{ flex: 1, backgroundColor: "rgba(11,31,51,0.42)" }} onPress={close} />
+        <Pressable style={{ flex: 1, backgroundColor: colors.scrim }} onPress={close} />
         <View
           style={{
             maxHeight: "80%",
@@ -109,7 +109,7 @@ export function Select({
             borderTopLeftRadius: 14,
             borderTopRightRadius: 14,
             borderTopWidth: 1,
-            borderColor: colors.hairline2,
+            borderColor: colors.edge,
             paddingTop: 16,
             paddingBottom: 20,
           }}
@@ -136,7 +136,7 @@ export function Select({
                 style={{
                   backgroundColor: colors.panelRaised,
                   borderWidth: 1,
-                  borderColor: colors.hairline2,
+                  borderColor: colors.edge,
                   borderRadius: radii.md,
                   paddingHorizontal: 12,
                   minHeight: 44,
@@ -161,7 +161,7 @@ export function Select({
                 style={{
                   backgroundColor: colors.panelRaised,
                   borderWidth: 1,
-                  borderColor: colors.hairline2,
+                  borderColor: colors.edge,
                   borderRadius: radii.md,
                   paddingHorizontal: 12,
                   minHeight: 48,

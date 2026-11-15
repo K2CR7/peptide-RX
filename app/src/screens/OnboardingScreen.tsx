@@ -164,7 +164,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
                     style={{
                       backgroundColor: colors.panel,
                       borderWidth: 1,
-                      borderColor: colors.hairline2,
+                      borderColor: colors.edge,
                       borderRadius: radii.md,
                       padding: space.lg,
                       minHeight: 100,
@@ -236,13 +236,23 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             loading={updateProfile.isPending}
           />
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Button
-              label={stepIndex === 0 ? "" : "Back"}
-              variant="quiet"
-              size="sm"
-              onPress={() => setStepIndex((i) => Math.max(0, i - 1))}
-              style={{ opacity: stepIndex === 0 ? 0 : 1 }}
-            />
+            {/*
+              Rendered conditionally rather than hidden with opacity. At
+              opacity 0 it was still a live 44px target with an empty
+              accessible name — a sighted user could tap nothing, and a
+              screen reader announced an unlabelled button. The empty View
+              keeps "Skip" pinned right.
+            */}
+            {stepIndex > 0 ? (
+              <Button
+                label="Back"
+                variant="quiet"
+                size="sm"
+                onPress={() => setStepIndex((i) => Math.max(0, i - 1))}
+              />
+            ) : (
+              <View />
+            )}
             {/* Nothing here is required — skipping leaves a thinner profile,
                 not a broken one. */}
             <Button label="Skip" variant="quiet" size="sm" onPress={finish} />
@@ -325,12 +335,18 @@ function ProgressRail({ step, total, topInset }: { step: number; total: number; 
         paddingBottom: space.sm,
       }}
     >
-      <View style={{ height: 2, borderRadius: 1, backgroundColor: colors.hairline2, overflow: "hidden" }}>
+      {/*
+        The fill was `signal` on a `hairline2` track — 1.47:1, which is not
+        visible on a phone in daylight at any height, let alone two pixels.
+        The "Step 1 of 4" line below was carrying the whole job. signalInk on
+        `track` is 3.65:1, so the bar now actually reads as a bar.
+      */}
+      <View style={{ height: 2, borderRadius: radii.hair, backgroundColor: colors.track, overflow: "hidden" }}>
         <Animated.View
           style={{
             height: 2,
-            borderRadius: 1,
-            backgroundColor: colors.signal,
+            borderRadius: radii.hair,
+            backgroundColor: colors.signalInk,
             width: progress.interpolate({ inputRange: [0, 1], outputRange: ["0%", `${pct}%`] }),
           }}
         />

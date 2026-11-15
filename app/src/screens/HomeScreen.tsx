@@ -8,6 +8,7 @@ import { SettingsSheet } from "../components/SettingsSheet";
 import { StreakCard } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
+import { doseParts, speakDose } from "../lib/dose";
 import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
@@ -177,7 +178,7 @@ export function HomeScreen() {
                 height: 44,
                 borderRadius: radii.md,
                 borderWidth: 1,
-                borderColor: colors.hairline2,
+                borderColor: colors.edge,
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: pressed ? 0.7 : 1,
@@ -284,7 +285,7 @@ export function HomeScreen() {
                         height: 24,
                         borderRadius: 12,
                         borderWidth: 2,
-                        borderColor: colors.hairline2,
+                        borderColor: colors.edge,
                       }}
                     />
                   )}
@@ -302,8 +303,8 @@ export function HomeScreen() {
                       letterSpacing: 0.3,
                     }}
                   >
-                    {item.dose}
-                    <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
+                    {doseParts(item.dose, item.unit).value}
+                    <Text style={type.unit}> {doseParts(item.dose, item.unit).unit}</Text>
                   </Text>
 
                   {done ? (
@@ -329,9 +330,9 @@ export function HomeScreen() {
                         paddingVertical: 8,
                         paddingLeft: 12,
                         paddingRight: 8,
-                        borderRadius: 20,
+                        borderRadius: radii.md,
                         borderWidth: 1,
-                        borderColor: colors.signalDim,
+                        borderColor: colors.edge,
                         backgroundColor: colors.signalFaint,
                       }}
                     >

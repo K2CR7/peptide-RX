@@ -169,7 +169,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
                       paddingHorizontal: space.lg,
                       borderRadius: radii.md,
                       borderWidth: 1,
-                      borderColor: colors.hairline2,
+                      borderColor: colors.edge,
                       backgroundColor: colors.panel,
                     }}
                   >

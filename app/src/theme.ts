@@ -1,3 +1,5 @@
+import type { FontVariant } from "react-native";
+
 /*
 DIRECTION CONTRACT — seed 02d0b60b (impeccable, direction scope, operate mode)
 
@@ -111,6 +113,30 @@ export const colors = {
   amberFaint: "#F7EEDC",
   red: "#A8231C",
   redFaint: "#F8E6E4",
+
+  /*
+    The boundary of anything you can touch.
+
+    hairline2 (#A5CCC9) was doing this job on every text input, every
+    unselected chip and every control edge, and it measures 1.74:1 on a white
+    panel. WCAG 1.4.11 asks 3:1 for the boundary of a UI component, and that
+    criterion exists precisely for this case: an input whose edge you cannot
+    find is an input you cannot see is an input.
+
+    #48908C is the same hue carried down to L=0.232 — 3.72:1 on panel, 3.45:1
+    on panelRaised, 3.25:1 on the page. hairline and hairline2 stay, but only
+    for seams between things, never for the edge of a control.
+  */
+  edge: "#48908C",
+
+  /*
+    Modal scrims. These were rgba(11,31,51,...) in five places — a navy left
+    over from the palette before this one, so every sheet in the app dimmed
+    the screen toward a blue the theme no longer contains. Derived from
+    colors.ink now, so they dim toward the app's own darkest value.
+  */
+  scrim: "rgba(12,43,46,0.42)",
+  scrimStrong: "rgba(12,43,46,0.62)",
 } as const;
 
 /*
@@ -153,13 +179,30 @@ than re-deciding what 38px means.
 Light text on a near-black ground needs a touch more line height and tracking
 than the same face would on white; that compensation lives here, once.
 */
+/*
+  Tabular figures.
+
+  Proportional digits give each numeral its own width — a 1 is narrow, a 0 is
+  wide — so a column of numbers doesn't line up and a counting readout jitters
+  sideways as it ticks. Tabular figures share one advance width, which is why
+  every instrument, spreadsheet and ledger uses them.
+
+  This is not on by default in any font, including IBM Plex. The comment above
+  claimed the numerals were "tabular" for a month while nothing switched the
+  feature on, which is the kind of thing only a column of 111 above 999 shows.
+*/
+const TABULAR = { fontVariant: ["tabular-nums"] as FontVariant[] };
+
 export const type = {
   // Instrument readouts. The numerals ARE the product on this surface —
   // density is the point, not a pattern to be designed away.
-  display: { fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -0.5 },
-  statLg: { fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5 },
-  statMd: { fontFamily: font.numeral, fontSize: 32, color: colors.ink, letterSpacing: -0.5 },
-  statSm: { fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 },
+  display: { fontFamily: font.numeral, fontSize: 52, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
+  statLg: { fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
+  statMd: { fontFamily: font.numeral, fontSize: 32, color: colors.ink, letterSpacing: -0.5, ...TABULAR },
+  statSm: { fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3, ...TABULAR },
+
+  /** A dose's unit: always present, always subordinate to the number. */
+  unit: { fontFamily: font.medium, fontSize: 13, color: colors.ink3, letterSpacing: 0.2 },
 
   // Voice
   title: { fontFamily: font.bold, fontSize: 24, color: colors.ink, letterSpacing: 0.2 },
@@ -201,10 +244,15 @@ Clinical software sits around 4-6px: enough to avoid a hard CAD edge,
 not enough to read as soft.
 */
 export const radii = {
+  /** Hairline details — rules, ticks, segment ends. */
+  hair: 2,
   sm: 4,
   md: 6,
   lg: 8,
   xl: 10,
+  /** Sheet tops only. Larger than the scale because a sheet reads as a
+      sheet by its corner, and four files were hardcoding 14 for this. */
+  sheet: 14,
 } as const;
 
 /*

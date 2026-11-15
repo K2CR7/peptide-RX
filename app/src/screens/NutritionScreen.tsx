@@ -390,7 +390,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
         style={{
           backgroundColor: colors.panelRaised,
           borderWidth: 1,
-          borderColor: colors.hairline2,
+          borderColor: colors.edge,
           borderRadius: radii.md,
           padding: 12,
           fontFamily: font.numeralMedium,

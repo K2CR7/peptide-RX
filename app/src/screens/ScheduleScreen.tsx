@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MarkDue, MarkLogged, MarkMissed, MarkScheduled } from "../components/icons";
 import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
+import { formatDose } from "../lib/dose";
 import { useInjectionLogs, useStackItems } from "../lib/queries";
 import { AsyncBlock, Panel } from "../components/primitives";
 import { TourTarget } from "../components/tour";
@@ -82,12 +83,25 @@ export function ScheduleScreen() {
     [rows, loggedByDay, today],
   );
 
-  const cellW = (390 - NAME_COL) / 7;
+  /*
+    The grid used to be sized from a hardcoded 390, which is one specific
+    iPhone. Everything narrower silently lost days off the right edge: the
+    row is clipped by overflow:"hidden", so on a 393pt iPhone Sunday was cut
+    off and on a 360pt Android both weekend days were. It looked correct only
+    in the web dev frame, which happens to be 430 wide.
+
+    Measured from the panel itself rather than from the window, because on
+    web this app renders inside a fixed-width phone frame — the window is the
+    whole browser and is nothing to do with how much room this grid has.
+    onLayout is the only number that is true on both platforms.
+  */
+  const [gridW, setGridW] = useState(0);
+  const cellW = gridW > 0 ? (gridW - NAME_COL) / 7 : 0;
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: space.xl, paddingTop: insets.top + space.xl, paddingBottom: space.section }}
     >
       <Text style={type.title}>This week</Text>
       <Text style={[type.meta, { marginTop: 4 }]}>
@@ -113,7 +127,10 @@ export function ScheduleScreen() {
         </View>
       ) : (
         <TourTarget id="week-grid" style={{ marginTop: 16 }}>
-        <View style={[panel, { paddingVertical: 4, overflow: "hidden" }]}>
+        <View
+          style={[panel, { paddingVertical: 4, overflow: "hidden" }]}
+          onLayout={(e) => setGridW(e.nativeEvent.layout.width)}
+        >
           {/* Day header */}
           <View style={{ flexDirection: "row", alignItems: "flex-end", paddingBottom: 8, paddingTop: 8 }}>
             <View style={{ width: NAME_COL }} />
@@ -174,7 +191,7 @@ export function ScheduleScreen() {
                   {item.peptideName}
                 </Text>
                 <Text style={{ fontFamily: font.numeralMedium, fontSize: 11, color: colors.ink3, marginTop: 1 }}>
-                  {item.dose} {item.unit}
+                  {formatDose(item.dose, item.unit)}
                 </Text>
               </View>
 

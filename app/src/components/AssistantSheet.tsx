@@ -60,7 +60,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(11,31,51,0.42)" }} onPress={close} />
+          <Pressable style={{ flex: 1, backgroundColor: colors.scrim }} onPress={close} />
 
           {/* Fixed height: the sheet shouldn't jump as answers arrive. */}
           <View
@@ -70,7 +70,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
               borderTopLeftRadius: 14,
               borderTopRightRadius: 14,
               borderTopWidth: 1,
-              borderColor: colors.hairline2,
+              borderColor: colors.edge,
               paddingTop: 16,
               paddingBottom: 16,
             }}
@@ -124,7 +124,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                         justifyContent: "center",
                         paddingHorizontal: 16,
                         borderWidth: 1,
-                        borderColor: colors.hairline2,
+                        borderColor: colors.edge,
                         borderRadius: radii.md,
                         opacity: pressed ? 0.72 : 1,
                       })}
@@ -212,7 +212,7 @@ export function AssistantSheet({ visible, onClose, context, suggestions }: Props
                   flex: 1,
                   backgroundColor: colors.panelRaised,
                   borderWidth: 1,
-                  borderColor: colors.hairline2,
+                  borderColor: colors.edge,
                   borderRadius: radii.md,
                   paddingHorizontal: 12,
                   minHeight: 46,

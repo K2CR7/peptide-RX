@@ -112,31 +112,54 @@ function CheckinCard({ checkin }: { checkin: Checkin }) {
             {checkin.mood != null && <Stat label="mood" value={`${checkin.mood}/10`} />}
           </View>
         </View>
-        <Pressable
-          onPress={handleDelete}
-          disabled={deleteCheckin.isPending}
-          accessibilityRole="button"
-          accessibilityLabel={confirming ? "Confirm delete this check-in" : "Delete this check-in"}
-          style={({ pressed }) => ({
-            minWidth: 56,
-            minHeight: HIT,
-            marginTop: -8,
-            marginRight: -6,
-            alignItems: "flex-end",
-            justifyContent: "center",
-            paddingHorizontal: space.sm,
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Text
-            style={[
-              type.meta,
-              { color: colors.red, fontFamily: confirming ? font.bold : font.medium },
-            ]}
+        {/*
+          Once armed, there has to be a way back out. Previously nothing
+          cleared `confirming` except a delete that succeeded or failed, so
+          a user who thought better of it was left with a card whose only
+          visible action was "Tap to confirm" — permanently. The two other
+          destructive flows in this app both offer a way out ("Keep it",
+          "Keep my data"); this one now matches them.
+        */}
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: -8, marginRight: -6 }}>
+          {confirming && !deleteCheckin.isPending && (
+            <Pressable
+              onPress={() => setConfirming(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Keep this check-in"
+              style={({ pressed }) => ({
+                minHeight: HIT,
+                justifyContent: "center",
+                paddingHorizontal: space.sm,
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Text style={type.meta}>Keep it</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={handleDelete}
+            disabled={deleteCheckin.isPending}
+            accessibilityRole="button"
+            accessibilityLabel={confirming ? "Confirm delete this check-in" : "Delete this check-in"}
+            style={({ pressed }) => ({
+              minWidth: 56,
+              minHeight: HIT,
+              alignItems: "flex-end",
+              justifyContent: "center",
+              paddingHorizontal: space.sm,
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
-            {deleteCheckin.isPending ? "Deleting…" : confirming ? "Tap to confirm" : "Delete"}
-          </Text>
-        </Pressable>
+            <Text
+              style={[
+                type.meta,
+                { color: colors.red, fontFamily: confirming ? font.bold : font.medium },
+              ]}
+            >
+              {deleteCheckin.isPending ? "Deleting…" : confirming ? "Tap to confirm" : "Delete"}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <ErrorText style={{ marginTop: space.sm }}>{error}</ErrorText>
@@ -259,7 +282,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
             style={{
               backgroundColor: colors.panel,
               borderWidth: 1,
-              borderColor: colors.hairline2,
+              borderColor: colors.edge,
               borderRadius: radii.md,
               padding: 12,
               fontFamily: font.regular,
@@ -283,7 +306,7 @@ function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () =
                   height: 76,
                   borderRadius: radii.md,
                   borderWidth: 1,
-                  borderColor: colors.hairline2,
+                  borderColor: colors.edge,
                   backgroundColor: colors.panel,
                   alignItems: "center",
                   justifyContent: "center",
@@ -343,7 +366,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
         style={{
           backgroundColor: colors.panel,
           borderWidth: 1,
-          borderColor: colors.hairline2,
+          borderColor: colors.edge,
           borderRadius: radii.md,
           padding: 12,
           fontFamily: font.numeralMedium,

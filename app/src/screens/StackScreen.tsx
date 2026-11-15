@@ -6,6 +6,7 @@ import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { siteHistory } from "../lib/injectionSites";
+import { DOSE_UNITS, doseParts, formatDose, speakDose } from "../lib/dose";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
   CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
@@ -28,7 +29,10 @@ import { INTERACTION_DISCLAIMER, cautionsFor, type InteractionSeverity } from ".
 import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
-const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
+// "units", not "IU": ISMP lists IU as error-prone because it is misread as
+// IV or as the number 10. Legacy rows storing "IU" still render correctly —
+// normalizeUnit maps them on the way out.
+const UNIT_OPTIONS = [...DOSE_UNITS];
 const DOSE_OPTIONS = [
   "0.25", "0.5", "1", "2", "2.5", "5", "10", "15", "20", "25",
   "50", "75", "100", "150", "200", "250", "300", "400", "500",
@@ -48,6 +52,9 @@ export function StackScreen() {
   const [addOpen, setAddOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
+  // A failed dose log has to say so somewhere on this screen; the sheet it
+  // happened in is already gone by the time the request comes back.
+  const [logError, setLogError] = useState<string | null>(null);
   const [detailFor, setDetailFor] = useState<StackItem | null>(null);
   const [editFor, setEditFor] = useState<StackItem | null>(null);
 
@@ -66,7 +73,7 @@ export function StackScreen() {
                 height: 44,
                 borderRadius: radii.md,
                 borderWidth: 1,
-                borderColor: colors.hairline2,
+                borderColor: colors.edge,
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: pressed ? 0.7 : 1,
@@ -110,6 +117,8 @@ export function StackScreen() {
             </AsyncBlock>
           </Panel>
         )}
+
+        <ErrorText>{logError}</ErrorText>
 
         {items && items.length > 0 && (
           <View style={[panel, { overflow: "hidden" }]}>
@@ -157,6 +166,7 @@ export function StackScreen() {
           stackItemId={injectFor.id}
           route={injectFor.route}
           onClose={() => setInjectFor(null)}
+          onError={setLogError}
         />
       )}
     </View>
@@ -211,9 +221,9 @@ function StackItemRow({
         )}
       </Pressable>
 
-      <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
-        {item.dose}
-        <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
+      <Text style={type.statSm} accessibilityLabel={speakDose(item.dose, item.unit)}>
+        {doseParts(item.dose, item.unit).value}
+        <Text style={type.unit}> {doseParts(item.dose, item.unit).unit}</Text>
       </Text>
 
       <Pressable
@@ -239,7 +249,17 @@ function StackItemRow({
   );
 }
 
-function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string; route: string | null; onClose: () => void }) {
+function InjectionLogger({
+  stackItemId,
+  route,
+  onClose,
+  onError,
+}: {
+  stackItemId: string;
+  route: string | null;
+  onClose: () => void;
+  onError: (message: string) => void;
+}) {
   const { data: logs } = useInjectionLogs(stackItemId);
   const logInjection = useLogInjection();
   const history = siteHistory(logs ?? []).reverse();
@@ -253,7 +273,17 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
       onConfirm={(site) => {
         // site is null for oral and nasal routes — there is nowhere to pin,
         // but the dose still happened, so it still gets logged.
-        logInjection.mutate({ stackItemId, site });
+        //
+        // A failure here used to be completely invisible: the sheet closed
+        // either way and the row simply never flipped to Logged, so the user
+        // walked away believing a dose was recorded that wasn't. In a
+        // medication tracker that is the worst thing this codebase could do,
+        // and the Today tab already handled it correctly — this is the same
+        // treatment, not a new one.
+        logInjection.mutate(
+          { stackItemId, site },
+          { onError: () => onError("Couldn't log that dose — check your connection and try again.") },
+        );
         onClose();
       }}
     />
@@ -511,7 +541,7 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
         style={{
           backgroundColor: colors.panel,
           borderWidth: 1,
-          borderColor: colors.hairline2,
+          borderColor: colors.edge,
           borderRadius: radii.md,
           paddingHorizontal: 16,
           minHeight: 48,
@@ -558,14 +588,14 @@ function StackItemSheet({
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(11,31,51,0.42)" }} onPress={onClose} />
+          <Pressable style={{ flex: 1, backgroundColor: colors.scrim }} onPress={onClose} />
           <View
             style={{
               backgroundColor: colors.panel,
               borderTopLeftRadius: 14,
               borderTopRightRadius: 14,
               borderTopWidth: 1,
-              borderColor: colors.hairline2,
+              borderColor: colors.edge,
               paddingTop: 20,
               paddingHorizontal: 20,
               paddingBottom: 20,
@@ -574,7 +604,7 @@ function StackItemSheet({
             <Text style={[type.heading, { fontSize: 20 }]}>{item.peptideName}</Text>
 
             <View style={{ marginTop: 16, gap: 8 }}>
-              <DetailRow label="Dose" value={`${item.dose} ${item.unit}`} />
+              <DetailRow label="Dose" value={formatDose(item.dose, item.unit)} />
               <DetailRow label="Frequency" value={item.frequency} />
               <DetailRow label="Route" value={item.route ?? "—"} />
               <DetailRow
