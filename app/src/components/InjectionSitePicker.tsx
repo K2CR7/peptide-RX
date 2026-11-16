@@ -7,7 +7,7 @@ import {
   StepPill, StepPress, StepSwab, StepTimer, StepWash,
 } from "./icons";
 import {
-  type BodyView, getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark,
+  type BodyView, fixedSiteFor, getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark,
 } from "../lib/injectionSites";
 import { HIT, colors, font, radii, type } from "../theme";
 
@@ -28,7 +28,15 @@ const STEP_ICONS: Record<StepMark, (p: { size?: number; color: string }) => Reac
 interface Props {
   visible: boolean;
   route: string | null;
-  history: string[]; // recent site ids used for this stack item, most-recent last
+  /*
+    Recent site ids, oldest first, across EVERY peptide that pins a site —
+    not just the one being logged. This said "for this stack item" and was
+    passed that way, which gave each peptide its own private rotation: two
+    SubQ items could both be told the same site was free on the same day,
+    and the usage marks below would not warn about it either, because they
+    are counted from this same list. Tissue does not care which vial it was.
+  */
+  history: string[];
   onClose: () => void;
   onConfirm: (site: string | null) => void;
 }
@@ -60,7 +68,15 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
     setView(recommended.view);
   }, [recommended, touched]);
 
-  const hasSites = sites.length > 0;
+  /*
+    Oral and nasal now HAVE a site — the mouth and the nose — so that the
+    body diagram can draw a complete protocol instead of quietly dropping
+    3 of 18 reference peptides off the chart. There is still nothing to pin,
+    though, so this branches on whether the route rotates rather than on
+    whether the list is empty, which is what it used to do.
+  */
+  const fixedSite = fixedSiteFor(routeKey);
+  const hasSites = sites.length > 0 && fixedSite === null;
   const hasBack = sites.some((s) => s.view === "back");
 
   const usage = useMemo(() => {
@@ -282,7 +298,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
               </Text>
 
               <Pressable
-                onPress={() => { reset(); onConfirm(null); }}
+                onPress={() => { reset(); onConfirm(fixedSite?.id ?? null); }}
                 accessibilityRole="button"
                 style={({ pressed }) => ({
                   backgroundColor: colors.signal,

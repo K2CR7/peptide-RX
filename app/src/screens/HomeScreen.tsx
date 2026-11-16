@@ -1,17 +1,30 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TodayHero } from "../components/TodayHero";
-import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
+import { BodyToday, type PendingDose } from "../components/BodyToday";
+import { ChevronRight, GearIcon, MarkLogged, MarkPartial, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
-import { StreakCard } from "../components/StreakCard";
+import { StreakHeader } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
-import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
-import { doseParts, speakDose } from "../lib/dose";
-import { ProtocolMatrix } from "../components/ProtocolMatrix";
-import { buildMatrix } from "../lib/lanes";
-import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
+import { doseSlotsForDay, dosesPerDay } from "../lib/doses";
+import {
+  type InjectionSite,
+  ROUTE_SITES,
+  daysSinceBySite,
+  fixedSiteFor,
+  getNextSite,
+  getRouteKey,
+  rotationHistory,
+} from "../lib/injectionSites";
+import { doseParts } from "../lib/dose";
+import {
+  type StackItem,
+  useAppOpens,
+  useInjectionLogs,
+  useLogInjection,
+  useStackItems,
+} from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
 import { computeStreak } from "../lib/streak";
@@ -23,15 +36,6 @@ import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function relativeDay(iso: string): string {
-  const then = new Date(iso);
-  const now = new Date();
-  if (isSameDay(then, now)) return "Today";
-  const days = Math.round((now.setHours(0, 0, 0, 0) - new Date(iso).setHours(0, 0, 0, 0)) / 86400000);
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
 }
 
 export function HomeScreen() {
@@ -72,18 +76,32 @@ export function HomeScreen() {
     [items, today, offIds],
   );
 
-  const loggedTodayIds = useMemo(() => {
-    const now = new Date();
-    const ids = new Set<string>();
-    (allLogs ?? []).forEach((log) => {
-      if (isSameDay(new Date(log.takenAt), now)) ids.add(log.stackItemId);
-    });
-    return ids;
-  }, [allLogs]);
+  /*
+    Today, one entry per expected DOSE.
 
-  const doneCount = dueToday.filter((i) => loggedTodayIds.has(i.id)).length;
-  const progress = dueToday.length > 0 ? doneCount / dueToday.length : 0;
-  const allDone = dueToday.length > 0 && doneCount === dueToday.length;
+    This was a Set of item ids and a count of items, which is why an item
+    running twice a day could not be logged twice: the first log put its id
+    in the set, the row went disabled, and the second dose had nowhere to go.
+    See lib/doses.ts.
+  */
+  const slots = useMemo(() => doseSlotsForDay(items ?? [], allLogs ?? []), [items, allLogs]);
+
+  const doneCount = slots.filter((s) => s.log !== null).length;
+
+  /** Outstanding doses, in schedule order, for the list and the hero. */
+  const openSlots = useMemo(() => slots.filter((s) => s.log === null), [slots]);
+
+  /*
+    Doses logged today per item, so a row can say "1 of 2" rather than
+    flipping to done on the first one.
+  */
+  const doneByItem = useMemo(() => {
+    const counts = new Map<string, number>();
+    slots.forEach((s) => {
+      if (s.log) counts.set(s.item.id, (counts.get(s.item.id) ?? 0) + 1);
+    });
+    return counts;
+  }, [slots]);
 
   const dayCount = useMemo(() => {
     if (!items || items.length === 0) return 1;
@@ -91,21 +109,102 @@ export function HomeScreen() {
     return Math.max(1, Math.floor((Date.now() - earliest) / (24 * 3600 * 1000)) + 1);
   }, [items]);
 
-  // Rotation is the product's core differentiator, so the readout carries it:
-  // where the last few injections landed, and which site is up next.
-  const rotation = useMemo(() => {
-    const injectable = (items ?? []).filter((i) => {
-      const key = getRouteKey(i.route);
-      return key !== "Oral" && key !== "Nasal spray";
+  /*
+    The figure, which is now the screen rather than a panel at the bottom of
+    it: which sites exist, what went where today, and how long each spot has
+    been resting.
+
+    ONE ROTATING ROUTE, PLUS EVERY FIXED SITE. A stack running one SubQ and
+    one IM peptide genuinely has two rotations over two different site sets,
+    and overlaying them would draw abdominal sites and glutes on one figure
+    as though they were one cycle — so the rotating set still comes from a
+    single route, the first in the stack.
+
+    Fixed sites are a different case and are always added. The mouth and the
+    nose take part in no rotation, so putting them on a SubQ figure cannot
+    corrupt one, and leaving them off is what used to make an oral peptide
+    vanish from its own body diagram.
+  */
+  const body = useMemo(() => {
+    const routeKeys = (items ?? []).map((i) => getRouteKey(i.route));
+    if (routeKeys.length === 0) return null;
+
+    const rotatingKey = routeKeys.find((k) => fixedSiteFor(k) === null) ?? null;
+    const rotatingSites = rotatingKey ? ROUTE_SITES[rotatingKey] : [];
+
+    const fixed = [...new Set(routeKeys)]
+      .map((k) => fixedSiteFor(k))
+      .filter((s): s is InjectionSite => s !== null);
+
+    const sites = [...rotatingSites, ...fixed];
+    if (sites.length === 0) return null;
+
+    /*
+      Every dose that pinned a site, not just this route's peptides — see
+      rotationHistory in lib/injectionSites.ts. The picker is handed the same
+      history, and the two MUST agree: the figure announces where the
+      rotation goes next, and opening the list has to land on that same site
+      rather than on a second opinion.
+    */
+    const next = rotatingKey
+      ? getNextSite(rotatingKey, rotationHistory(allLogs ?? [], rotatingKey))
+      : null;
+
+    /*
+      Today only. The figure could carry the week, which is the better
+      rotation picture in the abstract and is also exactly what the Week tab
+      draws; on this screen the question is what happened today.
+
+      Counted against the sites this figure actually draws: a dose into a
+      glute while the map shows a SubQ route has nowhere to be drawn, and a
+      count printed over marks that do not include it is a header calling its
+      own diagram a liar.
+    */
+    const drawable = new Set(sites.map((s) => s.id));
+    const now = new Date();
+    const usedToday: Record<string, number> = {};
+    (allLogs ?? []).forEach((log) => {
+      if (!log.site || !drawable.has(log.site)) return;
+      if (!isSameDay(new Date(log.takenAt), now)) return;
+      usedToday[log.site] = (usedToday[log.site] ?? 0) + 1;
     });
-    if (injectable.length === 0) return null;
-    const routeKey = getRouteKey(injectable[0].route);
-    const injectableIds = new Set(injectable.map((i) => i.id));
-    const logs = (allLogs ?? []).filter((l) => injectableIds.has(l.stackItemId));
-    const recent = [...logs].sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime());
-    const next = getNextSite(routeKey, siteHistory([...recent].reverse()));
-    return { next, recent: recent.slice(0, 3) };
+
+    return { sites, next, usedToday, daysSince: daysSinceBySite(allLogs ?? []) };
   }, [items, allLogs]);
+
+  /*
+    Outstanding doses, one entry per item, for the buttons in the figure's
+    confirm bar. Deduped because three outstanding doses of one peptide is
+    one button, not three — the bar logs one dose per press and the count
+    line above it is what says how many are left.
+  */
+  const pending = useMemo(() => {
+    const seen = new Set<string>();
+    const out: PendingDose[] = [];
+    openSlots.forEach((s) => {
+      if (seen.has(s.item.id)) return;
+      seen.add(s.item.id);
+      out.push({
+        stackItemId: s.item.id,
+        name: s.item.peptideName,
+        routeKey: getRouteKey(s.item.route),
+      });
+    });
+    return out;
+  }, [openSlots]);
+
+  /*
+    One writer for both paths into the log, so the body figure and the picker
+    cannot drift on error handling. A failure used to be invisible on the
+    picker path: the sheet closed either way and the row just never flipped.
+  */
+  function logDose(stackItemId: string, site: string | null) {
+    setLogError(null);
+    logInjection.mutate(
+      { stackItemId, site },
+      { onError: () => setLogError("Couldn't log that dose. Check your connection and try again.") },
+    );
+  }
 
   // Opening the app is what a rest day is counted from, so this fires on
   // mount and seeds the streak.
@@ -114,15 +213,6 @@ export function HomeScreen() {
   const streak = useMemo(
     () => computeStreak(items ?? [], allLogs ?? [], openDays ?? []),
     [items, allLogs, openDays],
-  );
-
-  const matrix = useMemo(
-    // Three weeks, not four. The window is set by how big a cell can be
-    // and still be a cell: 28 columns across a phone is 10px each, which
-    // renders as a texture rather than as marks you can count. See the
-    // geometry note in ProtocolMatrix.
-    () => buildMatrix(items ?? [], allLogs ?? [], 21),
-    [items, allLogs],
   );
 
   const adherence = useMemo(
@@ -135,7 +225,7 @@ export function HomeScreen() {
   // same numbers the user is looking at instead of re-deriving date math.
   const assistantContext = useMemo(() => {
     const lines: string[] = [
-      `Today: ${doneCount} of ${dueToday.length} due doses logged.`,
+      `Today: ${doneCount} of ${slots.length} due doses logged.`,
     ];
     if (adherence.pct !== null) {
       lines.push(
@@ -152,20 +242,20 @@ export function HomeScreen() {
         `Resting today (off cycle): ${restingToday.map((i) => i.peptideName).join(", ")}.`,
       );
     }
-    if (rotation?.next) {
-      lines.push(`Next injection site in rotation: ${rotation.next.label}.`);
+    if (body?.next) {
+      lines.push(`Next injection site in rotation: ${body.next.label}.`);
     }
     return lines.join("\n");
-  }, [doneCount, dueToday, adherence, cycles, restingToday, rotation]);
+  }, [doneCount, slots, adherence, cycles, restingToday, body]);
 
   const assistantSuggestions = useMemo(() => {
     const out: string[] = [];
     if (adherence.pct !== null) out.push(`Why is my adherence ${adherence.pct}%?`);
     if (cycles.length > 0) out.push(`When does my ${cycles[0].item.peptideName} cycle end?`);
-    if (rotation?.next) out.push("Which site should I use next, and why that one?");
+    if (body?.next) out.push("Which site should I use next, and why that one?");
     out.push("What does the rest of my week look like?");
     return out;
-  }, [adherence, cycles, rotation]);
+  }, [adherence, cycles, body]);
 
   const dateStamp = new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
@@ -174,7 +264,25 @@ export function HomeScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 20 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={type.title}>Today</Text>
+            {/*
+              The corner carries the streak, not the word "Today".
+
+              A tab title restating the tab you just tapped is the one thing
+              on a screen guaranteed to tell the reader nothing, and it was
+              sitting in the position that costs the most to spend: first
+              thing, top left, where the eye lands before it has decided
+              where to look. The run of days goes there instead and the date
+              drops to the line underneath, which is where a date belongs.
+
+              With an empty stack the streak is 0, and "0 days on protocol"
+              as the first thing in a new account reads as a scolding before
+              anything has been asked of the user. That case keeps the title.
+            */}
+            {(items?.length ?? 0) > 0 ? (
+              <StreakHeader streak={streak} settled={allLogs !== undefined && openDays !== undefined} />
+            ) : (
+              <Text style={type.title}>Today</Text>
+            )}
             <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
@@ -218,30 +326,42 @@ export function HomeScreen() {
           </View>
         </View>
 
-        <TourTarget id="today-ring">
-          <TodayHero
-            done={doneCount}
-            due={dueToday.length}
-            dueNames={dueToday.filter((i) => !loggedTodayIds.has(i.id)).map((i) => i.peptideName)}
-            restingToday={restingToday.length > 0}
-          />
-        </TourTarget>
+        {body && (
+          <TourTarget id="today-ring">
+            <Panel pad={space.lg}>
+              <BodyToday
+                sites={body.sites}
+                usedToday={body.usedToday}
+                daysSince={body.daysSince}
+                next={body.next}
+                done={doneCount}
+                due={slots.length}
+                pending={pending}
+                onLog={logDose}
+                /* The accessibility path out of the diagram, and the way to
+                   override the recommendation. It opens on the first
+                   outstanding dose; the rows below are how you reach a
+                   specific one. */
+                onOpenList={() =>
+                  pending.length > 0 &&
+                  setInjectFor({
+                    id: pending[0].stackItemId,
+                    route: items?.find((i) => i.id === pending[0].stackItemId)?.route ?? null,
+                  })
+                }
+              />
+            </Panel>
+          </TourTarget>
+        )}
 
         {/*
-          In a panel, like everything else that holds data.
-
-          This sat directly on the page ground on the theory that occupying
-          the ground made it the heaviest thing on screen. It did the
-          opposite: with no edge to sit inside, three rows of small outlined
-          cells read as texture drifting under the header rather than as a
-          chart. Weight comes from containment and cell size, not from the
-          absence of a border.
+          The three-week matrix used to sit here, between the ring and the
+          dose list. It has moved to the Week tab, which is the screen whose
+          whole subject is the schedule drawn as a grid — the two were the
+          same graphic at two window lengths on two tabs, and the longer one
+          was pushing the thing you came to this screen to do below the fold.
+          Today is for today.
         */}
-        {matrix.lanes.length > 0 && (
-          <Panel pad={space.lg}>
-            <ProtocolMatrix matrix={matrix} />
-          </Panel>
-        )}
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
@@ -266,15 +386,31 @@ export function HomeScreen() {
           <ErrorText>{logError}</ErrorText>
 
           <View style={{ gap: space.sm }}>
+            {/*
+              One row per item, not per dose.
+
+              An item due three times a day would otherwise draw three
+              identical rows, which reads as three different things to do.
+              The row carries its own progress instead and stays tappable
+              until the last dose is in.
+            */}
             {dueToday.map((item) => {
-              const done = loggedTodayIds.has(item.id);
+              const want = dosesPerDay(item);
+              const got = doneByItem.get(item.id) ?? 0;
+              const done = got >= want;
               return (
                 <Pressable
                   key={item.id}
                   onPress={() => !done && setInjectFor({ id: item.id, route: item.route })}
                   disabled={done}
                   accessibilityRole="button"
-                  accessibilityLabel={done ? `${item.peptideName} logged` : `Log ${item.peptideName}`}
+                  accessibilityLabel={
+                    done
+                      ? `${item.peptideName} logged`
+                      : want > 1
+                        ? `Log ${item.peptideName}, ${got} of ${want} doses logged`
+                        : `Log ${item.peptideName}`
+                  }
                   style={({ pressed }) => [
                     panel,
                     {
@@ -294,6 +430,10 @@ export function HomeScreen() {
                 >
                   {done ? (
                     <MarkLogged size={24} color={colors.signalInk} />
+                  ) : got > 0 ? (
+                    /* Started, not finished. Same mark the week grid and the
+                       matrix use for a partly-logged day. */
+                    <MarkPartial size={24} color={colors.signalInk} />
                   ) : (
                     <View
                       style={{
@@ -308,7 +448,13 @@ export function HomeScreen() {
 
                   <View style={{ flex: 1 }}>
                     <Text style={type.headingSm}>{item.peptideName}</Text>
-                    <Text style={[type.meta, { marginTop: 1 }]}>{item.frequency}</Text>
+                    <Text style={[type.meta, { marginTop: 1 }]}>
+                      {/* The free-text frequency is what the user wrote and
+                          stays the subtitle; the count is what the app
+                          actually tracked, so it is appended rather than
+                          replacing it. */}
+                      {want > 1 ? `${item.frequency} · ${got} of ${want}` : item.frequency}
+                    </Text>
                   </View>
 
                   <Text
@@ -363,13 +509,6 @@ export function HomeScreen() {
             })}
           </View>
         </View>
-
-        {/* Days on protocol, in place of the old consistency percentage.
-            A percentage reports on the past; a run of days is something
-            you would rather not break. Same data, pointed forward. */}
-        {(items?.length ?? 0) > 0 && (
-          <StreakCard streak={streak} settled={allLogs !== undefined && openDays !== undefined} />
-        )}
 
         {cycles.length > 0 && (
           <View style={{ gap: 12 }}>
@@ -431,31 +570,6 @@ export function HomeScreen() {
           </View>
         )}
 
-        {rotation?.next && (
-          <View style={{ gap: 12 }}>
-            <Text style={type.label}>Site rotation</Text>
-            <View style={[panel, { padding: 16 }]}>
-              <Text style={type.meta}>Next site</Text>
-              <Text style={[type.heading, { color: colors.signalInk, marginTop: 3 }]}>
-                {rotation.next.label}
-              </Text>
-
-              {rotation.recent.length > 0 && (
-                <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 8 }}>
-                  {rotation.recent.filter((l) => l.site).map((log) => (
-                    <View key={log.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.ink3 }} />
-                        <Text style={type.bodySm}>{siteLabel(log.site!)}</Text>
-                      </View>
-                      <Text style={type.meta}>{relativeDay(log.takenAt)}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        )}
       </ScrollView>
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
@@ -471,18 +585,14 @@ export function HomeScreen() {
         <InjectionSitePicker
           visible
           route={injectFor.route}
-          history={siteHistory((allLogs ?? []).filter((l) => l.stackItemId === injectFor.id)).reverse()}
+          history={rotationHistory(allLogs ?? [], getRouteKey(injectFor.route))}
           onClose={() => setInjectFor(null)}
           onConfirm={(site) => {
-            // site is null for oral and nasal routes — there is nowhere to pin,
-            // but the dose still happened, so it still gets logged.
-            // A failure used to be invisible: the sheet closed either way and
-            // the row just never flipped to Logged.
-            setLogError(null);
-            logInjection.mutate(
-              { stackItemId: injectFor.id, site },
-              { onError: () => setLogError("Couldn't log that dose. Check your connection and try again.") },
-            );
+            // An oral or nasal route returns its FIXED site id rather than
+            // null now, so the dose lands on the body diagram at the mouth
+            // or the nose instead of being recorded nowhere. null is still
+            // possible for a route with no site at all.
+            logDose(injectFor.id, site);
             setInjectFor(null);
           }}
         />

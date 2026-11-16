@@ -46,6 +46,31 @@ const FREQUENCY_OPTIONS = [
   "Once weekly", "Twice weekly", "3x weekly",
   "Every other day", "Every 3 days", "As needed",
 ];
+
+/* Four covers everything in the reference library. The field takes a custom
+   value for the rest, and the server caps it at 12. */
+const PER_DAY_OPTIONS = ["1", "2", "3", "4"];
+
+/*
+  A first guess at doses per day, read off the reference library's frequency
+  prose. Only ever a DEFAULT for the field beside it, never the stored value.
+
+  The strings it reads are written for a human: "Twice daily", "2-3x daily",
+  "1-2x daily", "Once daily SubQ / 2x topical". A range has no single right
+  answer, so this takes the low end — under-counting leaves the user able to
+  log a dose the app did not expect, which the Today screen handles, while
+  over-counting invents a dose they never intended and shows them a miss for
+  it. Anything weekly, or anything it cannot read, is one.
+*/
+function dosesPerDayFromFrequency(frequency: string): number {
+  const text = frequency.toLowerCase();
+  if (!text.includes("dai") && !text.includes("day")) return 1;
+  if (text.includes("twice")) return 2;
+  if (text.includes("once")) return 1;
+  // Leading integer of "2-3x daily", "1-3x daily", "3x daily".
+  const n = Number(text.match(/(\d+)\s*(?:[-–]\s*\d+\s*)?x/)?.[1]);
+  return Number.isInteger(n) && n >= 1 && n <= 12 ? n : 1;
+}
 /*
   A fortnight per row, not the four weeks the home screen draws.
 
@@ -352,6 +377,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
   const [dose, setDose] = useState(item ? String(item.dose) : "");
   const [unit, setUnit] = useState(item?.unit ?? "mcg");
   const [frequency, setFrequency] = useState(item?.frequency ?? "");
+  const [perDay, setPerDay] = useState(String(item?.dosesPerDay ?? 1));
   const [route, setRoute] = useState(item?.route ?? "");
   const [days, setDays] = useState<number[]>(item?.scheduleDays ?? []);
   const [cycleLabel, setCycleLabel] = useState(
@@ -392,6 +418,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
     const ref = PEPTIDE_REFERENCE[name];
     if (ref) {
       setFrequency(ref.frequency);
+      setPerDay(String(dosesPerDayFromFrequency(ref.frequency)));
       setRoute(ref.primaryRoute);
       setDays(ref.typicalScheduleDays);
     }
@@ -403,6 +430,10 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
     if (!peptideName.trim()) return setError("Pick or enter a peptide name.");
     if (!dose || !doseNum) return setError("Pick or enter a dose.");
     if (!frequency.trim()) return setError("Pick or enter a frequency.");
+    const perDayNum = Number(perDay);
+    if (!Number.isInteger(perDayNum) || perDayNum < 1 || perDayNum > 12) {
+      return setError("Doses per day must be a whole number from 1 to 12.");
+    }
     const cycle = resolveCycle();
     if (isCustomCycle && (cycle.onDays === null || cycle.offDays === null)) {
       return setError("Enter both weeks on and weeks off, or pick a preset cycle.");
@@ -413,6 +444,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
       dose: doseNum,
       unit,
       frequency: frequency.trim(),
+      dosesPerDay: perDayNum,
       scheduleDays: days,
       route: route.trim() || null,
       cycleOnDays: cycle.onDays,
@@ -486,7 +518,17 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           </View>
         </View>
 
-        <View style={{ marginTop: 16 }}>
+        {/*
+          Frequency and doses-per-day sit on one row because they are two
+          halves of the same answer. Frequency is the free text the user
+          recognises ("2-3x daily"); the number beside it is what the app
+          counts against, and it has to be asked for separately because that
+          string is editable prose with ranges in it and cannot be parsed
+          reliably. Picking a known peptide pre-fills the number from the
+          reference, so most people never touch it.
+        */}
+        <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
+          <View style={{ flex: 1.8 }}>
           <Select
             label="Frequency"
             options={FREQUENCY_OPTIONS}
@@ -495,6 +537,18 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
             placeholder="How often"
             customPlaceholder="Enter a frequency"
           />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Select
+              label="Per day"
+              options={PER_DAY_OPTIONS}
+              value={perDay}
+              onChange={setPerDay}
+              placeholder="1"
+              customPlaceholder="Doses per day"
+              keyboardType="numeric"
+            />
+          </View>
         </View>
 
         <View style={{ marginTop: 16 }}>

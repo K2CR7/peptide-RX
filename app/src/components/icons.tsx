@@ -123,6 +123,24 @@ export function MarkDue({ size = 15, color }: IconProps) {
   );
 }
 
+/*
+  Some of the day's doses logged, but not all of them.
+
+  The due ring with a filled core, so it sits between MarkDue (empty ring)
+  and MarkLogged (check in a ring) by construction rather than by colour. The
+  core is deliberately not sized to the fraction done: at 16px a disc cannot
+  carry "two of three" legibly, and a reader who thinks it can will misread
+  it. It says started, not finished, and the count says the rest.
+*/
+export function MarkPartial({ size = 15, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={2.5} fill="none" />
+      <Circle cx={12} cy={12} r={4} fill={color} />
+    </Svg>
+  );
+}
+
 export function MarkMissed({ size = 15, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

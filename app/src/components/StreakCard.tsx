@@ -1,10 +1,22 @@
 /*
 Days on protocol.
 
-A ticker, not a chart. The earlier version drew a fortnight of marks under
-the number, which turned it back into the schedule readout it was meant to
-replace — the point of a streak is that it is ONE number you don't want to
-reset. So: the count, what kept it, and nothing else.
+A ticker, not a chart, and now the first thing on the Today screen rather
+than a panel two thirds of the way down it. It sat below the dose list on the
+reasoning that the doses are what the screen is for. True, but it left the
+top-left corner — the first place a reader looks, and the only position on a
+page that needs no label to be found — holding the word "Today" above the
+date: the tab you just tapped, above something the phone already tells you.
+
+So the corner carries the number, the date drops to the quiet line under it,
+and the panel is gone. The figure sits on the page ground with nothing drawn
+around it, because a border around the top-left corner of a screen is an
+edge the screen already has.
+
+The earlier version drew a fortnight of marks under the number, which turned
+it back into the schedule readout it was meant to replace — the point of a
+streak is that it is ONE number you don't want to reset. So: the count, what
+kept it, and nothing else.
 
 The moment it goes up is the only event here. Finish the day — log the last
 dose due, or simply open the app on a rest day — and the figure turns over
@@ -26,7 +38,7 @@ import { Animated, Text, View } from "react-native";
 import type { KeptBy, StreakSummary } from "../lib/streak";
 import { secureStorage } from "../lib/secureStorage";
 import { EASE } from "./motion";
-import { colors, radii, space, type } from "../theme";
+import { colors, space, type } from "../theme";
 
 /*
   Not a secret — but it is the one key/value store in this app that already
@@ -43,7 +55,7 @@ interface Celebration {
   id: number;
 }
 
-export function StreakCard({
+export function StreakHeader({
   streak,
   settled,
 }: {
@@ -51,7 +63,7 @@ export function StreakCard({
   /** False while the queries behind the number are still arriving. */
   settled: boolean;
 }) {
-  const { current, longest, todayKind, todayPending } = streak;
+  const { current, longest, todayKind } = streak;
   const [celebration, setCelebration] = useState<Celebration | null>(null);
   const nextId = useRef(0);
 
@@ -91,41 +103,21 @@ export function StreakCard({
   }, [current, settled, todayKind]);
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.panel,
-        borderWidth: 1,
-        borderColor: colors.hairline,
-        borderRadius: radii.xl,
-        padding: space.lg,
-        gap: space.sm,
-        overflow: "hidden",
-      }}
-    >
-      <View
-        style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}
-      >
-        <Text style={type.label}>Days on protocol</Text>
-        {longest > current && (
-          <Text style={type.metaSm}>
-            Best {longest} day{longest === 1 ? "" : "s"}
-          </Text>
-        )}
-      </View>
+    <View>
+      <Text style={type.label}>Days on protocol</Text>
 
       {/*
-        Centred, which is not how the rest of this screen is laid out. The
-        figure travels vertically as it turns over, so it needs even room
-        above and below rather than a left edge to sit against, and the
-        numeral is the one thing in the card worth looking at directly.
+        Left-aligned, which the centred panel version was not. The figure
+        travels vertically as it turns over, so what it needs is room above
+        and below; in the corner the page margin is the edge it sits against,
+        and centring it there would leave it floating off the title column
+        every other element on the screen lines up with.
       */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "baseline",
-          justifyContent: "center",
           gap: space.sm,
-          paddingVertical: 2,
         }}
       >
         <View style={{ justifyContent: "center" }}>
@@ -143,8 +135,15 @@ export function StreakCard({
         <Text style={[type.body, { color: colors.ink2, paddingBottom: 6 }]}>
           {current === 1 ? "day" : "days"}
         </Text>
-      </View>
 
+        {/* Only when the run on screen is not the best one. A personal best
+            that equals the current number is the same number printed twice. */}
+        {longest > current && (
+          <Text style={[type.metaSm, { paddingBottom: 8 }]}>
+            Best {longest}
+          </Text>
+        )}
+      </View>
     </View>
   );
 }

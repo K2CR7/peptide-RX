@@ -35,7 +35,7 @@ const STOPS: TourStop[] = [
     tab: "Today",
     title: "Today",
     body:
-      "The ring is today's doses, logged against due. Tap a dose below it to log one.",
+      "Tap where on your body a dose went to log it. Filled marks are today; the dashed ring is where your rotation goes next.",
   },
   {
     id: "stack-add",

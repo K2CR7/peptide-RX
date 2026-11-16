@@ -134,7 +134,26 @@ model StackItem {
   peptideName  String
   dose         Float
   unit         String
+  /*
+    Free text, shown to the reader: "Twice daily", "2-3x daily", "2x/week
+    (DAC)". It is copied from the peptide reference and is editable, so it
+    cannot be the source of truth for anything the app computes.
+  */
   frequency    String
+  /*
+    How many doses this item asks for on a day it is scheduled.
+
+    The app had no such field and assumed one. Every day was collapsed to a
+    Set of item ids in five places, so a second dose of the same compound had
+    nowhere to be recorded: the row went disabled after the first one and the
+    user simply could not log the rest of their day. Four peptides in the
+    reference library ship multi-per-day frequencies, so this was not a
+    hypothetical.
+
+    Defaulted to 1, which makes every row that existed before this field
+    correct without a backfill.
+  */
+  dosesPerDay  Int       @default(1)
   scheduleDays Int[]
   route        String?
   startedAt    DateTime  @default(now())
