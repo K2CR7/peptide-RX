@@ -37,8 +37,9 @@ counts days on protocol, and a second count, on a second screen, measuring a
 second thing, is how an instrument turns into a game.
 */
 import { useCallback, useRef } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { Animated, Easing, Pressable, Text, View } from "react-native";
-import { GrainOrb, ORB, ORB_BOX } from "./grain";
+import { CHECK_WORD, GrainOrb, ORB, ORB_BOX } from "./grain";
 import {
   CADENCE_SHORT,
   DEFAULT_CADENCE,
@@ -49,6 +50,14 @@ import {
 import { colors, font, radii, space, type } from "../theme";
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+/*
+  checkin-word.png is 560x195. The words sit a little under two thirds
+  of the way across the orb, which leaves the loose particles at the
+  ends of the letters room to land on cloud rather than on page.
+*/
+const WORD_RATIO = 560 / 195;
+const WORD_W = Math.round(ORB * 0.62);
 
 /*
   The orb lives in grain.tsx now, next to the backdrop the check-in flow
@@ -111,6 +120,30 @@ export function CheckinHero({
     in full view.
   */
   const burst = useRef(new Animated.Value(0)).current;
+
+  /*
+    The dots gathering into the words, on arrival at the tab.
+
+    useFocusEffect rather than useEffect, because react-navigation keeps
+    the other tabs mounted: a mount-only animation would play once in a
+    session and never again.
+  */
+  const gather = useRef(new Animated.Value(0)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      gather.setValue(0);
+      const anim = Animated.timing(gather, {
+        toValue: 1,
+        duration: 760,
+        delay: 120,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      });
+      anim.start();
+      return () => anim.stop();
+    }, [gather]),
+  );
 
   const press = useCallback(() => {
     burst.setValue(0);
@@ -238,30 +271,54 @@ export function CheckinHero({
           {/*
             The whole orb is the button, so there is no button in it.
 
-            This was a pill: a filled, rounded, bordered control sitting
-            in the middle of the orb, which said that the PILL was the
-            target and the orb was decoration behind it. The opposite is
-            true. The Pressable has always been the full 236pt disc, and
-            a control drawn inside a control only tells people to aim for
-            the small one.
+            This was a pill: a filled, rounded, bordered control in the
+            middle of the orb, which said the PILL was the target and the
+            orb was decoration behind it. The opposite is true. The
+            Pressable has always been the full 236pt disc, and a control
+            drawn inside a control only tells people to aim for the small
+            one.
 
-            So: the words, and nothing else. No fill, no border, no
-            radius. They are set in signalInk, the same teal the dots are
-            made of, so they read as part of the cloud rather than as
-            something resting on top of it.
+            Then it was live text in the UI font, which was no better: the
+            orb is particles and the words were vector glyphs with hard
+            edges, so they read as a caption laid over a picture rather
+            than as part of it.
+
+            It is a point cloud now, generated the same way the orb was
+            and keyed to the same two teals; see mkword.js. On arrival the
+            dots gather: the words come in a fifth over size and settle,
+            which is as close to particles converging as this gets without
+            animating every one of them. 680 animated nodes measured 1.2fps
+            under react-native-web earlier in this branch.
           */}
-          <Animated.Text
+          <Animated.View
             style={{
-              fontFamily: font.semibold,
-              fontSize: 17,
-              letterSpacing: 0.3,
-              color: colors.signalInk,
-              /* Goes with the particles rather than sitting there as they leave. */
-              opacity: burst.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }),
+              /*
+                Leaves with the particles rather than sitting there as they
+                go. On its own node, because the gather below drives a
+                second value and react-native-web hands a node's property
+                to whichever animation started last.
+              */
+              opacity: burst.interpolate({
+                inputRange: [0, 0.4],
+                outputRange: [1, 0],
+                extrapolate: "clamp",
+              }),
             }}
           >
-            Check in
-          </Animated.Text>
+            <Animated.View style={{ opacity: gather }}>
+              <Animated.Image
+                source={CHECK_WORD}
+                resizeMode="contain"
+                style={{
+                  width: WORD_W,
+                  height: WORD_W / WORD_RATIO,
+                  transform: [
+                    { scale: gather.interpolate({ inputRange: [0, 1], outputRange: [1.2, 1] }) },
+                  ],
+                }}
+              />
+            </Animated.View>
+          </Animated.View>
         </Pressable>
 
         {/*

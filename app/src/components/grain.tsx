@@ -48,6 +48,7 @@ import { colors } from "../theme";
 
 export const FIELD = require("../../assets/checkin-field.png");
 export const GRAIN = require("../../assets/checkin-grain.png");
+export const CHECK_WORD = require("../../assets/checkin-word.png");
 export const CLOUD_A = require("../../assets/checkin-cloud-a.png");
 export const CLOUD_B = require("../../assets/checkin-cloud-b.png");
 /* The noise tile is 128px square; the drift covers exactly one per lap. */
