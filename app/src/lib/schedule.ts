@@ -34,9 +34,21 @@ export function buildWeekSchedule(items: ScheduleableItem[]): ScheduleSlot[][] {
   return week;
 }
 
+/*
+  ISO weekday: Monday is 1, Sunday is 7.
+
+  Every schedule in this app is stored that way, and JavaScript's getDay()
+  returns Sunday as 0, so the conversion has to happen somewhere. It was
+  happening in three somewheres — here, in lanes.ts and in doses.ts — which is
+  two too many for a line that is wrong in a way nobody notices until a Sunday.
+*/
+export function dowOf(d: Date): number {
+  const x = d.getDay();
+  return x === 0 ? 7 : x;
+}
+
 export function todayDow(): number {
-  const d = new Date().getDay();
-  return d === 0 ? 7 : d;
+  return dowOf(new Date());
 }
 
 export function mondayOfThisWeek(): Date {

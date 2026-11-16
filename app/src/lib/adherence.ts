@@ -1,4 +1,5 @@
 import { cycleState } from "./cycle";
+import { loggedCountsByDay, tallyDay } from "./doses";
 
 const DAY_MS = 24 * 3600 * 1000;
 const LOOKBACK_DAYS = 240;
@@ -35,6 +36,8 @@ interface ScheduledItem {
   startedAt: string;
   cycleOnDays: number | null;
   cycleOffDays: number | null;
+  /** Optional so a caller with an older cached row still type-checks. */
+  dosesPerDay?: number;
 }
 
 interface LoggedDose {
@@ -62,16 +65,15 @@ export function computeAdherence(
   windowDays = 30,
   now: Date = new Date(),
 ): AdherenceSummary {
-  const loggedByDay = new Map<number, Set<string>>();
-  logs.forEach((log) => {
-    const key = startOfDay(new Date(log.takenAt));
-    let set = loggedByDay.get(key);
-    if (!set) {
-      set = new Set<string>();
-      loggedByDay.set(key, set);
-    }
-    set.add(log.stackItemId);
-  });
+  /*
+    Counts, not a Set of item ids.
+
+    A Set answered "did this item happen" with a boolean, so an item running
+    three times a day scored the same for one dose as for three. Adherence was
+    reporting the fraction of ITEMS touched, which happens to equal the
+    fraction of doses taken only when everything is once-daily.
+  */
+  const loggedByDay = loggedCountsByDay(logs);
 
   const todayKey = startOfDay(now);
   const span = Math.max(windowDays, LOOKBACK_DAYS);
@@ -81,7 +83,7 @@ export function computeAdherence(
     const key = todayKey - i * DAY_MS;
     const date = new Date(key);
     const dow = dayOfWeek(date);
-    const logged = loggedByDay.get(key) ?? new Set<string>();
+    const logged = loggedByDay.get(key);
 
     let due = 0;
     let done = 0;
@@ -90,8 +92,11 @@ export function computeAdherence(
       if (startOfDay(new Date(item.startedAt)) > key) return;
       const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays, date);
       if (cycle?.phase === "off") return;
-      due += 1;
-      if (logged.has(item.id)) done += 1;
+      // Clamped by tallyDay, so four doses on a three-dose day cannot push a
+      // week's percentage over 100 and stop the figure being believable.
+      const day = tallyDay(item, logged?.get(item.id) ?? 0);
+      due += day.due;
+      done += day.done;
     });
 
     all.push({ date, due, done });

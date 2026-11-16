@@ -21,6 +21,12 @@ const createSchema = z.object({
   dose: z.number().positive(),
   unit: z.string().min(1),
   frequency: z.string().min(1),
+  /*
+    Capped at 12. Not a clinical limit — it is the point past which the Today
+    screen stops being able to draw one mark per dose and the number is far
+    more likely to be a typo than a protocol.
+  */
+  dosesPerDay: z.number().int().min(1).max(12).default(1),
   scheduleDays: z.array(z.number().int().min(1).max(7)).default([]),
   route: z.string().nullable().optional(),
   cycleOnDays: z.number().int().positive().nullable().optional(),

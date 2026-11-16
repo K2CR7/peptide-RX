@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MarkDue, MarkLogged, MarkMissed, MarkScheduled } from "../components/icons";
+import { MarkDue, MarkLogged, MarkMissed, MarkPartial, MarkScheduled } from "../components/icons";
 import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
 import { formatDose } from "../lib/dose";
-import { useInjectionLogs, useStackItems } from "../lib/queries";
+import { type StackItem, useInjectionLogs, useStackItems } from "../lib/queries";
+import { tallyDay } from "../lib/doses";
 import { AsyncBlock, Panel } from "../components/primitives";
 import { ProtocolMatrix } from "../components/ProtocolMatrix";
 import { buildMatrix } from "../lib/lanes";
@@ -17,7 +18,7 @@ const DAY_MS = 24 * 3600 * 1000;
 const NAME_COL = 108;
 const ROW_H = 44;
 
-type CellState = "logged" | "missed" | "due" | "scheduled" | "none";
+type CellState = "logged" | "partial" | "missed" | "due" | "scheduled" | "none";
 
 /*
   A missed dose is drawn in the same muted edge colour as an unfilled cell on
@@ -33,6 +34,12 @@ type CellState = "logged" | "missed" | "due" | "scheduled" | "none";
 */
 function StateMark({ state }: { state: CellState }) {
   if (state === "logged") return <MarkLogged size={16} color={colors.signalInk} />;
+  /*
+    Partly done: the due ring with a filled core. Same logic as the matrix —
+    an item due three times with two in is not the same event as one with
+    none, and it is not a finished day either.
+  */
+  if (state === "partial") return <MarkPartial size={16} color={colors.signalInk} />;
   if (state === "missed") return <MarkMissed size={16} color={colors.edge} />;
   if (state === "due") return <MarkDue size={16} color={colors.signalInk} />;
   if (state === "scheduled") return <MarkScheduled size={16} color={colors.ink3} />;
@@ -47,19 +54,27 @@ export function ScheduleScreen() {
   const dates = weekDates();
   const today = todayDow();
 
+  /*
+    Doses logged per item, per day of this week. Counts rather than a Set of
+    ids, so an item running more than once a day can be partly done.
+  */
   const loggedByDay = useMemo(() => {
     const start = mondayOfThisWeek().setHours(0, 0, 0, 0);
-    const days: Set<string>[] = Array.from({ length: 7 }, () => new Set<string>());
+    const days: Map<string, number>[] = Array.from({ length: 7 }, () => new Map<string, number>());
     (allLogs ?? []).forEach((log) => {
       const idx = Math.floor((new Date(log.takenAt).setHours(0, 0, 0, 0) - start) / DAY_MS);
-      if (idx >= 0 && idx < 7) days[idx].add(log.stackItemId);
+      if (idx < 0 || idx >= 7) return;
+      const day = days[idx];
+      day.set(log.stackItemId, (day.get(log.stackItemId) ?? 0) + 1);
     });
     return days;
   }, [allLogs]);
 
-  const stateFor = (itemId: string, scheduleDays: number[], day: number): CellState => {
-    if (!scheduleDays.includes(day)) return "none";
-    if (loggedByDay[day - 1].has(itemId)) return "logged";
+  const stateFor = (item: StackItem, day: number): CellState => {
+    if (!item.scheduleDays.includes(day)) return "none";
+    const tally = tallyDay(item, loggedByDay[day - 1].get(item.id) ?? 0);
+    if (tally.done >= tally.due) return "logged";
+    if (tally.done > 0) return "partial";
     if (day < today) return "missed";
     if (day === today) return "due";
     return "scheduled";
@@ -67,14 +82,28 @@ export function ScheduleScreen() {
 
   const rows = items ?? [];
 
+  /*
+    Both of these count DOSES, not items.
+
+    They used to add one per item per day, reading the cell state: a twice
+    daily peptide contributed one to the denominator and scored one for a
+    single dose. The header then printed "4/6 logged" for a week that owed
+    nine. Counting the slots directly is both correct and simpler than
+    inferring a number back out of a cell state.
+
+    The future is still excluded from the header's denominator — Thursday's
+    dose is not owed on Monday — which is why `owed` skips "scheduled" while
+    the per-day foot, which labels each column, does not.
+  */
   const totals = useMemo(() => {
     let logged = 0;
     let owed = 0;
     rows.forEach((item) => {
       for (let day = 1; day <= 7; day++) {
-        const s = stateFor(item.id, item.scheduleDays, day);
-        if (s === "logged") logged += 1;
-        if (s === "logged" || s === "missed" || s === "due") owed += 1;
+        if (!item.scheduleDays.includes(day)) continue;
+        const tally = tallyDay(item, loggedByDay[day - 1].get(item.id) ?? 0);
+        logged += tally.done;
+        if (day <= today) owed += tally.due;
       }
     });
     return { logged, owed };
@@ -87,10 +116,10 @@ export function ScheduleScreen() {
         let done = 0;
         let due = 0;
         rows.forEach((item) => {
-          const s = stateFor(item.id, item.scheduleDays, day);
-          if (s === "none") return;
-          due += 1;
-          if (s === "logged") done += 1;
+          if (!item.scheduleDays.includes(day)) return;
+          const tally = tallyDay(item, loggedByDay[day - 1].get(item.id) ?? 0);
+          due += tally.due;
+          done += tally.done;
         });
         return { done, due };
       }),
@@ -239,7 +268,7 @@ export function ScheduleScreen() {
                       backgroundColor: isToday ? colors.signalFaint : "transparent",
                     }}
                   >
-                    <StateMark state={stateFor(item.id, item.scheduleDays, day)} />
+                    <StateMark state={stateFor(item, day)} />
                   </View>
                 );
               })}

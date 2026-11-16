@@ -77,6 +77,30 @@ function cellsPath(
 }
 
 /*
+  A small filled square at the centre of each picked cell.
+
+  What a partly-finished day is drawn with. A half-filled cell would be the
+  obvious choice and is the wrong one: at 14px the fill boundary is two
+  pixels from the cell edge, so "half" and "full" are the same mark at arm's
+  length, and the fraction it implies (half) is a lie whenever the day is one
+  of three. A dot inside an outline says "started, not finished" without
+  claiming a proportion it does not know.
+*/
+function centresPath(lanes: Matrix["lanes"], picked: (s: CellState) => boolean, size: number): string {
+  let d = "";
+  const off = (CELL - size) / 2;
+  lanes.forEach((lane, row) => {
+    const y = row * (LANE_H + LANE_GAP) + off;
+    lane.cells.forEach((state, col) => {
+      if (!picked(state)) return;
+      const x = col * STEP + off;
+      d += `M${x} ${y}h${size}v${size}h${-size}Z`;
+    });
+  });
+  return d;
+}
+
+/*
   One swatch, drawn the same way the cell is drawn.
 
   A legend that approximates its graphic is worse than none, because the
@@ -99,6 +123,19 @@ function Swatch({ state }: { state: CellState }) {
         </>
       ) : state === "logged" ? (
         <Rect x={0} y={0} width={SW} height={SW} fill={colors.signalInk} />
+      ) : state === "partial" ? (
+        <>
+          <Rect
+            x={0.5}
+            y={0.5}
+            width={SW - 1}
+            height={SW - 1}
+            fill="none"
+            stroke={colors.signalInk}
+            strokeWidth={1}
+          />
+          <Rect x={3} y={3} width={SW - 6} height={SW - 6} fill={colors.signalInk} />
+        </>
       ) : (
         <Rect
           x={0.5}
@@ -159,6 +196,7 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
 
   const todayX = (cols - 1) * STEP;
   const hasMissed = lanes.some((lane) => lane.cells.includes("missed"));
+  const hasPartial = lanes.some((lane) => lane.cells.includes("partial"));
 
   return (
     <View style={{ gap: space.sm }}>
@@ -217,6 +255,20 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
             {/* Logged: solid. The only filled state. */}
             <Path d={cellsPath(lanes, (s) => s === "logged")} fill={colors.signalInk} />
 
+            {/*
+              Partly done: outlined in the signal colour, with a dot inside.
+              Deliberately closer to logged than to missed — some of the day
+              happened, and an item due three times with two in is not the
+              same event as one with none.
+            */}
+            <Path
+              d={cellsPath(lanes, (s) => s === "partial", 0.5)}
+              fill="none"
+              stroke={colors.signalInk}
+              strokeWidth={1}
+            />
+            <Path d={centresPath(lanes, (s) => s === "partial", 6)} fill={colors.signalInk} />
+
             {/* Due and not logged: an outline. The absence IS the reading. */}
             <Path
               d={cellsPath(lanes, (s) => s === "missed", 0.5)}
@@ -266,6 +318,9 @@ export function ProtocolMatrix({ matrix }: { matrix: Matrix }) {
       */}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md, rowGap: space.xs }}>
         <LegendItem state="logged" label="Logged" />
+        {/* Only shown when a partly-finished day is actually on screen —
+            a once-daily stack can never produce one. */}
+        {hasPartial && <LegendItem state="partial" label="Some logged" />}
         {hasMissed && <LegendItem state="missed" label="Not logged" />}
         {offDays > 0 && <LegendItem state="off" label="Off-cycle" />}
       </View>

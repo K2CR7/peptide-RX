@@ -22,6 +22,7 @@ an unresolved today is skipped: the run is whatever it was last night, and
 logging the dose is what pushes it over.
 */
 import { cycleState } from "./cycle";
+import { loggedCountsByDay, tallyDay } from "./doses";
 
 const DAY_MS = 24 * 3600 * 1000;
 const LOOKBACK_DAYS = 400;
@@ -65,6 +66,8 @@ interface ScheduledItem {
   startedAt: string;
   cycleOnDays: number | null;
   cycleOffDays: number | null;
+  /** Optional so a caller with an older cached row still type-checks. */
+  dosesPerDay?: number;
 }
 
 interface LoggedDose {
@@ -78,16 +81,12 @@ export function computeStreak(
   openedDays: string[],
   now: Date = new Date(),
 ): StreakSummary {
-  const loggedByDay = new Map<number, Set<string>>();
-  logs.forEach((log) => {
-    const key = startOfDay(new Date(log.takenAt));
-    let set = loggedByDay.get(key);
-    if (!set) {
-      set = new Set<string>();
-      loggedByDay.set(key, set);
-    }
-    set.add(log.stackItemId);
-  });
+  /*
+    Counts, not a Set of item ids. A day is kept when every DOSE the schedule
+    asked for was logged — under the old Set, one dose of a twice-daily item
+    kept the day, so a run could be built out of half-finished days.
+  */
+  const loggedByDay = loggedCountsByDay(logs);
 
   const opened = new Set(openedDays);
   const todayKey = startOfDay(now);
@@ -96,7 +95,7 @@ export function computeStreak(
   function evaluate(key: number): { kept: boolean; by: KeptBy | null } | null {
     const date = new Date(key);
     const dow = dayOfWeek(date);
-    const logged = loggedByDay.get(key) ?? new Set<string>();
+    const logged = loggedByDay.get(key);
 
     let due = 0;
     let done = 0;
@@ -107,8 +106,9 @@ export function computeStreak(
       // An off-phase day was never due, however the weekday schedule reads.
       const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays, date);
       if (cycle?.phase === "off") return;
-      due += 1;
-      if (logged.has(item.id)) done += 1;
+      const day = tallyDay(item, logged?.get(item.id) ?? 0);
+      due += day.due;
+      done += day.done;
     });
 
     if (due > 0) {

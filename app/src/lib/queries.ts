@@ -7,7 +7,10 @@ export interface StackItem {
   peptideName: string;
   dose: number;
   unit: string;
+  /** Free text for the reader. Never the source of truth for a computation. */
   frequency: string;
+  /** How many doses this item asks for on a day it is scheduled. */
+  dosesPerDay: number;
   scheduleDays: number[];
   route: string | null;
   startedAt: string;

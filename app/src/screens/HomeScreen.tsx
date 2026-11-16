@@ -2,12 +2,13 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TodayHero } from "../components/TodayHero";
-import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
+import { ChevronRight, GearIcon, MarkLogged, MarkPartial, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
 import { StreakHeader } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { SiteMap } from "../components/SiteMap";
+import { doseSlotsForDay, dosesPerDay } from "../lib/doses";
 import { ROUTE_SITES, type RouteKey, getNextSite, getRouteKey } from "../lib/injectionSites";
 import { doseParts, speakDose } from "../lib/dose";
 import {
@@ -98,18 +99,33 @@ export function HomeScreen() {
     [items, today, offIds],
   );
 
-  const loggedTodayIds = useMemo(() => {
-    const now = new Date();
-    const ids = new Set<string>();
-    (allLogs ?? []).forEach((log) => {
-      if (isSameDay(new Date(log.takenAt), now)) ids.add(log.stackItemId);
-    });
-    return ids;
-  }, [allLogs]);
+  /*
+    Today, one entry per expected DOSE.
 
-  const doneCount = dueToday.filter((i) => loggedTodayIds.has(i.id)).length;
-  const progress = dueToday.length > 0 ? doneCount / dueToday.length : 0;
-  const allDone = dueToday.length > 0 && doneCount === dueToday.length;
+    This was a Set of item ids and a count of items, which is why an item
+    running twice a day could not be logged twice: the first log put its id
+    in the set, the row went disabled, and the second dose had nowhere to go.
+    See lib/doses.ts.
+  */
+  const slots = useMemo(() => doseSlotsForDay(items ?? [], allLogs ?? []), [items, allLogs]);
+
+  const doneCount = slots.filter((s) => s.log !== null).length;
+  const allDone = slots.length > 0 && doneCount === slots.length;
+
+  /** Outstanding doses, in schedule order, for the list and the hero. */
+  const openSlots = useMemo(() => slots.filter((s) => s.log === null), [slots]);
+
+  /*
+    Doses logged today per item, so a row can say "1 of 2" rather than
+    flipping to done on the first one.
+  */
+  const doneByItem = useMemo(() => {
+    const counts = new Map<string, number>();
+    slots.forEach((s) => {
+      if (s.log) counts.set(s.item.id, (counts.get(s.item.id) ?? 0) + 1);
+    });
+    return counts;
+  }, [slots]);
 
   const dayCount = useMemo(() => {
     if (!items || items.length === 0) return 1;
@@ -196,7 +212,7 @@ export function HomeScreen() {
   // same numbers the user is looking at instead of re-deriving date math.
   const assistantContext = useMemo(() => {
     const lines: string[] = [
-      `Today: ${doneCount} of ${dueToday.length} due doses logged.`,
+      `Today: ${doneCount} of ${slots.length} due doses logged.`,
     ];
     if (adherence.pct !== null) {
       lines.push(
@@ -217,7 +233,7 @@ export function HomeScreen() {
       lines.push(`Next injection site in rotation: ${rotation.next.label}.`);
     }
     return lines.join("\n");
-  }, [doneCount, dueToday, adherence, cycles, restingToday, rotation]);
+  }, [doneCount, slots, adherence, cycles, restingToday, rotation]);
 
   const assistantSuggestions = useMemo(() => {
     const out: string[] = [];
@@ -300,8 +316,10 @@ export function HomeScreen() {
         <TourTarget id="today-ring">
           <TodayHero
             done={doneCount}
-            due={dueToday.length}
-            dueNames={dueToday.filter((i) => !loggedTodayIds.has(i.id)).map((i) => i.peptideName)}
+            due={slots.length}
+            /* Distinct names, because three outstanding doses of one peptide
+               is one thing to go and do, not three. */
+            dueNames={[...new Set(openSlots.map((s) => s.item.peptideName))]}
             restingToday={restingToday.length > 0}
           />
         </TourTarget>
@@ -338,15 +356,31 @@ export function HomeScreen() {
           <ErrorText>{logError}</ErrorText>
 
           <View style={{ gap: space.sm }}>
+            {/*
+              One row per item, not per dose.
+
+              An item due three times a day would otherwise draw three
+              identical rows, which reads as three different things to do.
+              The row carries its own progress instead and stays tappable
+              until the last dose is in.
+            */}
             {dueToday.map((item) => {
-              const done = loggedTodayIds.has(item.id);
+              const want = dosesPerDay(item);
+              const got = doneByItem.get(item.id) ?? 0;
+              const done = got >= want;
               return (
                 <Pressable
                   key={item.id}
                   onPress={() => !done && setInjectFor({ id: item.id, route: item.route })}
                   disabled={done}
                   accessibilityRole="button"
-                  accessibilityLabel={done ? `${item.peptideName} logged` : `Log ${item.peptideName}`}
+                  accessibilityLabel={
+                    done
+                      ? `${item.peptideName} logged`
+                      : want > 1
+                        ? `Log ${item.peptideName}, ${got} of ${want} doses logged`
+                        : `Log ${item.peptideName}`
+                  }
                   style={({ pressed }) => [
                     panel,
                     {
@@ -366,6 +400,10 @@ export function HomeScreen() {
                 >
                   {done ? (
                     <MarkLogged size={24} color={colors.signalInk} />
+                  ) : got > 0 ? (
+                    /* Started, not finished. Same mark the week grid and the
+                       matrix use for a partly-logged day. */
+                    <MarkPartial size={24} color={colors.signalInk} />
                   ) : (
                     <View
                       style={{
@@ -380,7 +418,13 @@ export function HomeScreen() {
 
                   <View style={{ flex: 1 }}>
                     <Text style={type.headingSm}>{item.peptideName}</Text>
-                    <Text style={[type.meta, { marginTop: 1 }]}>{item.frequency}</Text>
+                    <Text style={[type.meta, { marginTop: 1 }]}>
+                      {/* The free-text frequency is what the user wrote and
+                          stays the subtitle; the count is what the app
+                          actually tracked, so it is appended rather than
+                          replacing it. */}
+                      {want > 1 ? `${item.frequency} · ${got} of ${want}` : item.frequency}
+                    </Text>
                   </View>
 
                   <Text

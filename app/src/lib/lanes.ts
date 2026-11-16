@@ -29,6 +29,7 @@ tell them apart will accuse its user of 57 missed doses it has no evidence
 for. Nothing before the first log is drawn at all.
 */
 import { cycleState } from "./cycle";
+import { loggedCountsByDay, tallyDay } from "./doses";
 
 const DAY_MS = 24 * 3600 * 1000;
 
@@ -42,6 +43,8 @@ function dayOfWeek(d: Date): number {
 }
 
 export type CellState =
+  /** Due more than once, and some but not all of them logged. */
+  | "partial"
   /** Due, and logged. */
   | "logged"
   /** Due, not logged, and the day is over. */
@@ -79,6 +82,8 @@ interface ScheduledItem {
   startedAt: string;
   cycleOnDays: number | null;
   cycleOffDays: number | null;
+  /** Optional so a caller with an older cached row still type-checks. */
+  dosesPerDay?: number;
 }
 
 interface LoggedDose {
@@ -92,16 +97,7 @@ export function buildMatrix(
   windowDays = 28,
   now: Date = new Date(),
 ): Matrix {
-  const loggedByDay = new Map<number, Set<string>>();
-  logs.forEach((log) => {
-    const key = startOfDay(new Date(log.takenAt));
-    let set = loggedByDay.get(key);
-    if (!set) {
-      set = new Set<string>();
-      loggedByDay.set(key, set);
-    }
-    set.add(log.stackItemId);
-  });
+  const loggedByDay = loggedCountsByDay(logs);
 
   const todayKey = startOfDay(now);
 
@@ -141,24 +137,33 @@ export function buildMatrix(
 
       if (!item.scheduleDays.includes(dayOfWeek(date))) return "none";
 
-      if (loggedByDay.get(key)?.has(item.id)) {
-        due += 1;
-        logged += 1;
-        return "logged";
+      /*
+        Counted in doses now, so a twice-daily item contributes two to the
+        denominator and a day with one of them logged is PARTIAL rather than
+        logged. Under the old boolean it scored the same as a finished day,
+        which made the grid's caption overstate the record.
+      */
+      const day = tallyDay(item, loggedByDay.get(key)?.get(item.id) ?? 0);
+
+      if (day.done > 0) {
+        due += day.due;
+        logged += day.done;
+        return day.done >= day.due ? "logged" : "partial";
       }
 
-      // Today's dose has not failed; the day isn't over.
+      // Today's doses have not failed; the day isn't over.
       if (key === todayKey) {
-        due += 1;
+        due += day.due;
         return "pending";
       }
 
       // Before the first log there is no record, so there is nothing to say.
       // Not a miss, and not counted in the denominator either — a ratio built
-      // on days the app wasn't watching is not a ratio of anything.
+      // on days the app wasn't watching is not a ratio of anything. The
+      // increment stays below this guard for that reason.
       if (recordFrom === null || key < recordFrom) return "none";
 
-      due += 1;
+      due += day.due;
       return "missed";
     });
 
