@@ -191,7 +191,7 @@ export function DustField() {
         top: -TILE * 2,
         width: width + TILE * 2,
         height: height + TILE * 4,
-        opacity: 0.85,
+        opacity: 0.62,
         transform: [
           { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, TILE] }) },
           { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -TILE * 2] }) },
@@ -316,11 +316,17 @@ export function GrainOrb() {
         />
       </Animated.View>
 
-      {/* The floor the moving particles sit on, not the effect itself. */}
+      {/*
+        A floor under the moving particles, and only that.
+
+        It was at 0.38, which made the still layer compete with the moving
+        one instead of supporting it. Held down to 0.16 it does what it is
+        for: stops the field reading as flat colour between specks.
+      */}
       <Image
         source={GRAIN}
         resizeMode="repeat"
-        style={{ position: "absolute", width: ORB, height: ORB, opacity: 0.38 }}
+        style={{ position: "absolute", width: ORB, height: ORB, opacity: 0.16 }}
       />
 
       <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
@@ -389,13 +395,16 @@ export function GrainWash() {
         <Rect width={width} height={height} fill="url(#washFade)" />
       </Svg>
 
-      <Image
-        source={GRAIN}
-        resizeMode="repeat"
-        style={{ position: "absolute", width, height, opacity: 0.42 }}
-      />
+      {/*
+        The flow's only texture, and it moves.
 
-      {/* Slower and sparser than the orb's: this is a page, not a subject. */}
+        There was a static noise tile over the whole screen at 0.42 here.
+        That was what anyone actually saw: a still photograph of grain,
+        with a few particles drifting somewhere behind it. No amount of
+        work on the moving layer shows through a still one laid on top at
+        that strength, so the still one is gone and the dust is denser to
+        take its place.
+      */}
       <DustField />
     </View>
   );
