@@ -247,9 +247,9 @@ export function CheckinHero({
               paddingHorizontal: 24,
               paddingVertical: 13,
               borderRadius: 999,
-              backgroundColor: "rgba(10,38,41,0.34)",
+              backgroundColor: "rgba(10,38,41,0.46)",
               borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.28)",
+              borderColor: "rgba(255,255,255,0.22)",
               /* Goes with the particles rather than sitting there as they leave. */
               opacity: burst.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }),
             }}

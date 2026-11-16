@@ -86,12 +86,18 @@ const DUST = [
 const DUST_TILE = require("../../assets/checkin-dust-tile.png");
 const TILE = 256;
 
-/* Turn rates, in ms per revolution. Alternating sign, and none of them a
-   multiple of another, so the layers never line back up. */
+/*
+  Turn rates in ms per revolution, alternating sign, none of them a
+  multiple of another so the layers never line back up.
+
+  Three plates of the same material at falling opacity, rather than three
+  equal ones: stacked at full strength they sum to a haze. The one in
+  front carries the dust you read, the two behind it carry the movement.
+*/
 const DRIFT = [
-  { ms: 23000, dir: 1, burst: 1.95 },
-  { ms: 31000, dir: -1, burst: 2.35 },
-  { ms: 41000, dir: 1, burst: 1.65 },
+  { ms: 23000, dir: 1, burst: 1.95, op: 0.78 },
+  { ms: 31000, dir: -1, burst: 2.35, op: 0.6 },
+  { ms: 41000, dir: 1, burst: 1.65, op: 0.42 },
 ];
 
 /*
@@ -149,6 +155,7 @@ export function Dust({
           ms={layer.ms}
           dir={layer.dir}
           to={layer.burst}
+          op={layer.op}
           burst={burst}
         />
       ))}
@@ -200,6 +207,7 @@ function DustLayer({
   ms,
   dir,
   to,
+  op,
   burst,
 }: {
   source: number;
@@ -207,6 +215,7 @@ function DustLayer({
   ms: number;
   dir: number;
   to: number;
+  op: number;
   burst?: Animated.Value;
 }) {
   const spin = useLoop(ms);
@@ -237,6 +246,7 @@ function DustLayer({
           position: "absolute",
           width: size,
           height: size,
+          opacity: op,
           transform: [{ rotate: spinTo(spin, 360 * dir) }],
         }}
       />
