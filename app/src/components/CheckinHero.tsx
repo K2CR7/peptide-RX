@@ -57,7 +57,7 @@ const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
   ends of the letters room to land on cloud rather than on page.
 */
 const WORD_RATIO = 560 / 195;
-const WORD_W = Math.round(ORB * 0.62);
+const WORD_W = Math.round(ORB * 0.46);
 
 /*
   The orb lives in grain.tsx now, next to the backdrop the check-in flow
