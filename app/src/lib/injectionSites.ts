@@ -31,14 +31,24 @@ export interface InjectionSite {
    * flips between views: facing the front view, the user's left is on the
    * viewer's right; on the back view it is on the viewer's left.
    *
-   * Every number here was measured off the figure in BodyFigure.tsx against
-   * a 10-unit grid. They are not transferable: the previous set came from a
-   * figure with different proportions and landed the deltoids on the chest
-   * and the thigh sites on the knees. If the figure is ever redrawn, these
-   * have to be read off it again rather than scaled.
+   * Every number here was re-measured against the figure now in
+   * BodyFigure.tsx, by scanning its outline for the body's real edges at
+   * each height rather than by eye: a scanline across the chart meets the
+   * arm, the torso and the other arm, so grouping the crossings gives the
+   * torso's actual width at that height and a site can be placed as a
+   * fraction of a measurement.
    *
-   * Landmarks on the current figure: navel (100, 140), crotch y 194, knee
-   * y 245, acromion y 68, gluteal fold y 186.
+   * They are not transferable. The set before this one came off a figure
+   * with different proportions, and when the art was replaced every site
+   * moved — the deltoids by 4 units, the abdominal zones by 6, the glutes
+   * by 3. A marker inherited from one drawing and placed on another points
+   * at the wrong part of a human being, so a redraw means measuring again,
+   * never scaling.
+   *
+   * Measured landmarks on the current figure: head y 4..50, nose y 33,
+   * mouth y 42, armpit y 110, navel (100, 146), crotch y 189, knee y 250,
+   * feet y 352. Torso half-width runs 24 at the upper abdomen to 32 at the
+   * hip.
    */
   x: number;
   y: number;
@@ -55,33 +65,33 @@ const rotating = (sites: Omit<InjectionSite, "kind">[]): InjectionSite[] =>
   sites.map((s) => ({ ...s, kind: "rotating" }));
 
 const ABDOMEN: InjectionSite[] = rotating([
-  { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone", view: "front", x: 112, y: 130 },
-  { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone", view: "front", x: 88, y: 130 },
-  { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone", view: "front", x: 112, y: 155 },
-  { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone", view: "front", x: 88, y: 155 },
+  { id: "abd-ul", label: "Upper Left Abdomen", short: "Abd UL", desc: "2 inches left of navel, upper zone", view: "front", x: 112, y: 136 },
+  { id: "abd-ur", label: "Upper Right Abdomen", short: "Abd UR", desc: "2 inches right of navel, upper zone", view: "front", x: 88, y: 136 },
+  { id: "abd-ll", label: "Lower Left Abdomen", short: "Abd LL", desc: "2 inches left of navel, lower zone", view: "front", x: 112, y: 160 },
+  { id: "abd-lr", label: "Lower Right Abdomen", short: "Abd LR", desc: "2 inches right of navel, lower zone", view: "front", x: 88, y: 160 },
 ]);
 
 const THIGHS: InjectionSite[] = rotating([
-  { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh", view: "front", x: 120, y: 218 },
-  { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh", view: "front", x: 80, y: 218 },
+  { id: "thigh-l", label: "Left Outer Thigh", short: "Thigh L", desc: "Outer middle of left thigh", view: "front", x: 122, y: 220 },
+  { id: "thigh-r", label: "Right Outer Thigh", short: "Thigh R", desc: "Outer middle of right thigh", view: "front", x: 78, y: 220 },
 ]);
 
 const FLANKS: InjectionSite[] = rotating([
-  { id: "flank-l", label: "Left Flank", short: "Flank L", desc: "Left love handle / lateral hip", view: "front", x: 124, y: 168 },
-  { id: "flank-r", label: "Right Flank", short: "Flank R", desc: "Right love handle / lateral hip", view: "front", x: 76, y: 168 },
+  { id: "flank-l", label: "Left Flank", short: "Flank L", desc: "Left love handle / lateral hip", view: "front", x: 126, y: 172 },
+  { id: "flank-r", label: "Right Flank", short: "Flank R", desc: "Right love handle / lateral hip", view: "front", x: 74, y: 172 },
 ]);
 
 const GLUTES_AND_LATS: InjectionSite[] = rotating([
-  { id: "glute-l", label: "Left Glute", short: "Glute L", desc: "Upper outer quadrant of left buttock", view: "back", x: 77, y: 157 },
-  { id: "glute-r", label: "Right Glute", short: "Glute R", desc: "Upper outer quadrant of right buttock", view: "back", x: 123, y: 157 },
-  { id: "lat-l", label: "Left Lateral Thigh", short: "Lat L", desc: "Outer middle of left thigh, relaxed", view: "front", x: 123, y: 222 },
-  { id: "lat-r", label: "Right Lateral Thigh", short: "Lat R", desc: "Outer middle of right thigh, relaxed", view: "front", x: 77, y: 222 },
+  { id: "glute-l", label: "Left Glute", short: "Glute L", desc: "Upper outer quadrant of left buttock", view: "back", x: 79, y: 160 },
+  { id: "glute-r", label: "Right Glute", short: "Glute R", desc: "Upper outer quadrant of right buttock", view: "back", x: 121, y: 160 },
+  { id: "lat-l", label: "Left Lateral Thigh", short: "Lat L", desc: "Outer middle of left thigh, relaxed", view: "front", x: 124, y: 218 },
+  { id: "lat-r", label: "Right Lateral Thigh", short: "Lat R", desc: "Outer middle of right thigh, relaxed", view: "front", x: 76, y: 218 },
 ]);
 
 const DELTOIDS = (desc: string): InjectionSite[] =>
   rotating([
-    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc, view: "front", x: 134, y: 84 },
-    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc, view: "front", x: 66, y: 84 },
+    { id: "delt-l", label: "Left Deltoid", short: "Delt L", desc, view: "front", x: 138, y: 86 },
+    { id: "delt-r", label: "Right Deltoid", short: "Delt R", desc, view: "front", x: 62, y: 86 },
   ]);
 
 /*
@@ -111,7 +121,7 @@ const NOSE: InjectionSite = {
   kind: "fixed",
   view: "front",
   x: 100,
-  y: 31,
+  y: 33,
 };
 
 const MOUTH: InjectionSite = {
@@ -122,7 +132,7 @@ const MOUTH: InjectionSite = {
   kind: "fixed",
   view: "front",
   x: 100,
-  y: 39,
+  y: 42,
 };
 
 export const ROUTE_SITES: Record<RouteKey, InjectionSite[]> = {

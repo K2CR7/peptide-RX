@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>scan</title>
+<body style="font:12px ui-monospace,monospace;background:#fff">
+<div id="out">scanning…</div>
+<div id="host" style="position:absolute;left:-9999px"></div>
+<script>
+/*
+  Scanlines across the body outline, in the 200x360 space the site
+  coordinates live in.
+
+  The outline is one path that includes the arms and the legs, so the x
+  extent at a given height is not the torso. Sampling the path densely and
+  grouping the crossings at each height separates them: at abdomen height a
+  scanline meets six edges -- left arm, torso, right arm -- and the torso is
+  the middle pair. Printing the runs lets each site be placed as a fraction
+  of a real measurement instead of by eye.
+*/
+const S = 348 / 830.7;
+const TY = 4 - 20 * S;
+const TX = { front: 100 - 364 * S, back: 100 - 804 * S };
+
+const ROWS = [
+  28, 31, 34, 37, 40, 44, 48, 52,          // head and face
+  60, 64, 68, 72, 76, 80, 84, 88, 92, 96,  // shoulder and upper arm
+  110, 120, 130, 140, 150, 160, 170, 180,  // torso
+  190, 200, 210, 220, 230, 240, 250,       // hips and thigh
+];
+
+fetch("gen1.svg").then(r => r.text()).then(t => {
+  document.getElementById("host").innerHTML = t;
+  const svg = document.querySelector("#host svg");
+  const out = [];
+
+  ["front", "back"].forEach(view => {
+    const path = svg.querySelector("#" + view + " path");
+    const len = path.getTotalLength();
+    const N = 6000;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const p = path.getPointAtLength((i / N) * len);
+      pts.push([p.x * S + TX[view], p.y * S + TY]);
+    }
+    const bands = new Map();
+    pts.forEach(([x, y]) => {
+      const k = Math.round(y);
+      if (!bands.has(k)) bands.set(k, []);
+      bands.get(k).push(x);
+    });
+
+    out.push("=== " + view + " ===");
+    ROWS.forEach(y => {
+      // gather a +/-0.5 band so a row is never empty
+      let xs = [];
+      [y - 1, y, y + 1].forEach(k => { if (bands.has(k)) xs = xs.concat(bands.get(k)); });
+      if (!xs.length) { out.push("y=" + y + "  (no edge)"); return; }
+      xs.sort((a, b) => a - b);
+      // collapse points closer than 2 units into one edge
+      const edges = [];
+      let run = [xs[0]];
+      for (let i = 1; i < xs.length; i++) {
+        if (xs[i] - run[run.length - 1] < 2.5) run.push(xs[i]);
+        else { edges.push(run); run = [xs[i]]; }
+      }
+      edges.push(run);
+      const mids = edges.map(r => +((r[0] + r[r.length - 1]) / 2).toFixed(1));
+      out.push("y=" + String(y).padStart(3) + "  edges: " + mids.join("  "));
+    });
+  });
+
+  document.getElementById("out").innerHTML = "<pre>" + out.join("\n") + "</pre>";
+});
+</script>
