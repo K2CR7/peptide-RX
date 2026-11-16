@@ -48,6 +48,8 @@ import { colors } from "../theme";
 
 export const FIELD = require("../../assets/checkin-field.png");
 export const GRAIN = require("../../assets/checkin-grain.png");
+/* The noise tile is 128px square; the drift covers exactly one per lap. */
+const GRAIN_TILE = 128;
 
 export const ORB = 236;
 
@@ -270,12 +272,23 @@ function DustLayer({
   screen in a medical record at all.
 */
 export function GrainOrb() {
-  const spinA = useLoop(26000);
-  const spinB = useLoop(37000);
+  const spin = useLoop(62000);
   const breathe = useLoop(11000, Easing.inOut(Easing.sin));
+  const drift = useLoop(26000);
 
   return (
     <>
+      {/*
+        ONE image, turning.
+
+        There were two counter-rotating copies of the field here, the
+        second at 0.55, from back when the field was a smooth colour wash
+        and one copy turning was invisible. The field is grainy now, so a
+        single slow turn is plainly visible: every speck at radius r
+        travels a circle of radius r, which is the particle movement the
+        whole thing was for. Two grainy copies crossing each other just
+        averaged back into a smooth one.
+      */}
       <Animated.View
         style={{
           position: "absolute",
@@ -283,13 +296,10 @@ export function GrainOrb() {
           height: ORB,
           transform: [
             {
-              /*
-                0 -> 1 -> 0 across the loop, so the swell comes back on
-                itself without the jump a sawtooth would give at the seam.
-              */
+              /* 0 -> 1 -> 0, so the swell returns without a seam. */
               scale: breathe.interpolate({
                 inputRange: [0, 0.5, 1],
-                outputRange: [OVERFILL, OVERFILL + 0.15, OVERFILL],
+                outputRange: [OVERFILL, OVERFILL + 0.12, OVERFILL],
               }),
             },
           ],
@@ -301,37 +311,43 @@ export function GrainOrb() {
             position: "absolute",
             width: ORB,
             height: ORB,
-            transform: [{ rotate: spinTo(spinA, 360) }],
-          }}
-        />
-        <Animated.Image
-          source={FIELD}
-          style={{
-            position: "absolute",
-            width: ORB,
-            height: ORB,
-            opacity: 0.55,
-            transform: [{ rotate: spinTo(spinB, -360) }],
+            transform: [{ rotate: spinTo(spin, 360) }],
           }}
         />
       </Animated.View>
 
       {/*
-        A floor under the moving particles, and only that.
+        A second speckle, drifting across the first.
 
-        It was at 0.38, which made the still layer compete with the moving
-        one instead of supporting it. Held down to 0.16 it does what it is
-        for: stops the field reading as flat colour between specks.
+        The baked grain turns with the image, so near the middle it barely
+        moves: a circle of radius zero is a point. This slides the whole
+        way across instead, which gives the centre something to do, and
+        running it against the rotation keeps the two from ever agreeing.
+
+        Pure per-pixel noise tiles seamlessly on its own -- there is no
+        structure in it to line up -- so the drift only has to cover one
+        tile per lap for the wrap to be invisible.
       */}
-      <Image
+      <Animated.Image
         source={GRAIN}
         resizeMode="repeat"
-        style={{ position: "absolute", width: ORB, height: ORB, opacity: 0.16 }}
+        style={{
+          position: "absolute",
+          width: ORB,
+          height: ORB,
+          opacity: 0.3,
+          transform: [
+            { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, GRAIN_TILE] }) },
+            { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -GRAIN_TILE] }) },
+          ],
+        }}
       />
 
       <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
         <Defs>
           <RadialGradient id="orbFeather" cx="50%" cy="50%" r="50%">
+            {/* These stops are mirrored in mkorb.js, which fades the burst
+                particles on the same curve. Change both or neither. */}
             <Stop offset="0.66" stopColor={colors.bg} stopOpacity={0} />
             <Stop offset="0.87" stopColor={colors.bg} stopOpacity={0.5} />
             <Stop offset="1" stopColor={colors.bg} stopOpacity={1} />
@@ -348,21 +364,6 @@ export function GrainOrb() {
   );
 }
 
-/* -------------------------------------------------------------- backdrop */
-
-/*
-  The backdrop the check-in flow sits on.
-
-  The flow is what the orb opens, so it should look like the inside of the
-  orb rather than a plain sheet that happened to appear: the same colour
-  field turning above the top edge, the same noise tile, and the same
-  particles still drifting, as though the ones that scattered off the orb
-  carried on into here.
-
-  The colour is held to a tint, and the reason is contrast rather than
-  taste: the title is 32pt of near-black over this and the chips below it
-  carry real state, so none of it may end up sitting on a patch of gold.
-*/
 export function GrainWash() {
   const { width, height } = useWindowDimensions();
   const spin = useLoop(44000);
