@@ -1,18 +1,24 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TodayHero } from "../components/TodayHero";
+import { BodyToday, type PendingDose } from "../components/BodyToday";
 import { ChevronRight, GearIcon, MarkLogged, MarkPartial, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
 import { StreakHeader } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
-import { SiteMap } from "../components/SiteMap";
 import { doseSlotsForDay, dosesPerDay } from "../lib/doses";
-import { ROUTE_SITES, type RouteKey, getNextSite, getRouteKey } from "../lib/injectionSites";
-import { doseParts, speakDose } from "../lib/dose";
 import {
-  type InjectionLog,
+  type InjectionSite,
+  ROUTE_SITES,
+  daysSinceBySite,
+  fixedSiteFor,
+  getNextSite,
+  getRouteKey,
+  rotationHistory,
+} from "../lib/injectionSites";
+import { doseParts } from "../lib/dose";
+import {
   type StackItem,
   useAppOpens,
   useInjectionLogs,
@@ -30,35 +36,6 @@ import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-/*
-  The sites used lately, oldest first, across EVERY peptide.
-
-  This was filtered to one stack item, which gave two injectable peptides two
-  independent rotations: each one walked its own cycle, neither could see the
-  other, and nothing stopped both of them being recommended the same site on
-  the same day. That is the exact thing rotation exists to prevent, and it is
-  worse than no recommendation, because the app was the thing asserting the
-  spot was free. A site is a property of the body; tissue does not care which
-  vial the dose came from.
-
-  Filtered to the ids this route can actually use, which is not cosmetic:
-  getNextSite reads a window the length of the site list and returns the
-  first site missing from it. An id from another route's set can never match
-  a site in this one, so leaving it in spends a slot in that window while
-  excluding nothing, and pushes a real entry out the back of it. A glute from
-  Monday's IM dose would quietly make Monday's abdominal site look free.
-
-  Oral and nasal doses pin nothing and store a null site, so they drop out
-  here without needing to be excluded by route.
-*/
-function rotationHistory(logs: InjectionLog[], routeKey: RouteKey): string[] {
-  const usable = new Set(ROUTE_SITES[routeKey].map((s) => s.id));
-  return [...logs]
-    .sort((a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime())
-    .map((log) => log.site)
-    .filter((site): site is string => site !== null && usable.has(site));
 }
 
 export function HomeScreen() {
@@ -110,7 +87,6 @@ export function HomeScreen() {
   const slots = useMemo(() => doseSlotsForDay(items ?? [], allLogs ?? []), [items, allLogs]);
 
   const doneCount = slots.filter((s) => s.log !== null).length;
-  const allDone = slots.length > 0 && doneCount === slots.length;
 
   /** Outstanding doses, in schedule order, for the list and the hero. */
   const openSlots = useMemo(() => slots.filter((s) => s.log === null), [slots]);
@@ -134,64 +110,101 @@ export function HomeScreen() {
   }, [items]);
 
   /*
-    Rotation is the product's core differentiator, so the readout carries it:
-    where this week's injections landed on the body, and which site is next.
+    The figure, which is now the screen rather than a panel at the bottom of
+    it: which sites exist, what went where today, and how long each spot has
+    been resting.
 
-    The window is Monday to now, which is the same week the Week tab draws.
-    A rolling seven days would be defensible and is worse here, because it
-    puts a boundary in the middle of the grid the user just looked at: a dose
-    could be inside this panel's window and outside that one's.
-
-    The site LIST comes from the first injectable item's route rather than
-    from the union of every route in the stack. A stack running one SubQ and
+    ONE ROTATING ROUTE, PLUS EVERY FIXED SITE. A stack running one SubQ and
     one IM peptide genuinely has two rotations over two different site sets,
     and overlaying them would draw abdominal sites and glutes on one figure
-    as though they were one cycle. One route, drawn correctly, beats two
-    merged into a diagram that is true of neither.
-  */
-  const rotation = useMemo(() => {
-    const injectable = (items ?? []).filter((i) => {
-      const key = getRouteKey(i.route);
-      return key !== "Oral" && key !== "Nasal spray";
-    });
-    if (injectable.length === 0) return null;
+    as though they were one cycle — so the rotating set still comes from a
+    single route, the first in the stack.
 
-    const routeKey = getRouteKey(injectable[0].route);
-    const sites = ROUTE_SITES[routeKey];
+    Fixed sites are a different case and are always added. The mouth and the
+    nose take part in no rotation, so putting them on a SubQ figure cannot
+    corrupt one, and leaving them off is what used to make an oral peptide
+    vanish from its own body diagram.
+  */
+  const body = useMemo(() => {
+    const routeKeys = (items ?? []).map((i) => getRouteKey(i.route));
+    if (routeKeys.length === 0) return null;
+
+    const rotatingKey = routeKeys.find((k) => fixedSiteFor(k) === null) ?? null;
+    const rotatingSites = rotatingKey ? ROUTE_SITES[rotatingKey] : [];
+
+    const fixed = [...new Set(routeKeys)]
+      .map((k) => fixedSiteFor(k))
+      .filter((s): s is InjectionSite => s !== null);
+
+    const sites = [...rotatingSites, ...fixed];
     if (sites.length === 0) return null;
 
     /*
-      Every dose that pinned a site, not just this route's peptides. The
-      picker is handed the same history for the same reason — see
-      rotationHistory above, and note that the two MUST agree: the figure
-      here announces where the rotation goes next, and tapping Log has to
-      open on that site rather than on a second opinion.
+      Every dose that pinned a site, not just this route's peptides — see
+      rotationHistory in lib/injectionSites.ts. The picker is handed the same
+      history, and the two MUST agree: the figure announces where the
+      rotation goes next, and opening the list has to land on that same site
+      rather than on a second opinion.
     */
-    const next = getNextSite(routeKey, rotationHistory(allLogs ?? [], routeKey));
+    const next = rotatingKey
+      ? getNextSite(rotatingKey, rotationHistory(allLogs ?? [], rotatingKey))
+      : null;
 
     /*
-      Today only. The figure used to carry the week, which is the better
-      rotation picture and is also what the Week tab is for; on this screen
-      the question is what happened today.
+      Today only. The figure could carry the week, which is the better
+      rotation picture in the abstract and is also exactly what the Week tab
+      draws; on this screen the question is what happened today.
 
-      Counted against the sites this figure actually draws, for the same
-      reason the history is filtered: a dose into a glute while the map is
-      showing a SubQ route has nowhere to be drawn, and "3 today" printed
-      over two marks is a header calling its own diagram a liar.
+      Counted against the sites this figure actually draws: a dose into a
+      glute while the map shows a SubQ route has nowhere to be drawn, and a
+      count printed over marks that do not include it is a header calling its
+      own diagram a liar.
     */
     const drawable = new Set(sites.map((s) => s.id));
     const now = new Date();
     const usedToday: Record<string, number> = {};
-    let count = 0;
     (allLogs ?? []).forEach((log) => {
       if (!log.site || !drawable.has(log.site)) return;
       if (!isSameDay(new Date(log.takenAt), now)) return;
       usedToday[log.site] = (usedToday[log.site] ?? 0) + 1;
-      count += 1;
     });
 
-    return { sites, next, usedToday, count };
+    return { sites, next, usedToday, daysSince: daysSinceBySite(allLogs ?? []) };
   }, [items, allLogs]);
+
+  /*
+    Outstanding doses, one entry per item, for the buttons in the figure's
+    confirm bar. Deduped because three outstanding doses of one peptide is
+    one button, not three — the bar logs one dose per press and the count
+    line above it is what says how many are left.
+  */
+  const pending = useMemo(() => {
+    const seen = new Set<string>();
+    const out: PendingDose[] = [];
+    openSlots.forEach((s) => {
+      if (seen.has(s.item.id)) return;
+      seen.add(s.item.id);
+      out.push({
+        stackItemId: s.item.id,
+        name: s.item.peptideName,
+        routeKey: getRouteKey(s.item.route),
+      });
+    });
+    return out;
+  }, [openSlots]);
+
+  /*
+    One writer for both paths into the log, so the body figure and the picker
+    cannot drift on error handling. A failure used to be invisible on the
+    picker path: the sheet closed either way and the row just never flipped.
+  */
+  function logDose(stackItemId: string, site: string | null) {
+    setLogError(null);
+    logInjection.mutate(
+      { stackItemId, site },
+      { onError: () => setLogError("Couldn't log that dose. Check your connection and try again.") },
+    );
+  }
 
   // Opening the app is what a rest day is counted from, so this fires on
   // mount and seeds the streak.
@@ -229,20 +242,20 @@ export function HomeScreen() {
         `Resting today (off cycle): ${restingToday.map((i) => i.peptideName).join(", ")}.`,
       );
     }
-    if (rotation?.next) {
-      lines.push(`Next injection site in rotation: ${rotation.next.label}.`);
+    if (body?.next) {
+      lines.push(`Next injection site in rotation: ${body.next.label}.`);
     }
     return lines.join("\n");
-  }, [doneCount, slots, adherence, cycles, restingToday, rotation]);
+  }, [doneCount, slots, adherence, cycles, restingToday, body]);
 
   const assistantSuggestions = useMemo(() => {
     const out: string[] = [];
     if (adherence.pct !== null) out.push(`Why is my adherence ${adherence.pct}%?`);
     if (cycles.length > 0) out.push(`When does my ${cycles[0].item.peptideName} cycle end?`);
-    if (rotation?.next) out.push("Which site should I use next, and why that one?");
+    if (body?.next) out.push("Which site should I use next, and why that one?");
     out.push("What does the rest of my week look like?");
     return out;
-  }, [adherence, cycles, rotation]);
+  }, [adherence, cycles, body]);
 
   const dateStamp = new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
@@ -313,16 +326,33 @@ export function HomeScreen() {
           </View>
         </View>
 
-        <TourTarget id="today-ring">
-          <TodayHero
-            done={doneCount}
-            due={slots.length}
-            /* Distinct names, because three outstanding doses of one peptide
-               is one thing to go and do, not three. */
-            dueNames={[...new Set(openSlots.map((s) => s.item.peptideName))]}
-            restingToday={restingToday.length > 0}
-          />
-        </TourTarget>
+        {body && (
+          <TourTarget id="today-ring">
+            <Panel pad={space.lg}>
+              <BodyToday
+                sites={body.sites}
+                usedToday={body.usedToday}
+                daysSince={body.daysSince}
+                next={body.next}
+                done={doneCount}
+                due={slots.length}
+                pending={pending}
+                onLog={logDose}
+                /* The accessibility path out of the diagram, and the way to
+                   override the recommendation. It opens on the first
+                   outstanding dose; the rows below are how you reach a
+                   specific one. */
+                onOpenList={() =>
+                  pending.length > 0 &&
+                  setInjectFor({
+                    id: pending[0].stackItemId,
+                    route: items?.find((i) => i.id === pending[0].stackItemId)?.route ?? null,
+                  })
+                }
+              />
+            </Panel>
+          </TourTarget>
+        )}
 
         {/*
           The three-week matrix used to sit here, between the ring and the
@@ -540,11 +570,6 @@ export function HomeScreen() {
           </View>
         )}
 
-        {rotation && (
-          <Panel pad={space.lg}>
-            <SiteMap sites={rotation.sites} usedToday={rotation.usedToday} count={rotation.count} />
-          </Panel>
-        )}
       </ScrollView>
 
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
@@ -563,15 +588,11 @@ export function HomeScreen() {
           history={rotationHistory(allLogs ?? [], getRouteKey(injectFor.route))}
           onClose={() => setInjectFor(null)}
           onConfirm={(site) => {
-            // site is null for oral and nasal routes — there is nowhere to pin,
-            // but the dose still happened, so it still gets logged.
-            // A failure used to be invisible: the sheet closed either way and
-            // the row just never flipped to Logged.
-            setLogError(null);
-            logInjection.mutate(
-              { stackItemId: injectFor.id, site },
-              { onError: () => setLogError("Couldn't log that dose. Check your connection and try again.") },
-            );
+            // An oral or nasal route returns its FIXED site id rather than
+            // null now, so the dose lands on the body diagram at the mouth
+            // or the nose instead of being recorded nowhere. null is still
+            // possible for a route with no site at all.
+            logDose(injectFor.id, site);
             setInjectFor(null);
           }}
         />

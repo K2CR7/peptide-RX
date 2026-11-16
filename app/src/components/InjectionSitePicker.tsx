@@ -7,7 +7,7 @@ import {
   StepPill, StepPress, StepSwab, StepTimer, StepWash,
 } from "./icons";
 import {
-  type BodyView, getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark,
+  type BodyView, fixedSiteFor, getNextSite, getRouteKey, INJECT_STEPS, ROUTE_SITES, type StepMark,
 } from "../lib/injectionSites";
 import { HIT, colors, font, radii, type } from "../theme";
 
@@ -68,7 +68,15 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
     setView(recommended.view);
   }, [recommended, touched]);
 
-  const hasSites = sites.length > 0;
+  /*
+    Oral and nasal now HAVE a site — the mouth and the nose — so that the
+    body diagram can draw a complete protocol instead of quietly dropping
+    3 of 18 reference peptides off the chart. There is still nothing to pin,
+    though, so this branches on whether the route rotates rather than on
+    whether the list is empty, which is what it used to do.
+  */
+  const fixedSite = fixedSiteFor(routeKey);
+  const hasSites = sites.length > 0 && fixedSite === null;
   const hasBack = sites.some((s) => s.view === "back");
 
   const usage = useMemo(() => {
@@ -290,7 +298,7 @@ export function InjectionSitePicker({ visible, route, history, onClose, onConfir
               </Text>
 
               <Pressable
-                onPress={() => { reset(); onConfirm(null); }}
+                onPress={() => { reset(); onConfirm(fixedSite?.id ?? null); }}
                 accessibilityRole="button"
                 style={({ pressed }) => ({
                   backgroundColor: colors.signal,
