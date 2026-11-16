@@ -1,5 +1,10 @@
 /*
-The first-run sequence: survey → quote → tour → app.
+The first-run sequence: intro → survey → quote → tour → app.
+
+The intro came later than the rest and fixed something embarrassing: the app
+opened on a form. The very first thing anyone saw was a question about their
+date of birth, asked by a product that had not yet said a word about what it
+was for or what it would do with the answer.
 
 Phase is derived from the server, not held only in local state, so closing the
 app mid-way resumes in the right place rather than starting over or skipping
@@ -10,6 +15,7 @@ questions.
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { MainTabs } from "../navigation/MainTabs";
+import { IntroScreen } from "./IntroScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
 import { QuoteScreen } from "./QuoteScreen";
 import { TourProvider, type TourStop } from "../components/tour";
@@ -27,49 +33,44 @@ const STOPS: TourStop[] = [
   {
     id: "today-ring",
     tab: "Today",
-    title: "Tonight's readout",
+    title: "Today",
     body:
-      "This is the one number that matters day to day: how many of today's doses you've logged. " +
-      "Tap a dose below the ring to log it — the row itself is the button.",
+      "The ring is today's doses, logged against due. Tap a dose below it to log one.",
   },
   {
     id: "stack-add",
     tab: "Stack",
-    title: "Your stack",
+    title: "Stack",
     body:
-      "Everything you're running lives here, with its dose, schedule and any on/off cycle. " +
-      "Let's add your first one.",
+      "Everything you're running, with its dose, schedule and any on/off cycle.",
     requiresAction: true,
-    actionHint: "Tap Add and enter something you're taking. The tour picks up once it's saved.",
+    actionHint: "Tap Add and enter something you're taking.",
   },
   {
     id: "week-grid",
     tab: "Week",
-    title: "The week at a glance",
+    title: "Week",
     body:
-      "One row per peptide, one column per day. Logged, missed, due and off-cycle days each " +
-      "carry their own mark, so you can see a pattern forming without reading any numbers.",
+      "One row per peptide, one column per day. Logged, missed, due and off-cycle each carry their own mark.",
   },
   {
     id: "progress-checkin",
     tab: "Progress",
-    title: "Check in on yourself",
+    title: "Progress",
     body:
-      "Log weight, energy and mood, with photos if you want them. The chart builds a trend " +
-      "over time, which is what tells you whether any of this is doing anything.",
+      "Weight, energy and mood, with photos if you want them. The chart builds the trend.",
   },
   {
     id: "fuel-builder",
     tab: "Fuel",
-    title: "What you eat matters here",
+    title: "Fuel",
     body:
-      "Diet does a lot of the work alongside peptides and GLP-1s — this screen sets calorie and " +
-      "macro targets from your profile, flags the nutrients your goals lean on, and can build a " +
-      "meal that fits them.",
+      "Calorie and macro targets from your profile, the nutrients your goals lean on, and a " +
+      "meal builder that works to them.",
   },
 ];
 
-type Phase = "survey" | "quote" | "tour";
+type Phase = "intro" | "survey" | "quote" | "tour";
 
 export function FirstRun() {
   const user = useAuthStore((s) => s.user);
@@ -77,7 +78,7 @@ export function FirstRun() {
 
   // Someone who already answered the survey but bailed on the tour resumes
   // at the tour, not back at the questions.
-  const [phase, setPhase] = useState<Phase>(user?.onboardedAt ? "tour" : "survey");
+  const [phase, setPhase] = useState<Phase>(user?.onboardedAt ? "tour" : "intro");
 
   const goToTab = useCallback((tab: TourStop["tab"]) => {
     navigateToTab(tab);
@@ -88,6 +89,14 @@ export function FirstRun() {
     // is a far better failure than blocking entry to the app.
     updateProfile.mutate({ tourCompleted: true });
   }, [updateProfile]);
+
+  if (phase === "intro") {
+    return (
+      <Fade style={{ flex: 1 }}>
+        <IntroScreen onDone={() => setPhase("survey")} />
+      </Fade>
+    );
+  }
 
   if (phase === "survey") {
     return (

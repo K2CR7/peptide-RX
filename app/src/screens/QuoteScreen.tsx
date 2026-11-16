@@ -68,7 +68,7 @@ export function QuoteScreen({ onContinue }: { onContinue: () => void }) {
           <Text style={[type.label, { color: colors.signalInk }]}>Lao Tzu</Text>
         </Rise>
 
-        <Rise delay={1750} duration={DUR.step} style={{ marginTop: space.lg }}>
+        <Rise delay={1750} duration={DUR.enter} style={{ marginTop: space.lg }}>
           <Button label="I'm ready" onPress={onContinue} />
         </Rise>
       </View>

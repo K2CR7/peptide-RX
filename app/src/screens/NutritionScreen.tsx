@@ -7,7 +7,6 @@ import { useStackItems, useUpdateProfile } from "../lib/queries";
 import {
   ACTIVITY_LABELS,
   calculateMacros,
-  GOAL_CONTEXT,
   GOAL_LABELS,
   goalsFromStack,
   type ActivityLevel,
@@ -158,7 +157,6 @@ function PlanView() {
           ))}
         </View>
 
-        <Text style={[type.bodySm, { lineHeight: 18, marginTop: 16 }]}>{GOAL_CONTEXT[goal]}</Text>
         <Text style={[type.metaSm, { marginTop: 8 }]}>Resting burn {macros.bmr} kcal</Text>
       </View>
 
@@ -228,13 +226,13 @@ function NutrientList({ stackNutrients }: { stackNutrients: Set<string> }) {
         prioritized.length < NUTRIENT_GUIDANCE.length &&
         section(
           "Worth prioritizing",
-          "Tied to what the peptides in your stack are typically used for.",
+          "Based on the peptides in your stack.",
           prioritized,
         )}
       {section(
         prioritized.length > 0 && prioritized.length < NUTRIENT_GUIDANCE.length
           ? "Everything else"
-          : "Eat clean — by nutrient",
+          : "By nutrient",
         "General adult daily reference amounts.",
         prioritized.length > 0 && prioritized.length < NUTRIENT_GUIDANCE.length ? rest : NUTRIENT_GUIDANCE,
       )}
@@ -319,14 +317,14 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
       });
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't save your profile — try again.");
+      setError(e instanceof Error ? e.message : "Couldn't save your profile. Try again.");
     }
   }
 
   return (
     <View style={[panel, { padding: 20, gap: 16 }]}>
       <Text style={type.body}>
-        Used only to calculate your calorie/macro targets — not medical advice.
+        Used for your calorie and macro targets. Not medical advice.
       </Text>
 
       <View style={{ flexDirection: "row", gap: 12 }}>
@@ -340,7 +338,7 @@ function ProfileForm({ onDone }: { onDone: () => void }) {
 
       {hasBirthDate && (
         <Text style={type.metaSm}>
-          Age {user?.age} — worked out from your date of birth.
+          Age {user?.age}, from your date of birth.
         </Text>
       )}
 

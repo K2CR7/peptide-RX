@@ -77,7 +77,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "TB-500",
       "GHK-Cu"
     ],
-    "description": "Synthetic 15-amino-acid peptide (C62H98N16O22) derived from a gastric protective protein. Studied for angiogenesis, VEGFR2/Akt-eNOS signaling, tissue repair, and gut protection. A 2025 systematic review found 544 articles but only 36 met inclusion criteria — almost all preclinical. One weak retrospective human report exists (7/12 patients with knee pain).",
+    "description": "Synthetic 15-amino-acid peptide (C62H98N16O22) derived from a gastric protective protein. Studied for angiogenesis, VEGFR2/Akt-eNOS signaling, tissue repair, and gut protection. A 2025 systematic review found 544 articles but only 36 met inclusion criteria, almost all preclinical. One weak retrospective human report exists (7/12 patients with knee pain).",
     "upsides": [
       "Strong preclinical data for tendon, ligament & muscle repair",
       "Improved vascularity and VEGF expression in animal models",
@@ -85,7 +85,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "Interesting gut-protective signaling through nitric oxide pathways"
     ],
     "risks": [
-      "Almost entirely animal data — only one weak human report",
+      "Almost entirely animal data, only one weak human report",
       "FDA flags as compounding safety-risk substance",
       "No validated clinical dosing regimen exists",
       "May theoretically promote tumor angiogenesis",
@@ -130,7 +130,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "BPC-157",
       "GHK-Cu"
     ],
-    "description": "Marketed as a thymosin beta-4 fragment, but TB-500 sold online is not standardized or equivalent to clinical-grade thymosin beta-4. The parent molecule (thymosin beta-4) is involved in actin regulation, cell migration, angiogenesis, and wound repair — acting as a repair-signaling peptide rather than a hormone.",
+    "description": "Marketed as a thymosin beta-4 fragment, but TB-500 sold online is not standardized or equivalent to clinical-grade thymosin beta-4. The parent molecule (thymosin beta-4) is involved in actin regulation, cell migration, angiogenesis, and wound repair, acting as a repair-signaling peptide rather than a hormone.",
     "upsides": [
       "Parent molecule has real human studies in heart injury and eye disease",
       "Phase 1 safety study found thymosin beta-4 well tolerated IV",
@@ -178,7 +178,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "interactions": [
       {
         "substance": "HGH (exogenous)",
-        "note": "Additive GH — reduce CJC 50%.",
+        "note": "Additive GH. Reduce CJC 50%.",
         "severity": "caution"
       },
       {
@@ -193,7 +193,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       },
       {
         "substance": "SARMs",
-        "note": "Compatible — monitor water retention.",
+        "note": "Compatible. Monitor water retention.",
         "severity": "info"
       }
     ],
@@ -203,7 +203,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     ],
     "description": "Growth hormone–releasing hormone (GHRH) analog that activates pituitary somatotroph GHRH receptors, increasing cAMP/PKA signaling, GH release, and downstream IGF-1. The DAC version binds albumin for a half-life of 6–8 days, enabling 1–2× weekly dosing in research contexts.",
     "upsides": [
-      "Long-acting — only 1–2 injections per week needed",
+      "Long-acting, only 1–2 injections per week needed",
       "Designed to elevate baseline GH and IGF-1",
       "Potential benefits for recovery, sleep, and body composition",
       "Established mechanism via GHRH receptor pathway"
@@ -340,7 +340,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "risks": [
       "Thyroid C-cell tumor warning (boxed)",
       "Pancreatitis and gallbladder disease risk",
-      "Nausea/vomiting common during titration — improves over time",
+      "Nausea/vomiting common during titration, improves over time",
       "Muscle loss risk without resistance training",
       "Weight typically returns if stopped without lifestyle changes",
       "Hypoglycemia risk when combined with insulin or sulfonylureas"
@@ -370,7 +370,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "interactions": [
       {
         "substance": "Blood pressure meds",
-        "note": "Transiently raises BP — avoid.",
+        "note": "Transiently raises BP. Avoid.",
         "severity": "avoid"
       },
       {
@@ -385,16 +385,16 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       }
     ],
     "synergies": [],
-    "description": "Bremelanotide — a melanocortin receptor agonist (especially MC4R) that affects sexual desire through central neuroendocrine signaling rather than blood flow. FDA-approved specifically for hypoactive sexual desire disorder (HSDD) in premenopausal women, not as a general-purpose sexual enhancer.",
+    "description": "Bremelanotide, a melanocortin receptor agonist (especially MC4R) that affects sexual desire through central neuroendocrine signaling rather than blood flow. FDA-approved specifically for hypoactive sexual desire disorder (HSDD) in premenopausal women, not as a general-purpose sexual enhancer.",
     "upsides": [
       "FDA-approved with defined labeled dose (1.75 mg SubQ)",
-      "Central mechanism of action — works on desire, not just blood flow",
+      "Central mechanism of action, works on desire, not just blood flow",
       "Effective in the indicated population when PDE5 inhibitors fail",
       "Effects can last 6–72 hours from a single dose"
     ],
     "risks": [
-      "Approved only for premenopausal women with HSDD — off-label for men",
-      "Transient blood pressure increase — contraindicated with CVD/HTN",
+      "Approved only for premenopausal women with HSDD, off-label for men",
+      "Transient blood pressure increase, contraindicated with CVD/HTN",
       "Nausea is common, especially at higher doses",
       "Max 1 dose per 24 hours, max 8 doses per month on label",
       "Receptor desensitization requires cycling for sustained effect"
@@ -437,7 +437,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "MOTS-c",
       "SS-31"
     ],
-    "description": "Synthetic tetrapeptide marketed for aging, sleep, and telomere-related claims. The research reputation is much stronger in marketing than in clinical medicine — there is no robust modern human evidence base. FDA flags it as a compounding safety-risk substance.",
+    "description": "Synthetic tetrapeptide marketed for aging, sleep, and telomere-related claims. The research reputation is much stronger in marketing than in clinical medicine. There is no robust modern human evidence base. FDA flags it as a compounding safety-risk substance.",
     "upsides": [
       "Interesting biological hypothesis around telomerase activation",
       "Some preclinical data on circadian rhythm normalization",
@@ -499,15 +499,15 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "upsides": [
       "Interesting pharmacology around anxiety and stress modulation",
       "Non-sedating anxiolytic mechanism (unlike benzodiazepines)",
-      "Available as nasal spray — no injection needed",
+      "Available as nasal spray, no injection needed",
       "No tolerance or withdrawal reported in limited studies"
     ],
     "risks": [
       "FDA flags as compounding safety-risk substance",
       "No strong, standardized human evidence base",
       "No validated dosing framework for consumer use",
-      "Potentiates SSRI effects — combination risk",
-      "Degrades quickly — requires refrigeration"
+      "Potentiates SSRI effects, combination risk",
+      "Degrades quickly, requires refrigeration"
     ],
     "evidenceTier": {
       "tier": "Preclinical",
@@ -556,15 +556,15 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "description": "Short synthetic neuroactive peptide related to ACTH, commonly discussed for cognition, neuroprotection, and BDNF-related effects. Falls in the 'interesting biology, weak standardized clinical evidence' category. FDA lists it as a compounding safety risk.",
     "upsides": [
       "Interesting neurotrophic / BDNF research",
-      "Rapid onset — effects felt within 15–30 minutes",
+      "Rapid onset, effects felt within 15–30 minutes",
       "Neuroprotective data in stroke recovery models",
-      "Nasal administration — no injection required"
+      "Nasal administration, no injection required"
     ],
     "risks": [
       "FDA flags as compounding safety-risk substance",
       "Research-only from a clinical standpoint",
       "No standardized human dosing protocol",
-      "Potentiates serotonin — interaction risk with SSRIs",
+      "Potentiates serotonin, interaction risk with SSRIs",
       "Additive CNS stimulation with stimulant medications"
     ],
     "evidenceTier": {
@@ -600,7 +600,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "interactions": [
       {
         "substance": "Semaglutide",
-        "note": "Additive — reduce AOD 25%.",
+        "note": "Additive. Reduce AOD 25%.",
         "severity": "caution"
       }
     ],
@@ -618,7 +618,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "risks": [
       "FDA flags injectable form as compounding safety-risk substance",
       "Has not produced a widely accepted clinical role",
-      "Modest standalone results — needs diet and training",
+      "Modest standalone results, needs diet and training",
       "Oral bioavailability is poor",
       "Weak human evidence supporting marketed claims"
     ],
@@ -658,7 +658,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "TB-500",
       "Epithalon"
     ],
-    "description": "Copper-binding tripeptide complex involved in wound healing, skin repair, collagen signaling, and oxidative stress modulation. Chemically distinct because it is a metal-peptide complex, not just a free peptide — making route, formulation, and purity especially important.",
+    "description": "Copper-binding tripeptide complex involved in wound healing, skin repair, collagen signaling, and oxidative stress modulation. Chemically distinct because it is a metal-peptide complex, not just a free peptide, making route, formulation, and purity especially important.",
     "upsides": [
       "Participates in collagen/elastin synthesis pathways",
       "Interesting wound healing and skin repair biology",
@@ -709,10 +709,10 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "Epithalon",
       "KPV"
     ],
-    "description": "28-amino-acid thymic peptide that acts as an immune modulator, interacting with both innate and adaptive immune responses. The most clinically mature 'immune peptide' on this list — approved in 37+ countries for hepatitis B/C with real immunology literature behind it, not just wellness marketing.",
+    "description": "28-amino-acid thymic peptide that acts as an immune modulator, interacting with both innate and adaptive immune responses. The most clinically mature 'immune peptide' on this list, approved in 37+ countries for hepatitis B/C with real immunology literature behind it, not just wellness marketing.",
     "upsides": [
       "Approved in 37+ countries for hepatitis B/C",
-      "Legitimate immunology literature — not just marketing",
+      "Legitimate immunology literature, not just marketing",
       "Enhances T-cell maturation and immune function",
       "Literature dosing: 0.8–6.4 mg SubQ twice weekly in studies",
       "Decades of clinical use data in some regions"
@@ -721,7 +721,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "FDA still flags for US compounded products (route/quality concerns)",
       "Contraindicated with autoimmune disease",
       "May counter immunosuppressant medications",
-      "Gradual onset — 4–8 weeks for immune effects",
+      "Gradual onset, 4–8 weeks for immune effects",
       "More expensive than most peptides on this list"
     ],
     "evidenceTier": {
@@ -753,7 +753,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "interactions": [
       {
         "substance": "Metformin",
-        "note": "Synergistic AMPK — monitor glucose.",
+        "note": "Synergistic AMPK. Monitor glucose.",
         "severity": "caution"
       }
     ],
@@ -761,19 +761,19 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "Epithalon",
       "SS-31"
     ],
-    "description": "Mitochondrial-derived peptide — scientifically interesting because it originates from mitochondrial DNA rather than nuclear genes. Discussed in metabolism, exercise adaptation, insulin sensitivity, and cellular stress responses. FDA says no human exposure data exists sufficient to evaluate safety.",
+    "description": "Mitochondrial-derived peptide, scientifically interesting because it originates from mitochondrial DNA rather than nuclear genes. Discussed in metabolism, exercise adaptation, insulin sensitivity, and cellular stress responses. FDA says no human exposure data exists sufficient to evaluate safety.",
     "upsides": [
-      "Novel biology — mitochondrial-derived signaling peptide",
+      "Novel biology, mitochondrial-derived signaling peptide",
       "AMPK activation associated with metabolic flexibility",
       "Exercise-mimetic properties in animal models",
       "Interesting research on insulin sensitivity and aging"
     ],
     "risks": [
       "FDA: no identified human exposure data sufficient to evaluate safety",
-      "Very early-stage science — not clinically settled",
+      "Very early-stage science, not clinically settled",
       "No established human dosing protocol",
       "Expensive with limited supply",
-      "Potentiates Metformin — combination monitoring needed"
+      "Potentiates Metformin, combination monitoring needed"
     ],
     "evidenceTier": {
       "tier": "Speculative",
@@ -819,14 +819,14 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "description": "Anti-inflammatory tripeptide (alpha-MSH fragment) discussed for gut inflammation, skin, and immune modulation. One of the clearest examples of a peptide with speculative interest but almost no clinical foundation. FDA notes no identified human exposure data.",
     "upsides": [
       "Targeted anti-inflammatory mechanism (NF-κB pathway)",
-      "Oral route may work for gut — no injection needed in theory",
-      "Short peptide — chemically simple",
+      "Oral route may work for gut, no injection needed in theory",
+      "Short peptide, chemically simple",
       "Interesting preclinical data on IL-6 and TNF-α reduction"
     ],
     "risks": [
       "FDA: no identified human exposure data whatsoever",
       "Almost no clinical foundation for any claim",
-      "Speculative interest only — not validated in humans",
+      "Speculative interest only, not validated in humans",
       "Oral vs. injection bioavailability not established",
       "Immunomodulatory effects not characterized in people"
     ],
@@ -867,7 +867,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "MOTS-c",
       "Epithalon"
     ],
-    "description": "Elamipretide (MTP-131) — a mitochondria-targeted tetrapeptide designed to interact with cardiolipin in the inner mitochondrial membrane. One of the more sophisticated peptides here from a medicinal chemistry perspective: not just 'a peptide' but a targeted mitochondrial drug candidate with real human trials.",
+    "description": "Elamipretide (MTP-131), a mitochondria-targeted tetrapeptide designed to interact with cardiolipin in the inner mitochondrial membrane. One of the more sophisticated peptides here from a medicinal chemistry perspective: not just 'a peptide' but a targeted mitochondrial drug candidate with real human trials.",
     "upsides": [
       "Real clinical development with human trials (40 mg/day studied)",
       "Targets mitochondrial dysfunction at the cardiolipin level",
@@ -879,7 +879,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "Very expensive compound",
       "SubQ administration less validated than IV in trials",
       "Requires cold-chain storage",
-      "Still investigational — not approved for any indication"
+      "Still investigational, not approved for any indication"
     ],
     "evidenceTier": {
       "tier": "Clinical Trials",
@@ -926,25 +926,25 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       }
     ],
     "synergies": [],
-    "description": "Triple receptor agonist for GIP, GLP-1, and glucagon — a polyagonist metabolic peptide combining appetite suppression, glucose control, energy expenditure, and weight-loss effects. Phase 2 trial showed ~24% body weight reduction. Among the most advanced obesity peptides in development.",
+    "description": "Triple receptor agonist for GIP, GLP-1, and glucagon, a polyagonist metabolic peptide combining appetite suppression, glucose control, energy expenditure, and weight-loss effects. Phase 2 trial showed ~24% body weight reduction. Among the most advanced obesity peptides in development.",
     "upsides": [
       "~24% weight reduction in phase 2 trials",
-      "Triple receptor agonism — more pathways than semaglutide",
+      "Triple receptor agonism, more pathways than semaglutide",
       "Glucagon component raises thermogenesis",
       "Among the most watched obesity drugs in development"
     ],
     "risks": [
-      "Still investigational — not FDA-approved",
+      "Still investigational, not FDA-approved",
       "Not interchangeable with or addable to semaglutide",
       "GI side effects may be severe during titration",
       "Long-term safety data not yet available",
-      "NEVER combine with other GLP-1 agonists — pancreatitis risk"
+      "NEVER combine with other GLP-1 agonists, pancreatitis risk"
     ],
     "evidenceTier": {
       "tier": "Clinical Trials",
       "label": "Phase 2 Trials",
       "fdaFlag": false,
-      "fdaNote": "Phase 2 trial showed ~24% body weight reduction. Still investigational — not approved or interchangeable with semaglutide."
+      "fdaNote": "Phase 2 trial showed ~24% body weight reduction. Still investigational. Not approved or interchangeable with semaglutide."
     }
   },
   "Tesamorelin": {
@@ -978,7 +978,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     "interactions": [
       {
         "substance": "HGH (exogenous)",
-        "note": "Additive — use one or the other.",
+        "note": "Additive. Use one or the other.",
         "severity": "caution"
       },
       {
@@ -993,7 +993,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     ],
     "description": "Synthetic GHRH analog engineered to stimulate endogenous pituitary GH release. The only FDA-approved GHRH analog, indicated for HIV-associated lipodystrophy. Maintains physiologic pulsatile GH release pattern rather than constant elevation.",
     "upsides": [
-      "FDA-approved — the most validated GHRH analog available",
+      "FDA-approved, the most validated GHRH analog available",
       "Specifically targets visceral fat reduction",
       "Maintains physiologic GH pulse pattern",
       "Cognitive improvement signals in clinical trials",
@@ -1004,7 +1004,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "Daily SubQ injection required",
       "Glucose effects and IGF-1 elevation require monitoring",
       "Joint pain and water retention common",
-      "Requires appropriate medical oversight — not a wellness peptide"
+      "Requires appropriate medical oversight, not a wellness peptide"
     ],
     "evidenceTier": {
       "tier": "FDA Approved",
@@ -1070,16 +1070,16 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
     ],
     "description": "Oral small-molecule ghrelin receptor agonist (not technically a peptide) that stimulates GH and IGF-1. Heavily discussed in performance and anti-aging circles due to oral convenience. FDA flags it as a compounding safety-risk substance and notes a clinical trial signal for congestive heart failure.",
     "upsides": [
-      "Oral administration — no injections required",
+      "Oral administration, no injections required",
       "Convenient once-daily dosing at bedtime",
       "Raises GH and IGF-1 systemically",
       "May improve sleep quality via GH pulse timing"
     ],
     "risks": [
       "FDA flags as compounding safety-risk substance",
-      "Clinical trial signal for congestive heart failure — major red flag",
+      "Clinical trial signal for congestive heart failure, major red flag",
       "Significantly increases hunger via ghrelin pathway",
-      "Worsens insulin resistance — contraindicated with diabetes",
+      "Worsens insulin resistance, contraindicated with diabetes",
       "Water retention and bloating common",
       "Risk/benefit far more serious than internet hype suggests"
     ],
@@ -1087,7 +1087,7 @@ export const PEPTIDE_REFERENCE: Record<string, PeptideReference> =
       "tier": "Preclinical",
       "label": "Preclinical Only",
       "fdaFlag": true,
-      "fdaNote": "FDA flags as compounding safety-risk substance. A clinical trial signal for congestive heart failure was identified — this is a major safety concern."
+      "fdaNote": "FDA flags as compounding safety-risk substance. A clinical trial signal for congestive heart failure was identified. This is a major safety concern."
     }
   }
 };

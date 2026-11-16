@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CircularProgress } from "../components/CircularProgress";
+import { TodayHero } from "../components/TodayHero";
 import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
@@ -9,6 +9,8 @@ import { StreakCard } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
 import { doseParts, speakDose } from "../lib/dose";
+import { ProtocolMatrix } from "../components/ProtocolMatrix";
+import { buildMatrix } from "../lib/lanes";
 import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
@@ -114,6 +116,15 @@ export function HomeScreen() {
     [items, allLogs, openDays],
   );
 
+  const matrix = useMemo(
+    // Three weeks, not four. The window is set by how big a cell can be
+    // and still be a cell: 28 columns across a phone is 10px each, which
+    // renders as a texture rather than as marks you can count. See the
+    // geometry note in ProtocolMatrix.
+    () => buildMatrix(items ?? [], allLogs ?? [], 21),
+    [items, allLogs],
+  );
+
   const adherence = useMemo(
     () => computeAdherence(items ?? [], allLogs ?? [], 7),
     [items, allLogs],
@@ -163,7 +174,7 @@ export function HomeScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 20 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={type.title}>{user?.name ? `Hey, ${user.name}` : "Tonight's readout"}</Text>
+            <Text style={type.title}>Today</Text>
             <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
@@ -208,24 +219,29 @@ export function HomeScreen() {
         </View>
 
         <TourTarget id="today-ring">
-          <View
-            style={[
-              panel,
-              {
-                padding: 24,
-                alignItems: "center",
-                backgroundColor: allDone ? colors.signalFaint : colors.panel,
-                borderColor: allDone ? colors.signalDim : colors.hairline,
-              },
-            ]}
-          >
-            <CircularProgress
-              progress={progress}
-              label={dueToday.length > 0 ? `${doneCount}/${dueToday.length}` : "—"}
-              sublabel={allDone ? "protocol complete" : "doses logged"}
-            />
-          </View>
+          <TodayHero
+            done={doneCount}
+            due={dueToday.length}
+            dueNames={dueToday.filter((i) => !loggedTodayIds.has(i.id)).map((i) => i.peptideName)}
+            restingToday={restingToday.length > 0}
+          />
         </TourTarget>
+
+        {/*
+          In a panel, like everything else that holds data.
+
+          This sat directly on the page ground on the theory that occupying
+          the ground made it the heaviest thing on screen. It did the
+          opposite: with no edge to sit inside, three rows of small outlined
+          cells read as texture drifting under the header rather than as a
+          chart. Weight comes from containment and cell size, not from the
+          absence of a border.
+        */}
+        {matrix.lanes.length > 0 && (
+          <Panel pad={space.lg}>
+            <ProtocolMatrix matrix={matrix} />
+          </Panel>
+        )}
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
@@ -239,7 +255,7 @@ export function HomeScreen() {
                 loading={isLoading}
                 error={isError}
                 isEmpty={dueToday.length === 0}
-                emptyText="Nothing due today. Add items to your stack to see them here."
+                emptyText="Nothing due today. Add items in Stack."
                 onRetry={refetch}
               >
                 <View />
@@ -409,8 +425,7 @@ export function HomeScreen() {
 
             {restingToday.length > 0 && (
               <Text style={type.meta}>
-                {restingToday.map((i) => i.peptideName).join(", ")}{" "}
-                {restingToday.length === 1 ? "is" : "are"} scheduled today but resting — not counted above.
+                Resting today, not counted above: {restingToday.map((i) => i.peptideName).join(", ")}
               </Text>
             )}
           </View>
@@ -420,7 +435,7 @@ export function HomeScreen() {
           <View style={{ gap: 12 }}>
             <Text style={type.label}>Site rotation</Text>
             <View style={[panel, { padding: 16 }]}>
-              <Text style={type.meta}>Next site up</Text>
+              <Text style={type.meta}>Next site</Text>
               <Text style={[type.heading, { color: colors.signalInk, marginTop: 3 }]}>
                 {rotation.next.label}
               </Text>
@@ -466,7 +481,7 @@ export function HomeScreen() {
             setLogError(null);
             logInjection.mutate(
               { stackItemId: injectFor.id, site },
-              { onError: () => setLogError("Couldn't log that dose — check your connection and try again.") },
+              { onError: () => setLogError("Couldn't log that dose. Check your connection and try again.") },
             );
             setInjectFor(null);
           }}

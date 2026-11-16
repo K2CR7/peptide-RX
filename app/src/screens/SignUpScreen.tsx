@@ -35,7 +35,7 @@ export function SignUpScreen({ onNavigateSignIn }: { onNavigateSignIn: () => voi
         Create account
       </Text>
       <Text style={[type.bodySm, { marginBottom: 8 }]}>
-        A tracking tool for your own stack — not medical advice.
+        A tracking tool for your own stack. Not medical advice.
       </Text>
       <TextInput
         placeholder="Name (optional)"

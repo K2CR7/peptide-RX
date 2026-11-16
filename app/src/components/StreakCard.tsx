@@ -6,18 +6,23 @@ the number, which turned it back into the schedule readout it was meant to
 replace — the point of a streak is that it is ONE number you don't want to
 reset. So: the count, what kept it, and nothing else.
 
-The reward is the moment it goes up. Finish the day — log the last dose due,
-or simply open the app on a rest day — and the number rolls over while a
-short pulse goes out behind it. That beat is the only ornament in the card
-and it is gone in under a second. At rest this is a readout; the character is
-entirely in how the number arrives.
+The moment it goes up is the only event here. Finish the day — log the last
+dose due, or simply open the app on a rest day — and the figure turns over
+like a mechanical counter: the old number leaves upward, the new one arrives
+from below. That is the whole of it. At rest this is a readout; the character
+is entirely in how the number arrives.
+
+What used to sit here was a radiating pulse keyed to milestone tiers at 7,
+30, 100 and 365. Tiers plus a reward animation is a game mechanic whatever
+the palette, and this is a medical record, so both are gone. The turn-over
+stays, because the event is real: a day was kept.
 
 It fires once per increment, not once per render. The run the user last saw
 is persisted, so returning to the Home tab nine times in an evening does not
 replay the moment nine times, which is how a reward stops meaning anything.
 */
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing, Text, View } from "react-native";
+import { Animated, Text, View } from "react-native";
 import type { KeptBy, StreakSummary } from "../lib/streak";
 import { secureStorage } from "../lib/secureStorage";
 import { EASE } from "./motion";
@@ -30,14 +35,11 @@ import { colors, radii, space, type } from "../theme";
 */
 const SEEN_KEY = "streak.acknowledged";
 
-/** Milestones get a longer, wider pulse. Rare enough to feel earned. */
-const MILESTONES = [7, 30, 100, 365];
-
 interface Celebration {
   from: number;
   to: number;
   by: KeptBy;
-  /** Distinguishes consecutive celebrations so the burst remounts. */
+  /** Distinguishes consecutive celebrations so the roll remounts. */
   id: number;
 }
 
@@ -95,8 +97,8 @@ export function StreakCard({
         borderWidth: 1,
         borderColor: colors.hairline,
         borderRadius: radii.xl,
-        padding: space.xl,
-        gap: space.md,
+        padding: space.lg,
+        gap: space.sm,
         overflow: "hidden",
       }}
     >
@@ -112,26 +114,21 @@ export function StreakCard({
       </View>
 
       {/*
-        Centred, which is not how the rest of this screen is laid out. Two
-        reasons. A pulse radiating from a figure sitting 20px off the panel
-        edge clips against it on one side, and a clipped flourish reads as a
-        bug. And the screen directly above this is a big centred ring, so a
-        centred figure is already the language here rather than an exception.
+        Centred, which is not how the rest of this screen is laid out. The
+        figure travels vertically as it turns over, so it needs even room
+        above and below rather than a left edge to sit against, and the
+        numeral is the one thing in the card worth looking at directly.
       */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "baseline",
           justifyContent: "center",
-          gap: space.md,
-          paddingVertical: space.sm,
+          gap: space.sm,
+          paddingVertical: 2,
         }}
       >
         <View style={{ justifyContent: "center" }}>
-          {/* The pulse sits behind the numeral and radiates from it. */}
-          {celebration && (
-            <Burst key={celebration.id} big={MILESTONES.includes(celebration.to)} />
-          )}
           {celebration ? (
             <Roll
               key={celebration.id}
@@ -144,19 +141,10 @@ export function StreakCard({
           )}
         </View>
         <Text style={[type.body, { color: colors.ink2, paddingBottom: 6 }]}>
-          {current === 1 ? "day" : "days"} in a row
+          {current === 1 ? "day" : "days"}
         </Text>
       </View>
 
-      <Text style={[type.metaSm, { lineHeight: 17, textAlign: "center" }]}>
-        {celebration
-          ? celebration.by === "rest"
-            ? "Rest day kept. Nothing was due — showing up is the whole job."
-            : "Dose logged. Day kept."
-          : todayPending
-            ? "Today's dose is still open — log it to move the count."
-            : "Rest days count: the protocol asks for nothing, so showing up keeps it."}
-      </Text>
     </View>
   );
 }
@@ -246,110 +234,6 @@ function Roll({ from, to, onDone }: { from: number; to: number; onDone: () => vo
     <View accessibilityLabel={`${to} consecutive days on protocol`}>
       <Animated.Text style={[NUMERAL, { position: "absolute" }, leaving]}>{from}</Animated.Text>
       <Animated.Text style={[NUMERAL, arriving]}>{to}</Animated.Text>
-    </View>
-  );
-}
-
-const SPOKES = 10;
-
-/*
-  The card clips its own overflow, so the pulse has to finish inside it or it
-  gets cut off against the panel edge mid-flight — which reads as a bug, not
-  a flourish. These reaches are sized so the widest frame still sits within
-  the padding, measured rather than guessed.
-*/
-const RING = 64;
-
-/**
- * One pulse out from behind the number: a soft disc that blooms and clears,
- * a ring that expands and thins, and a crown of short ticks pushed outward.
- *
- * Deliberately not confetti. Every element is a straight line or a circle in
- * the one brand teal, the whole thing is monochrome, and it is over in
- * three-quarters of a second — which is the difference between an instrument
- * acknowledging something and a game congratulating you for it.
- */
-function Burst({ big }: { big: boolean }) {
-  const p = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.timing(p, {
-      toValue: 1,
-      duration: big ? 1150 : 780,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-    anim.start();
-    return () => {
-      anim.stop();
-    };
-  }, [p, big]);
-
-  const reach = big ? 2.5 : 2.1;
-
-  return (
-    <View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "50%",
-        width: 0,
-        height: 0,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {/* Gives the pulse some body, so it isn't only thin outlines. */}
-      <Animated.View
-        style={{
-          position: "absolute",
-          width: RING,
-          height: RING,
-          marginLeft: -RING / 2,
-          marginTop: -RING / 2,
-          borderRadius: RING / 2,
-          backgroundColor: colors.signalFaint,
-          opacity: p.interpolate({ inputRange: [0, 0.45, 1], outputRange: [0.95, 0.5, 0] }),
-          transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.7] }) }],
-        }}
-      />
-      <Animated.View
-        style={{
-          position: "absolute",
-          width: RING,
-          height: RING,
-          marginLeft: -RING / 2,
-          marginTop: -RING / 2,
-          borderRadius: RING / 2,
-          borderWidth: 2,
-          borderColor: colors.signal,
-          opacity: p.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0.75, 0.45, 0] }),
-          transform: [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [0.5, reach] }) }],
-        }}
-      />
-      {Array.from({ length: SPOKES }).map((_, i) => (
-        <Animated.View
-          key={i}
-          style={{
-            position: "absolute",
-            width: 2,
-            height: big ? 13 : 10,
-            marginLeft: -1,
-            backgroundColor: colors.signal,
-            opacity: p.interpolate({ inputRange: [0, 0.2, 0.85], outputRange: [0, 0.9, 0] }),
-            transform: [
-              { rotate: `${(360 / SPOKES) * i}deg` },
-              {
-                translateY: p.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-24, big ? -72 : -60],
-                }),
-              },
-            ],
-          }}
-        />
-      ))}
     </View>
   );
 }

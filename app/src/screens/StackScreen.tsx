@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Select } from "../components/Select";
@@ -6,6 +6,9 @@ import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { siteHistory } from "../lib/injectionSites";
+import { CyclePhaseBar, ItemLane, laneWidth } from "../components/ItemGraphics";
+import { buildMatrix } from "../lib/lanes";
+import type { CellState } from "../lib/lanes";
 import { DOSE_UNITS, doseParts, formatDose, speakDose } from "../lib/dose";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
@@ -43,12 +46,30 @@ const FREQUENCY_OPTIONS = [
   "Once weekly", "Twice weekly", "3x weekly",
   "Every other day", "Every 3 days", "As needed",
 ];
+/*
+  A fortnight per row, not the four weeks the home screen draws.
+
+  The row has to stay a row — tall enough to tap, short enough that three
+  items are on screen at once — and 28 columns at a readable cell size is
+  wider than a phone. Fourteen days is also the honest window for "am I
+  actually taking this": far enough back to show a pattern, near enough that
+  it is about now.
+*/
+const LANE_DAYS = 14;
+
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 const FULL_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function StackScreen() {
   const insets = useSafeAreaInsets();
   const { data: items, isLoading, isError, refetch } = useStackItems();
+  // Every log, once, rather than one request per row.
+  const { data: allLogs } = useInjectionLogs();
+
+  const cellsByItem = useMemo(() => {
+    const { lanes } = buildMatrix(items ?? [], allLogs ?? [], LANE_DAYS);
+    return new Map(lanes.map((lane) => [lane.id, lane.cells]));
+  }, [items, allLogs]);
   const [addOpen, setAddOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
@@ -62,7 +83,7 @@ export function StackScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 16 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={type.title}>My stack</Text>
+          <Text style={type.title}>Stack</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Pressable
               onPress={() => setLearnOpen(true)}
@@ -110,7 +131,7 @@ export function StackScreen() {
               loading={isLoading}
               error={isError}
               isEmpty={items?.length === 0}
-              emptyText="Nothing in your stack yet. Add what you're already taking."
+              emptyText="Nothing here yet. Add what you're taking."
               onRetry={refetch}
             >
               <View />
@@ -127,6 +148,7 @@ export function StackScreen() {
                 key={item.id}
                 item={item}
                 first={i === 0}
+                cells={cellsByItem.get(item.id)}
                 onLog={() => setInjectFor({ id: item.id, route: item.route })}
                 onOpen={() => setDetailFor(item)}
               />
@@ -134,11 +156,6 @@ export function StackScreen() {
           </View>
         )}
 
-        {items && items.length > 0 && (
-          <Text style={[type.metaSm, { paddingHorizontal: 2 }]}>
-            Tap an item to edit or remove it.
-          </Text>
-        )}
       </ScrollView>
 
       {detailFor && (
@@ -174,10 +191,17 @@ export function StackScreen() {
 }
 
 function StackItemRow({
-  item, first, onLog, onOpen,
-}: { item: StackItem; first: boolean; onLog: () => void; onOpen: () => void }) {
+  item, first, cells, onLog, onOpen,
+}: {
+  item: StackItem;
+  first: boolean;
+  cells?: CellState[];
+  onLog: () => void;
+  onOpen: () => void;
+}) {
   const cycle = cycleState(item.startedAt, item.cycleOnDays, item.cycleOffDays);
   const off = cycle?.phase === "off";
+  const cycling = cycle !== null && item.cycleOnDays !== null && item.cycleOffDays !== null;
 
   return (
     <View
@@ -203,6 +227,28 @@ function StackItemRow({
           {item.frequency}
           {item.route ? ` · ${item.route}` : ""}
         </Text>
+        {/*
+          The two things the row couldn't say before: whether this is actually
+          being taken, and where it sits in its cycle. Both are stacked to the
+          same width so the row reads as one block rather than two widgets.
+        */}
+        {cells && (
+          <View style={{ marginTop: 7 }}>
+            <ItemLane cells={cells} days={LANE_DAYS} />
+          </View>
+        )}
+
+        {cycling && (
+          <View style={{ marginTop: 6 }}>
+            <CyclePhaseBar
+              cycle={cycle}
+              onDays={item.cycleOnDays as number}
+              offDays={item.cycleOffDays as number}
+              width={laneWidth(LANE_DAYS)}
+            />
+          </View>
+        )}
+
         {cycle && (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
             <View
@@ -282,7 +328,7 @@ function InjectionLogger({
         // treatment, not a new one.
         logInjection.mutate(
           { stackItemId, site },
-          { onError: () => onError("Couldn't log that dose — check your connection and try again.") },
+          { onError: () => onError("Couldn't log that dose. Check your connection and try again.") },
         );
         onClose();
       }}
@@ -388,8 +434,8 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
         e instanceof Error
           ? e.message
           : editing
-            ? "Couldn't save those changes — try again."
-            : "Failed to add to stack — try again.",
+            ? "Couldn't save those changes. Try again."
+            : "Couldn't add that to your stack. Try again.",
       );
     }
   }
@@ -468,7 +514,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
             options={cycleOptionLabels()}
             value={cycleLabel}
             onChange={setCycleLabel}
-            placeholder="No cycle — continuous"
+            placeholder="No cycle"
             customPlaceholder="Enter a cycle"
           />
         </View>
@@ -578,7 +624,7 @@ function StackItemSheet({
     archive.mutate(item.id, {
       onSuccess: onClose,
       onError: () => {
-        setError("Couldn't remove that — check your connection and try again.");
+        setError("Couldn't remove that. Check your connection and try again.");
         setConfirming(false);
       },
     });

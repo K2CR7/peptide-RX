@@ -4,6 +4,8 @@ import { secureStorage } from "../lib/secureStorage";
 
 const REFRESH_TOKEN_KEY = "peptiderx.refreshToken";
 
+import type { CheckinCadence } from "../data/checkinCadence";
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -17,6 +19,14 @@ export interface AuthUser {
   age?: number | null;
   activityLevel?: "SEDENTARY" | "LIGHT" | "MODERATE" | "ACTIVE" | "VERY_ACTIVE" | null;
   nutritionGoal?: "CUT" | "MAINTAIN" | "BULK" | null;
+
+  /*
+    How often they said they'd check in. Not nullable server-side — every
+    account is created WEEKLY and the survey only changes it — but optional
+    here, because a client that has been running since before this field
+    existed will have a cached user without it.
+  */
+  checkinCadence?: CheckinCadence;
 
   // First-run state and the answers given during onboarding. onboardedAt is
   // what routes a new account into the survey; tourCompletedAt is separate so

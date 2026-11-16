@@ -81,7 +81,7 @@ export interface CycleOption {
   offDays: number | null;
 }
 
-export const NO_CYCLE_LABEL = "No cycle — continuous";
+export const NO_CYCLE_LABEL = "No cycle";
 export const CUSTOM_CYCLE_LABEL = "Custom…";
 
 export const CYCLE_OPTIONS: CycleOption[] = [
