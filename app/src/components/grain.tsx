@@ -84,7 +84,7 @@ const DUST = [
   require("../../assets/checkin-dust-c.png"),
 ];
 const DUST_TILE = require("../../assets/checkin-dust-tile.png");
-const TILE = 256;
+const TILE = 512;
 
 /*
   Turn rates in ms per revolution, alternating sign, none of them a
