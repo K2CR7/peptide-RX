@@ -165,7 +165,7 @@ export function StatPair({
   size?: "lg" | "md" | "sm";
 }) {
   const color = {
-    ink: colors.ink, signal: colors.signal, amber: colors.amber,
+    ink: colors.ink, signal: colors.signalInk, amber: colors.amber,
     red: colors.red, dim: colors.ink3,
   }[tone];
   const valueStyle = size === "lg" ? type.statLg : size === "md" ? type.statMd : type.statSm;
@@ -193,7 +193,8 @@ export function Chip({
   tone?: "signal" | "trace";
   fullWidth?: boolean;
 }) {
-  const accent = tone === "trace" ? colors.trace : colors.signal;
+  // Border and label are drawn, not filled, so this is the ink variant.
+  const accent = tone === "trace" ? colors.trace : colors.signalInk;
   return (
     <Pressable
       onPress={onPress}

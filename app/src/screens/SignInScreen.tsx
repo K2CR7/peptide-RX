@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import { Button, ErrorText } from "../components/primitives";
+import { LogoTile } from "../components/Logo";
 import { HIT, colors, font, radii, space, type } from "../theme";
 
 export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => void }) {
@@ -25,7 +26,10 @@ export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => voi
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: "center", padding: 24, gap: 12 }}>
-      <Text style={type.label}>PEPTIDE RX</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+        <LogoTile size={40} />
+        <Text style={type.label}>PEPTIDE RX</Text>
+      </View>
       <Text style={{ fontFamily: font.numeral, fontSize: 38, color: colors.ink, letterSpacing: -0.5, marginBottom: 12 }}>
         Welcome back
       </Text>
@@ -70,7 +74,7 @@ export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => voi
       >
         <Text style={type.body}>
           Don't have an account?{" "}
-          <Text style={{ fontFamily: font.bold, color: colors.signal }}>Sign up</Text>
+          <Text style={{ fontFamily: font.bold, color: colors.signalInk }}>Sign up</Text>
         </Text>
       </Pressable>
     </View>
@@ -80,7 +84,7 @@ export function SignInScreen({ onNavigateSignUp }: { onNavigateSignUp: () => voi
 const inputStyle = {
   backgroundColor: colors.panel,
   borderWidth: 1,
-  borderColor: colors.hairline2,
+  borderColor: colors.edge,
   borderRadius: radii.md,
   padding: 16,
   fontFamily: font.regular,

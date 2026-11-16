@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MarkDue, MarkLogged, MarkMissed, MarkScheduled } from "../components/icons";
 import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
+import { formatDose } from "../lib/dose";
 import { useInjectionLogs, useStackItems } from "../lib/queries";
 import { AsyncBlock, Panel } from "../components/primitives";
+import { TourTarget } from "../components/tour";
 import { colors, font, panel, type, space } from "../theme";
 
 const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -16,9 +18,9 @@ const ROW_H = 44;
 type CellState = "logged" | "missed" | "due" | "scheduled" | "none";
 
 function StateMark({ state }: { state: CellState }) {
-  if (state === "logged") return <MarkLogged size={16} color={colors.signal} />;
+  if (state === "logged") return <MarkLogged size={16} color={colors.signalInk} />;
   if (state === "missed") return <MarkMissed size={16} color={colors.amber} />;
-  if (state === "due") return <MarkDue size={16} color={colors.signal} />;
+  if (state === "due") return <MarkDue size={16} color={colors.signalInk} />;
   if (state === "scheduled") return <MarkScheduled size={16} color={colors.ink3} />;
   // Not scheduled — a rule, not a mark, so the eye skips it.
   return <View style={{ width: 9, height: 1.5, borderRadius: 1, backgroundColor: colors.hairline2 }} />;
@@ -81,12 +83,25 @@ export function ScheduleScreen() {
     [rows, loggedByDay, today],
   );
 
-  const cellW = (390 - NAME_COL) / 7;
+  /*
+    The grid used to be sized from a hardcoded 390, which is one specific
+    iPhone. Everything narrower silently lost days off the right edge: the
+    row is clipped by overflow:"hidden", so on a 393pt iPhone Sunday was cut
+    off and on a 360pt Android both weekend days were. It looked correct only
+    in the web dev frame, which happens to be 430 wide.
+
+    Measured from the panel itself rather than from the window, because on
+    web this app renders inside a fixed-width phone frame — the window is the
+    whole browser and is nothing to do with how much room this grid has.
+    onLayout is the only number that is true on both platforms.
+  */
+  const [gridW, setGridW] = useState(0);
+  const cellW = gridW > 0 ? (gridW - NAME_COL) / 7 : 0;
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: space.xl, paddingTop: insets.top + space.xl, paddingBottom: space.section }}
     >
       <Text style={type.title}>This week</Text>
       <Text style={[type.meta, { marginTop: 4 }]}>
@@ -111,7 +126,11 @@ export function ScheduleScreen() {
           </Panel>
         </View>
       ) : (
-        <View style={[panel, { marginTop: 16, paddingVertical: 4, overflow: "hidden" }]}>
+        <TourTarget id="week-grid" style={{ marginTop: 16 }}>
+        <View
+          style={[panel, { paddingVertical: 4, overflow: "hidden" }]}
+          onLayout={(e) => setGridW(e.nativeEvent.layout.width)}
+        >
           {/* Day header */}
           <View style={{ flexDirection: "row", alignItems: "flex-end", paddingBottom: 8, paddingTop: 8 }}>
             <View style={{ width: NAME_COL }} />
@@ -124,7 +143,7 @@ export function ScheduleScreen() {
                       fontFamily: font.semibold,
                       fontSize: 11,
                       letterSpacing: 0.8,
-                      color: isToday ? colors.signal : colors.ink3,
+                      color: isToday ? colors.signalInk : colors.ink3,
                     }}
                   >
                     {DAY_LETTERS[i]}
@@ -145,7 +164,7 @@ export function ScheduleScreen() {
                         width: 18,
                         height: 2,
                         borderRadius: 1,
-                        backgroundColor: colors.signal,
+                        backgroundColor: colors.signalInk,
                         marginTop: 3,
                       }}
                     />
@@ -172,7 +191,7 @@ export function ScheduleScreen() {
                   {item.peptideName}
                 </Text>
                 <Text style={{ fontFamily: font.numeralMedium, fontSize: 11, color: colors.ink3, marginTop: 1 }}>
-                  {item.dose} {item.unit}
+                  {formatDose(item.dose, item.unit)}
                 </Text>
               </View>
 
@@ -227,7 +246,7 @@ export function ScheduleScreen() {
                     style={{
                       fontFamily: font.numeralMedium,
                       fontSize: 13,
-                      color: d.due === 0 ? colors.ink3 : complete ? colors.signal : colors.ink2,
+                      color: d.due === 0 ? colors.ink3 : complete ? colors.signalInk : colors.ink2,
                     }}
                   >
                     {d.due === 0 ? "—" : `${d.done}/${d.due}`}
@@ -237,6 +256,7 @@ export function ScheduleScreen() {
             })}
           </View>
         </View>
+        </TourTarget>
       )}
 
       <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 8, marginTop: 16, paddingHorizontal: 2 }}>

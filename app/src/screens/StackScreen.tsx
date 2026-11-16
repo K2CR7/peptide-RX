@@ -6,6 +6,7 @@ import { PhoneModalFrame } from "../components/PhoneModalFrame";
 import { BookIcon, PlusMark } from "../components/icons";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { siteHistory } from "../lib/injectionSites";
+import { DOSE_UNITS, doseParts, formatDose, speakDose } from "../lib/dose";
 import { PEPTIDE_REFERENCE } from "../data/peptideReference";
 import {
   CUSTOM_CYCLE_LABEL, NO_CYCLE_LABEL, cycleOptionLabels, cycleState, describeCycle,
@@ -22,10 +23,16 @@ import {
   useStackItems,
 } from "../lib/queries";
 import { AsyncBlock, Button, ErrorText, Panel } from "../components/primitives";
+import { TourTarget, useTour } from "../components/tour";
+import { useAuthStore } from "../store/authStore";
+import { INTERACTION_DISCLAIMER, cautionsFor, type InteractionSeverity } from "../data/peptideInteractions";
 import { HIT, colors, font, panel, radii, space, type } from "../theme";
 
 const ROUTE_OPTIONS = ["SubQ", "IM", "SubQ or IM", "Nasal spray", "Oral"];
-const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL", "mg/mL"];
+// "units", not "IU": ISMP lists IU as error-prone because it is misread as
+// IV or as the number 10. Legacy rows storing "IU" still render correctly —
+// normalizeUnit maps them on the way out.
+const UNIT_OPTIONS = [...DOSE_UNITS];
 const DOSE_OPTIONS = [
   "0.25", "0.5", "1", "2", "2.5", "5", "10", "15", "20", "25",
   "50", "75", "100", "150", "200", "250", "300", "400", "500",
@@ -45,6 +52,9 @@ export function StackScreen() {
   const [addOpen, setAddOpen] = useState(false);
   const [learnOpen, setLearnOpen] = useState(false);
   const [injectFor, setInjectFor] = useState<{ id: string; route: string | null } | null>(null);
+  // A failed dose log has to say so somewhere on this screen; the sheet it
+  // happened in is already gone by the time the request comes back.
+  const [logError, setLogError] = useState<string | null>(null);
   const [detailFor, setDetailFor] = useState<StackItem | null>(null);
   const [editFor, setEditFor] = useState<StackItem | null>(null);
 
@@ -63,7 +73,7 @@ export function StackScreen() {
                 height: 44,
                 borderRadius: radii.md,
                 borderWidth: 1,
-                borderColor: colors.hairline2,
+                borderColor: colors.edge,
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: pressed ? 0.7 : 1,
@@ -71,24 +81,26 @@ export function StackScreen() {
             >
               <BookIcon size={20} color={colors.ink2} />
             </Pressable>
-            <Pressable
-              onPress={() => setAddOpen(true)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                minHeight: 44,
-                backgroundColor: colors.signal,
-                borderRadius: radii.md,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <PlusMark size={13} color={colors.onSignal} />
-              <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
-            </Pressable>
+            <TourTarget id="stack-add">
+              <Pressable
+                onPress={() => setAddOpen(true)}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 44,
+                  backgroundColor: colors.signal,
+                  borderRadius: radii.md,
+                  paddingHorizontal: 16,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <PlusMark size={13} color={colors.onSignal} />
+                <Text style={{ fontFamily: font.bold, fontSize: 15, color: colors.onSignal, letterSpacing: 0.3 }}>Add</Text>
+              </Pressable>
+            </TourTarget>
           </View>
         </View>
 
@@ -105,6 +117,8 @@ export function StackScreen() {
             </AsyncBlock>
           </Panel>
         )}
+
+        <ErrorText>{logError}</ErrorText>
 
         {items && items.length > 0 && (
           <View style={[panel, { overflow: "hidden" }]}>
@@ -152,6 +166,7 @@ export function StackScreen() {
           stackItemId={injectFor.id}
           route={injectFor.route}
           onClose={() => setInjectFor(null)}
+          onError={setLogError}
         />
       )}
     </View>
@@ -195,10 +210,10 @@ function StackItemRow({
                 width: 6,
                 height: 6,
                 borderRadius: 3,
-                backgroundColor: off ? colors.amber : colors.signal,
+                backgroundColor: off ? colors.amber : colors.signalInk,
               }}
             />
-            <Text style={{ fontFamily: font.semibold, fontSize: 11, color: off ? colors.amber : colors.signal }}>
+            <Text style={{ fontFamily: font.semibold, fontSize: 11, color: off ? colors.amber : colors.signalInk }}>
               {describeCycle(cycle)}
             </Text>
             <Text style={type.metaSm}>· {describeRemaining(cycle)}</Text>
@@ -206,9 +221,9 @@ function StackItemRow({
         )}
       </Pressable>
 
-      <Text style={{ fontFamily: font.numeralMedium, fontSize: 20, color: colors.ink, letterSpacing: 0.3 }}>
-        {item.dose}
-        <Text style={{ fontSize: 13, color: colors.ink3 }}> {item.unit}</Text>
+      <Text style={type.statSm} accessibilityLabel={speakDose(item.dose, item.unit)}>
+        {doseParts(item.dose, item.unit).value}
+        <Text style={type.unit}> {doseParts(item.dose, item.unit).unit}</Text>
       </Text>
 
       <Pressable
@@ -228,13 +243,23 @@ function StackItemRow({
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signal, letterSpacing: 0.3 }}>Log</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: colors.signalInk, letterSpacing: 0.3 }}>Log</Text>
       </Pressable>
     </View>
   );
 }
 
-function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string; route: string | null; onClose: () => void }) {
+function InjectionLogger({
+  stackItemId,
+  route,
+  onClose,
+  onError,
+}: {
+  stackItemId: string;
+  route: string | null;
+  onClose: () => void;
+  onError: (message: string) => void;
+}) {
   const { data: logs } = useInjectionLogs(stackItemId);
   const logInjection = useLogInjection();
   const history = siteHistory(logs ?? []).reverse();
@@ -248,7 +273,17 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
       onConfirm={(site) => {
         // site is null for oral and nasal routes — there is nowhere to pin,
         // but the dose still happened, so it still gets logged.
-        logInjection.mutate({ stackItemId, site });
+        //
+        // A failure here used to be completely invisible: the sheet closed
+        // either way and the row simply never flipped to Logged, so the user
+        // walked away believing a dose was recorded that wasn't. In a
+        // medication tracker that is the worst thing this codebase could do,
+        // and the Today tab already handled it correctly — this is the same
+        // treatment, not a new one.
+        logInjection.mutate(
+          { stackItemId, site },
+          { onError: () => onError("Couldn't log that dose — check your connection and try again.") },
+        );
         onClose();
       }}
     />
@@ -263,6 +298,8 @@ function InjectionLogger({ stackItemId, route, onClose }: { stackItemId: string;
 function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () => void }) {
   const createItem = useCreateStackItem();
   const updateItem = useUpdateStackItem();
+  const { notifyAction } = useTour();
+  const declaredMeds = useAuthStore((s) => s.user?.medications ?? []);
   const editing = item !== undefined;
 
   const [peptideName, setPeptideName] = useState(item?.peptideName ?? "");
@@ -341,6 +378,9 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
         await updateItem.mutateAsync({ id: item.id, ...payload });
       } else {
         await createItem.mutateAsync(payload);
+        // During the tour this is the one step the user actually performs,
+        // so completing it is what releases the stop.
+        notifyAction("stack-add");
       }
       onClose();
     } catch (e) {
@@ -371,6 +411,10 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
           customPlaceholder="Enter a peptide not listed"
           describe={(name) => PEPTIDE_REFERENCE[name]?.aka}
         />
+
+        {peptideName.trim() !== "" && (
+          <InteractionNotice peptideName={peptideName} medications={declaredMeds} />
+        )}
 
         <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
           <View style={{ flex: 1.4 }}>
@@ -458,7 +502,7 @@ function StackItemFormModal({ item, onClose }: { item?: StackItem; onClose: () =
                   justifyContent: "center",
                   backgroundColor: on ? colors.signal : colors.panel,
                   borderWidth: 1,
-                  borderColor: on ? colors.signal : colors.hairline2,
+                  borderColor: on ? colors.signalInk : colors.hairline2,
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
@@ -497,7 +541,7 @@ function WeeksField({ label, value, onChangeText }: { label: string; value: stri
         style={{
           backgroundColor: colors.panel,
           borderWidth: 1,
-          borderColor: colors.hairline2,
+          borderColor: colors.edge,
           borderRadius: radii.md,
           paddingHorizontal: 16,
           minHeight: 48,
@@ -544,14 +588,14 @@ function StackItemSheet({
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <PhoneModalFrame>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(4,6,8,0.72)" }} onPress={onClose} />
+          <Pressable style={{ flex: 1, backgroundColor: colors.scrim }} onPress={onClose} />
           <View
             style={{
               backgroundColor: colors.panel,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 14,
+              borderTopRightRadius: 14,
               borderTopWidth: 1,
-              borderColor: colors.hairline2,
+              borderColor: colors.edge,
               paddingTop: 20,
               paddingHorizontal: 20,
               paddingBottom: 20,
@@ -560,7 +604,7 @@ function StackItemSheet({
             <Text style={[type.heading, { fontSize: 20 }]}>{item.peptideName}</Text>
 
             <View style={{ marginTop: 16, gap: 8 }}>
-              <DetailRow label="Dose" value={`${item.dose} ${item.unit}`} />
+              <DetailRow label="Dose" value={formatDose(item.dose, item.unit)} />
               <DetailRow label="Frequency" value={item.frequency} />
               <DetailRow label="Route" value={item.route ?? "—"} />
               <DetailRow
@@ -616,6 +660,58 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <Text style={{ fontFamily: font.semibold, fontSize: 15, color: colors.ink, flexShrink: 1, textAlign: "right" }}>
         {value}
       </Text>
+    </View>
+  );
+}
+
+/**
+ * Cautions for the peptide being added, against what the user said they take.
+ *
+ * Non-blocking by design. The product is a tracker and `PRODUCT.md` principle
+ * 1 forbids crossing into medical advice, so this reports a documented pairing
+ * and points at the prescriber — it never withholds the action and never tells
+ * anyone what to do. The "no established data" case is shown deliberately:
+ * saying nothing would read as "cleared".
+ */
+function InteractionNotice({
+  peptideName, medications,
+}: { peptideName: string; medications: string[] }) {
+  const notices = cautionsFor(peptideName, medications);
+  if (notices.length === 0) return null;
+
+  const worst: InteractionSeverity = notices.some((n) => n.severity === "avoid")
+    ? "avoid"
+    : notices.some((n) => n.severity === "caution")
+      ? "caution"
+      : "info";
+
+  const tone =
+    worst === "avoid" ? colors.red : worst === "caution" ? colors.amber : colors.ink3;
+  const heading =
+    worst === "avoid"
+      ? "Not intended to be combined"
+      : worst === "caution"
+        ? "Worth raising with your prescriber"
+        : "Good to know";
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: space.md,
+        marginTop: space.lg,
+      }}
+    >
+      <View style={{ width: 2, borderRadius: 1, backgroundColor: tone }} />
+      <View style={{ flex: 1, gap: space.sm }}>
+        <Text style={[type.label, { color: tone }]}>{heading}</Text>
+        {notices.map((n, i) => (
+          <Text key={i} style={type.bodySm}>
+            {n.note}
+          </Text>
+        ))}
+        <Text style={[type.metaSm, { lineHeight: 17 }]}>{INTERACTION_DISCLAIMER}</Text>
+      </View>
     </View>
   );
 }

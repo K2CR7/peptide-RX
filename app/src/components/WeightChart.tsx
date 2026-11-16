@@ -71,7 +71,7 @@ export function WeightChart({ checkins }: { checkins: { createdAt: string; weigh
           {Math.round(active.weightLb)}
           <Text style={{ fontSize: 17, color: colors.ink3 }}> lb</Text>
         </Text>
-        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: delta <= 0 ? colors.signal : colors.amber }}>
+        <Text style={{ fontFamily: font.semibold, fontSize: 13, color: delta <= 0 ? colors.signalInk : colors.amber }}>
           {delta === 0 ? "—" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)} lb`}
         </Text>
       </View>

@@ -43,9 +43,9 @@ export function BodyDiagram({
           const used = usage[site.id] ?? 0;
 
           const stroke = isSelected
-            ? colors.signal
+            ? colors.signalInk
             : isRecommended
-              ? colors.signal
+              ? colors.signalInk
               : used > 0
                 ? colors.amber
                 : colors.hairline2;
@@ -56,14 +56,14 @@ export function BodyDiagram({
               <Circle cx={site.x} cy={site.y} r={17} fill="transparent" />
 
               {isSelected && (
-                <Circle cx={site.x} cy={site.y} r={13} fill={colors.signal} opacity={0.18} />
+                <Circle cx={site.x} cy={site.y} r={13} fill={colors.signalInk} opacity={0.18} />
               )}
 
               <Circle
                 cx={site.x}
                 cy={site.y}
                 r={isSelected ? 8.5 : 7}
-                fill={isSelected ? colors.signal : colors.bg}
+                fill={isSelected ? colors.signalInk : colors.bg}
                 stroke={stroke}
                 strokeWidth={isSelected ? 0 : 2}
               />

@@ -40,10 +40,30 @@ model User {
   // history (Checkin.weightKg is the tracked-over-time version of weight).
   weightKg      Float?
   heightCm      Float?
+  // dateOfBirth is the source of truth where it's set; `age` is derived from
+  // it on read. A stored age silently goes stale every birthday, which would
+  // quietly drift the calorie maths — a birth date never does. `age` stays
+  // for accounts that only ever gave a number.
+  dateOfBirth   DateTime?
   age           Int?
   activityLevel ActivityLevel?
   nutritionGoal NutritionGoal?
 
+  // First-run state. A null onboardedAt is what routes a new account into the
+  // survey; tourCompletedAt is separate so someone can finish the survey, bail
+  // out of the tour, and not be sent back through both.
+  onboardedAt         DateTime?
+  tourCompletedAt     DateTime?
+
+  // Self-reported context from onboarding, all editable afterwards. `goals`
+  // uses the same vocabulary the peptide reference is tagged with, so a stated
+  // goal maps straight onto both peptides and nutrient priorities.
+  goals               String[] @default([])
+  medications         String[] @default([])
+  usedPeptidesBefore  Boolean?
+  priorExperienceNote String?
+
+  appOpens       AppOpen[]
   refreshTokens  RefreshToken[]
   stackItems     StackItem[]
   checkins       Checkin[]
@@ -53,6 +73,27 @@ model User {
 
 // Allows logging out of a single device and rotating refresh tokens without
 // invalidating every session — a bare "one secret in the JWT" approach can't do that.
+/*
+One row per day the user opened the app.
+
+A rest day asks nothing of the protocol, so there is no dose to log and
+nothing that could prove the day was kept. Showing up is the only signal
+available, which is why "days on protocol" counts it.
+
+Stored as a date at midnight rather than a timestamp, with a unique
+constraint on the pair, so repeated opens on one day collapse to a single
+row and the streak can't be inflated by relaunching.
+*/
+model AppOpen {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day    DateTime @db.Date
+
+  @@unique([userId, day])
+  @@index([userId])
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
