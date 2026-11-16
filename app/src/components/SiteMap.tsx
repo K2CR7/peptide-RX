@@ -20,18 +20,26 @@ side of a person. A view with no sites in it is not drawn at all: SubQ has
 nothing on the back, and an empty back figure would read as "nothing used
 here" rather than "nothing here to use".
 
-THREE MARKS, separated by shape as well as by weight, per the measured limit
-in theme.ts — amber and red are 2.2 ΔE apart under deuteranopia, so nothing
-in this app may carry state in colour alone:
+TWO MARKS, separated by shape as well as by weight, per the measured limit in
+theme.ts — amber and red are 2.2 ΔE apart under deuteranopia, so nothing in
+this app may carry state in colour alone:
 
-  filled disc    used this week
-  faded ring     where the rotation goes next
+  filled disc    injected today
   hairline dot   a site that exists and is free
 
-The next-site mark is deliberately the weakest of the three. It is a
-suggestion about a dose that has not happened, sitting on a chart of doses
-that have, and drawing it at the same strength as a recorded injection would
-put a prediction and a record in the same ink.
+TODAY, AND NOTHING ABOUT TOMORROW. There was a third mark: a dashed ring on
+the site the rotation put up next. It is gone, and the reason is worth
+keeping. A prediction drawn on a chart of records is a different kind of
+claim wearing the same clothes, and this one was a weak claim — getNextSite
+returns the first site missing from the last full cycle, which is a sensible
+default and not advice. Printing it on a body diagram in the app's own signal
+colour dressed it as a recommendation this app is not in a position to make.
+The picker still opens on that site when you go to log a dose, which is where
+a default belongs: on the control, where you can see it and override it.
+
+The window is today, not the week. A week of marks shows a rotation pattern
+and is the better graphic in the abstract; it is also the Week tab's job.
+This is the Today screen, so the question it answers is what happened today.
 */
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -59,17 +67,13 @@ const VIEWS: BodyView[] = ["front", "back"];
 interface Props {
   /** Every site the current route can use, both views. */
   sites: InjectionSite[];
-  /** How many times each site id was used since Monday. */
-  usedThisWeek: Record<string, number>;
-  /** The site the rotation puts up next, or null for a route with no sites. */
-  nextId: string | null;
-  /** Its human label, for the line under the figures. */
-  nextLabel: string | null;
-  /** Doses pinned to a site since Monday, for the count in the header. */
+  /** How many times each site id was used today. */
+  usedToday: Record<string, number>;
+  /** Doses pinned to a site today, for the count in the header. */
   count: number;
 }
 
-export function SiteMap({ sites, usedThisWeek, nextId, nextLabel, count }: Props) {
+export function SiteMap({ sites, usedToday, count }: Props) {
   /*
     Measured, not assumed.
 
@@ -98,7 +102,7 @@ export function SiteMap({ sites, usedThisWeek, nextId, nextLabel, count }: Props
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
         <Text style={type.label}>Injection sites</Text>
         <Text style={type.metaSm}>
-          {count === 0 ? "none this week" : `${count} this week`}
+          {count === 0 ? "none today" : `${count} today`}
         </Text>
       </View>
 
@@ -125,12 +129,7 @@ export function SiteMap({ sites, usedThisWeek, nextId, nextLabel, count }: Props
                 {sites
                   .filter((s) => s.view === view)
                   .map((site) => (
-                    <SiteMark
-                      key={site.id}
-                      site={site}
-                      used={usedThisWeek[site.id] ?? 0}
-                      isNext={site.id === nextId}
-                    />
+                    <SiteMark key={site.id} site={site} used={usedToday[site.id] ?? 0} />
                   ))}
               </Svg>
 
@@ -148,21 +147,12 @@ export function SiteMap({ sites, usedThisWeek, nextId, nextLabel, count }: Props
         </View>
       )}
 
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          alignItems: "center",
-          columnGap: space.lg,
-          rowGap: space.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.hairline,
-          paddingTop: space.md,
-        }}
-      >
-        <Key kind="used" label="This week" />
-        {nextLabel && <Key kind="next" label={`Next: ${nextLabel}`} />}
-      </View>
+      {/*
+        No legend. There are two marks left and the header has already said
+        which is which — a filled disc against a hairline dot, under the
+        words "2 today", needs no key, and a legend that explains two marks
+        is longer than the thing it explains.
+      */}
     </View>
   );
 }
@@ -176,15 +166,7 @@ export function SiteMap({ sites, usedThisWeek, nextId, nextLabel, count }: Props
   proportions and put the deltoids on the chest and the thigh sites at the
   knees.
 */
-function SiteMark({
-  site,
-  used,
-  isNext,
-}: {
-  site: InjectionSite;
-  used: number;
-  isNext: boolean;
-}) {
+function SiteMark({ site, used }: { site: InjectionSite; used: number }) {
   if (used > 0) {
     return (
       <G>
@@ -198,7 +180,7 @@ function SiteMark({
         <Circle cx={site.x} cy={site.y} r={6.5} fill={colors.signalInk} />
 
         {/*
-          A second dose into the same site in one week is the thing rotation
+          Two doses into the same site on the same day is the thing rotation
           exists to prevent, so it gets a drawn difference rather than a
           darker fill: a ring around the disc, which survives greyscale.
         */}
@@ -216,51 +198,5 @@ function SiteMark({
     );
   }
 
-  if (isNext) {
-    return (
-      <G>
-        <Circle cx={site.x} cy={site.y} r={6.5} fill={colors.signal} opacity={0.3} />
-        <Circle
-          cx={site.x}
-          cy={site.y}
-          r={6.5}
-          fill="none"
-          stroke={colors.signalInk}
-          strokeWidth={1.5}
-          /* Dashed, so "not yet" is in the line itself and not only in the
-             opacity. A faded solid ring is just a quieter version of the
-             same mark; a broken one is a different mark. */
-          strokeDasharray="2.5 2.5"
-          opacity={0.7}
-        />
-      </G>
-    );
-  }
-
   return <Circle cx={site.x} cy={site.y} r={3} fill={colors.hairline2} />;
-}
-
-function Key({ kind, label }: { kind: "used" | "next"; label: string }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-      <Svg width={14} height={14}>
-        {kind === "used" ? (
-          <Circle cx={7} cy={7} r={5} fill={colors.signalInk} />
-        ) : (
-          <Circle
-            cx={7}
-            cy={7}
-            r={5}
-            fill={colors.signal}
-            fillOpacity={0.3}
-            stroke={colors.signalInk}
-            strokeWidth={1.5}
-            strokeDasharray="2.5 2.5"
-            opacity={0.7}
-          />
-        )}
-      </Svg>
-      <Text style={type.meta}>{label}</Text>
-    </View>
-  );
 }

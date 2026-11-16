@@ -21,7 +21,7 @@ import {
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
 import { computeStreak } from "../lib/streak";
-import { mondayOfThisWeek, todayDow } from "../lib/schedule";
+import { todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
 import { TourTarget } from "../components/tour";
@@ -154,23 +154,27 @@ export function HomeScreen() {
     const next = getNextSite(routeKey, rotationHistory(allLogs ?? [], routeKey));
 
     /*
+      Today only. The figure used to carry the week, which is the better
+      rotation picture and is also what the Week tab is for; on this screen
+      the question is what happened today.
+
       Counted against the sites this figure actually draws, for the same
-      reason the history is: a dose into a glute while the map is showing a
-      SubQ route has nowhere to be drawn, and "3 this week" printed over two
-      marks is a header calling its own diagram a liar.
+      reason the history is filtered: a dose into a glute while the map is
+      showing a SubQ route has nowhere to be drawn, and "3 today" printed
+      over two marks is a header calling its own diagram a liar.
     */
     const drawable = new Set(sites.map((s) => s.id));
-    const weekStart = mondayOfThisWeek().setHours(0, 0, 0, 0);
-    const usedThisWeek: Record<string, number> = {};
+    const now = new Date();
+    const usedToday: Record<string, number> = {};
     let count = 0;
     (allLogs ?? []).forEach((log) => {
       if (!log.site || !drawable.has(log.site)) return;
-      if (new Date(log.takenAt).getTime() < weekStart) return;
-      usedThisWeek[log.site] = (usedThisWeek[log.site] ?? 0) + 1;
+      if (!isSameDay(new Date(log.takenAt), now)) return;
+      usedToday[log.site] = (usedToday[log.site] ?? 0) + 1;
       count += 1;
     });
 
-    return { sites, next, usedThisWeek, count };
+    return { sites, next, usedToday, count };
   }, [items, allLogs]);
 
   // Opening the app is what a rest day is counted from, so this fires on
@@ -494,13 +498,7 @@ export function HomeScreen() {
 
         {rotation && (
           <Panel pad={space.lg}>
-            <SiteMap
-              sites={rotation.sites}
-              usedThisWeek={rotation.usedThisWeek}
-              nextId={rotation.next?.id ?? null}
-              nextLabel={rotation.next?.label ?? null}
-              count={rotation.count}
-            />
+            <SiteMap sites={rotation.sites} usedToday={rotation.usedToday} count={rotation.count} />
           </Panel>
         )}
       </ScrollView>
