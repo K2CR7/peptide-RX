@@ -236,29 +236,32 @@ export function CheckinHero({
           <GrainOrb burst={burst} />
 
           {/*
-            Solid, and the app's own teal.
+            The whole orb is the button, so there is no button in it.
 
-            It was a translucent dark pill, which worked when the orb was
-            a dark mass it could sink into. The orb is a pale cloud on a
-            pale page now, so a translucent control has nothing to sit
-            against and reads as a smudge. This is signalInk, the same
-            fill every other primary action in the app uses.
+            This was a pill: a filled, rounded, bordered control sitting
+            in the middle of the orb, which said that the PILL was the
+            target and the orb was decoration behind it. The opposite is
+            true. The Pressable has always been the full 236pt disc, and
+            a control drawn inside a control only tells people to aim for
+            the small one.
+
+            So: the words, and nothing else. No fill, no border, no
+            radius. They are set in signalInk, the same teal the dots are
+            made of, so they read as part of the cloud rather than as
+            something resting on top of it.
           */}
-          <Animated.View
+          <Animated.Text
             style={{
-              paddingHorizontal: 24,
-              paddingVertical: 13,
-              borderRadius: 999,
-              backgroundColor: colors.signalInk,
-
+              fontFamily: font.semibold,
+              fontSize: 17,
+              letterSpacing: 0.3,
+              color: colors.signalInk,
               /* Goes with the particles rather than sitting there as they leave. */
               opacity: burst.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }),
             }}
           >
-            <Text style={{ fontFamily: font.semibold, fontSize: 16, color: "#FFFFFF", letterSpacing: 0.2 }}>
-              Check in
-            </Text>
-          </Animated.View>
+            Check in
+          </Animated.Text>
         </Pressable>
 
         {/*

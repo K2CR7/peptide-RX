@@ -318,6 +318,27 @@ export function GrainOrb({ burst }: { burst?: Animated.Value }) {
         ],
       }}
     >
+      {/*
+        A body behind the dots.
+
+        The cloud on its own is just dots on the page, and a sphere made
+        only of its own surface has nothing inside it: the middle read as
+        a gap rather than as the near face of something solid. This is the
+        volume the dots are the surface OF -- pale at the centre where you
+        are looking through the most of it, gone by the rim where the dots
+        take over and do the describing themselves.
+      */}
+      <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
+        <Defs>
+          <RadialGradient id="orbBody" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={colors.signal} stopOpacity={0.3} />
+            <Stop offset="0.62" stopColor={colors.signal} stopOpacity={0.17} />
+            <Stop offset="1" stopColor={colors.signal} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect width={ORB} height={ORB} fill="url(#orbBody)" />
+      </Svg>
+
       {[
         { src: CLOUD_A, spin: spinA, dir: 1, to: 1.9, op: 1 },
         { src: CLOUD_B, spin: spinB, dir: -1, to: 2.4, op: 0.85 },
@@ -362,46 +383,34 @@ export function GrainOrb({ burst }: { burst?: Animated.Value }) {
 
 export function GrainWash() {
   const { width, height } = useWindowDimensions();
-  const spin = useLoop(44000);
 
-  /* Oversized and hung above the screen: only the bleed reaches the page. */
-  const size = width * 1.9;
+  /*
+    A fade and the particles, and nothing else.
 
+    This used to be the orb's own image blown up to nearly twice the
+    screen width and hung above the top edge so its bleed washed down the
+    page, under a gradient, under a static noise tile. Three layers
+    competing to be the background of a form somebody is trying to type
+    into. The orb does not belong here: it is the thing you pressed to
+    GET here, and repeating it at four times the size behind the
+    questions turns a backdrop into a second subject.
+
+    So: white at the top where the question sits, the app teal at the
+    bottom, and the same dots drifting over it that the orb is made of.
+  */
   return (
     <View style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0 }} pointerEvents="none">
-      <Animated.Image
-        source={FIELD}
-        style={{
-          position: "absolute",
-          width: size,
-          height: size,
-          left: (width - size) / 2,
-          top: -size * 0.54,
-          transform: [{ rotate: spinTo(spin, 360) }],
-        }}
-      />
-
       <Svg width={width} height={height} style={{ position: "absolute" }}>
         <Defs>
           <LinearGradient id="washFade" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={colors.bg} stopOpacity={0.5} />
-            <Stop offset="0.3" stopColor={colors.bg} stopOpacity={0.84} />
-            <Stop offset="0.58" stopColor={colors.bg} stopOpacity={1} />
+            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={1} />
+            <Stop offset="0.42" stopColor={colors.signalFaint} stopOpacity={1} />
+            <Stop offset="1" stopColor={colors.signalDim} stopOpacity={1} />
           </LinearGradient>
         </Defs>
         <Rect width={width} height={height} fill="url(#washFade)" />
       </Svg>
 
-      {/*
-        The flow's only texture, and it moves.
-
-        There was a static noise tile over the whole screen at 0.42 here.
-        That was what anyone actually saw: a still photograph of grain,
-        with a few particles drifting somewhere behind it. No amount of
-        work on the moving layer shows through a still one laid on top at
-        that strength, so the still one is gone and the dust is denser to
-        take its place.
-      */}
       <DustField />
     </View>
   );
