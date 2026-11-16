@@ -66,7 +66,19 @@ export function TodayHero({
           <Text style={type.meta}>{restingToday ? "Off-cycle" : "Nothing scheduled"}</Text>
         </View>
       ) : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: space.xl }}>
+        /*
+          Centred in the panel, with what is outstanding under it rather than
+          beside it.
+
+          It sat left with the text in a column to its right, which is the
+          standard stat-plus-caption row and is wrong for this one: the ring
+          is a circle, so a left-aligned one puts its visual centre about a
+          third of the way across a panel whose every other element is
+          measured from the edges, and the eye reads it as pushed over rather
+          than as placed. A circle is the one shape with nowhere to sit but
+          the middle.
+        */
+        <View style={{ alignItems: "center", gap: space.md }}>
           <View
             style={{ width: RING, height: RING, alignItems: "center", justifyContent: "center" }}
             accessibilityLabel={`${done} of ${due} doses logged today`}
@@ -91,12 +103,12 @@ export function TodayHero({
             </View>
           </View>
 
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ alignItems: "center", gap: 2 }}>
             <Text style={[type.heading, { color: complete ? colors.signalInk : colors.ink }]}>
               {complete ? "All logged" : `${due - done} outstanding`}
             </Text>
             {dueNames.length > 0 && (
-              <Text style={type.meta} numberOfLines={3}>
+              <Text style={[type.meta, { textAlign: "center" }]} numberOfLines={2}>
                 {dueNames.join(", ")}
               </Text>
             )}

@@ -8,9 +8,16 @@ import { SettingsSheet } from "../components/SettingsSheet";
 import { StreakHeader } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
 import { SiteMap } from "../components/SiteMap";
-import { ROUTE_SITES, getNextSite, getRouteKey, siteHistory } from "../lib/injectionSites";
+import { ROUTE_SITES, type RouteKey, getNextSite, getRouteKey } from "../lib/injectionSites";
 import { doseParts, speakDose } from "../lib/dose";
-import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
+import {
+  type InjectionLog,
+  type StackItem,
+  useAppOpens,
+  useInjectionLogs,
+  useLogInjection,
+  useStackItems,
+} from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
 import { computeStreak } from "../lib/streak";
@@ -22,6 +29,35 @@ import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+/*
+  The sites used lately, oldest first, across EVERY peptide.
+
+  This was filtered to one stack item, which gave two injectable peptides two
+  independent rotations: each one walked its own cycle, neither could see the
+  other, and nothing stopped both of them being recommended the same site on
+  the same day. That is the exact thing rotation exists to prevent, and it is
+  worse than no recommendation, because the app was the thing asserting the
+  spot was free. A site is a property of the body; tissue does not care which
+  vial the dose came from.
+
+  Filtered to the ids this route can actually use, which is not cosmetic:
+  getNextSite reads a window the length of the site list and returns the
+  first site missing from it. An id from another route's set can never match
+  a site in this one, so leaving it in spends a slot in that window while
+  excluding nothing, and pushes a real entry out the back of it. A glute from
+  Monday's IM dose would quietly make Monday's abdominal site look free.
+
+  Oral and nasal doses pin nothing and store a null site, so they drop out
+  here without needing to be excluded by route.
+*/
+function rotationHistory(logs: InjectionLog[], routeKey: RouteKey): string[] {
+  const usable = new Set(ROUTE_SITES[routeKey].map((s) => s.id));
+  return [...logs]
+    .sort((a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime())
+    .map((log) => log.site)
+    .filter((site): site is string => site !== null && usable.has(site));
 }
 
 export function HomeScreen() {
@@ -108,20 +144,27 @@ export function HomeScreen() {
     const sites = ROUTE_SITES[routeKey];
     if (sites.length === 0) return null;
 
-    const injectableIds = new Set(injectable.map((i) => i.id));
-    const logs = (allLogs ?? [])
-      .filter((l) => injectableIds.has(l.stackItemId))
-      .sort((a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime());
+    /*
+      Every dose that pinned a site, not just this route's peptides. The
+      picker is handed the same history for the same reason — see
+      rotationHistory above, and note that the two MUST agree: the figure
+      here announces where the rotation goes next, and tapping Log has to
+      open on that site rather than on a second opinion.
+    */
+    const next = getNextSite(routeKey, rotationHistory(allLogs ?? [], routeKey));
 
-    // getNextSite reads the tail of the history, so it has to arrive oldest
-    // first. Handed the reverse it recommends the site just used.
-    const next = getNextSite(routeKey, siteHistory(logs));
-
+    /*
+      Counted against the sites this figure actually draws, for the same
+      reason the history is: a dose into a glute while the map is showing a
+      SubQ route has nowhere to be drawn, and "3 this week" printed over two
+      marks is a header calling its own diagram a liar.
+    */
+    const drawable = new Set(sites.map((s) => s.id));
     const weekStart = mondayOfThisWeek().setHours(0, 0, 0, 0);
     const usedThisWeek: Record<string, number> = {};
     let count = 0;
-    logs.forEach((log) => {
-      if (!log.site) return;
+    (allLogs ?? []).forEach((log) => {
+      if (!log.site || !drawable.has(log.site)) return;
       if (new Date(log.takenAt).getTime() < weekStart) return;
       usedThisWeek[log.site] = (usedThisWeek[log.site] ?? 0) + 1;
       count += 1;
@@ -475,7 +518,7 @@ export function HomeScreen() {
         <InjectionSitePicker
           visible
           route={injectFor.route}
-          history={siteHistory((allLogs ?? []).filter((l) => l.stackItemId === injectFor.id)).reverse()}
+          history={rotationHistory(allLogs ?? [], getRouteKey(injectFor.route))}
           onClose={() => setInjectFor(null)}
           onConfirm={(site) => {
             // site is null for oral and nasal routes — there is nowhere to pin,

@@ -28,7 +28,15 @@ const STEP_ICONS: Record<StepMark, (p: { size?: number; color: string }) => Reac
 interface Props {
   visible: boolean;
   route: string | null;
-  history: string[]; // recent site ids used for this stack item, most-recent last
+  /*
+    Recent site ids, oldest first, across EVERY peptide that pins a site —
+    not just the one being logged. This said "for this stack item" and was
+    passed that way, which gave each peptide its own private rotation: two
+    SubQ items could both be told the same site was free on the same day,
+    and the usage marks below would not warn about it either, because they
+    are counted from this same list. Tissue does not care which vial it was.
+  */
+  history: string[];
   onClose: () => void;
   onConfirm: (site: string | null) => void;
 }
