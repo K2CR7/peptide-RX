@@ -36,8 +36,9 @@ What does NOT carry over is the reference's streak pill. The app already
 counts days on protocol, and a second count, on a second screen, measuring a
 second thing, is how an instrument turns into a game.
 */
-import { Pressable, Text, View } from "react-native";
-import { GrainOrb, ORB } from "./grain";
+import { useCallback, useRef } from "react";
+import { Animated, Easing, Pressable, Text, View } from "react-native";
+import { Dust, GrainOrb, ORB, ORB_BOX } from "./grain";
 import {
   CADENCE_SHORT,
   DEFAULT_CADENCE,
@@ -93,6 +94,40 @@ export function CheckinHero({
 }) {
   const week = weekDates(now);
   const todayKey = new Date(now).setHours(0, 0, 0, 0);
+
+  /*
+    The scatter.
+
+    One value for every particle, read through a different interpolation
+    each. The flow is opened part-way through rather than after: waiting
+    for the particles to land would make the press feel like it did
+    nothing for half a second, and opening on touch would throw the
+    scatter away behind the sheet before any of it was visible. 170ms in,
+    the particles are well clear of the rim and the modal fades up over
+    what is left.
+
+    It is reset once the sheet is covering the screen, so coming back finds
+    the orb whole. Resetting on close instead would snap the particles home
+    in full view.
+  */
+  const burst = useRef(new Animated.Value(0)).current;
+
+  const press = useCallback(() => {
+    burst.setValue(0);
+    Animated.timing(burst, {
+      toValue: 1,
+      duration: 620,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    const open = setTimeout(onCheckIn, 170);
+    const reset = setTimeout(() => burst.setValue(0), 900);
+    return () => {
+      clearTimeout(open);
+      clearTimeout(reset);
+    };
+  }, [burst, onCheckIn]);
 
   return (
     <View style={{ gap: space.xl, alignItems: "center" }}>
@@ -169,53 +204,69 @@ export function CheckinHero({
 
       {/* -------------------------------------------------------------- orb */}
       {/*
-        The whole orb is the control, not a button sitting inside one. The
-        hit area is the full 236 points rather than the 66pt disc the old
-        layout gave it, which is three times the target for the one thing
-        this screen exists to do.
+        A box wider than the orb, and this one does not clip.
+
+        The orb itself has to clip, because the colour field inside it is
+        oversized and rotating and would otherwise spill out as a turning
+        diamond. But particles that clip cannot scatter: they reach the rim
+        and vanish. So the clip stops at the circle, and the particle layer
+        is a sibling of it inside this larger box, free to travel OUT points
+        past the edge before it fades.
       */}
-      <Pressable
-        onPress={onCheckIn}
-        accessibilityRole="button"
-        accessibilityLabel="Add a check-in"
-        style={({ pressed }) => ({
-          width: ORB,
-          height: ORB,
+      <View
+        style={{
+          width: ORB_BOX,
+          height: ORB_BOX,
           alignItems: "center",
           justifyContent: "center",
-          /*
-            The field is oversized and rotating, so without this it spills
-            past the orb as a turning diamond. Clipping to the square is
-            enough: everything outside the inscribed circle is solid page
-            colour by the time the feather is drawn over it.
-          */
-          overflow: "hidden",
-          transform: [{ scale: pressed ? 0.985 : 1 }],
-        })}
+        }}
       >
-        <GrainOrb />
+        <Pressable
+          onPress={press}
+          accessibilityRole="button"
+          accessibilityLabel="Add a check-in"
+          style={({ pressed }) => ({
+            width: ORB,
+            height: ORB,
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            transform: [{ scale: pressed ? 0.985 : 1 }],
+          })}
+        >
+          <GrainOrb />
+
+          {/*
+            Sat on the orb rather than punched through it. The old button
+            was a white disc with a hairline, which read as a control
+            dropped on top of a picture. This one is the colour of what is
+            behind it, only darker, so it belongs to the thing it sits on.
+          */}
+          <Animated.View
+            style={{
+              paddingHorizontal: 24,
+              paddingVertical: 13,
+              borderRadius: 999,
+              backgroundColor: "rgba(10,38,41,0.34)",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.28)",
+              /* Goes with the particles rather than sitting there as they leave. */
+              opacity: burst.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }),
+            }}
+          >
+            <Text style={{ fontFamily: font.semibold, fontSize: 16, color: "#FFFFFF", letterSpacing: 0.2 }}>
+              Check in
+            </Text>
+          </Animated.View>
+        </Pressable>
 
         {/*
-          Sat on the orb rather than punched through it. The old button was
-          a white disc with a hairline, which read as a control dropped on
-          top of a picture. This one is the colour of what is behind it,
-          only darker, so it belongs to the thing it sits on.
+          On top of the orb and outside its clip. Pointer events are off, so
+          the 236pt target underneath is unaffected by the layer covering
+          it.
         */}
-        <View
-          style={{
-            paddingHorizontal: 24,
-            paddingVertical: 13,
-            borderRadius: 999,
-            backgroundColor: "rgba(10,38,41,0.34)",
-            borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.28)",
-          }}
-        >
-          <Text style={{ fontFamily: font.semibold, fontSize: 16, color: "#FFFFFF", letterSpacing: 0.2 }}>
-            Check in
-          </Text>
-        </View>
-      </Pressable>
+        <Dust size={ORB} burst={burst} />
+      </View>
     </View>
   );
 }

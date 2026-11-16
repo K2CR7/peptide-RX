@@ -106,7 +106,10 @@ export function CheckinScreen() {
 */
 function AddCheckinModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    /* Fade, not slide: the orb scatters its particles and the flow comes
+       up through them. A sheet sliding in from the bottom edge is a second,
+       unrelated gesture crossing the first. */
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose}>
       <PhoneModalFrame backgroundColor={colors.bg}>
         {visible && <CheckinFlow key={String(visible)} onClose={onClose} />}
       </PhoneModalFrame>
