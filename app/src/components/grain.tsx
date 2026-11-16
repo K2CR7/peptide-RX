@@ -48,6 +48,8 @@ import { colors } from "../theme";
 
 export const FIELD = require("../../assets/checkin-field.png");
 export const GRAIN = require("../../assets/checkin-grain.png");
+export const CLOUD_A = require("../../assets/checkin-cloud-a.png");
+export const CLOUD_B = require("../../assets/checkin-cloud-b.png");
 /* The noise tile is 128px square; the drift covers exactly one per lap. */
 const GRAIN_TILE = 128;
 
@@ -271,96 +273,90 @@ function DustLayer({
   logo is, which is the only reason a disc of colour is allowable on a
   screen in a medical record at all.
 */
-export function GrainOrb() {
-  const spin = useLoop(62000);
+export function GrainOrb({ burst }: { burst?: Animated.Value }) {
+  const spinA = useLoop(54000);
+  const spinB = useLoop(79000);
   const breathe = useLoop(11000, Easing.inOut(Easing.sin));
-  const drift = useLoop(26000);
+
+  /*
+    The orb is a POINT CLOUD, which is what the reference actually is: a
+    form drawn as thousands of discrete dots with the background showing
+    through between them, not a mass with a texture over it. The dots
+    crowd at the silhouette because points spread evenly over a sphere
+    SURFACE project to a disc whose density goes as 1/sqrt(1 - r^2) --
+    near the edge the surface is almost end-on to the viewer, so a lot of
+    it lands in very little screen area. See mkcloud.js.
+
+    Two plates at different rates and directions, because one turning on
+    its own reads as a rigid object spinning; two sliding against each
+    other read as dots moving over a form, which is what the reference
+    does.
+
+    No feather here any more. The feather existed to fade a soft mass into
+    the page, and fading the rim of this would erase the exact thing that
+    makes it a sphere.
+  */
+  const scatter = (to: number) =>
+    burst
+      ? { transform: [{ scale: burst.interpolate({ inputRange: [0, 1], outputRange: [1, to] }) }] }
+      : null;
 
   return (
-    <>
-      {/*
-        ONE image, turning.
-
-        There were two counter-rotating copies of the field here, the
-        second at 0.55, from back when the field was a smooth colour wash
-        and one copy turning was invisible. The field is grainy now, so a
-        single slow turn is plainly visible: every speck at radius r
-        travels a circle of radius r, which is the particle movement the
-        whole thing was for. Two grainy copies crossing each other just
-        averaged back into a smooth one.
-      */}
-      <Animated.View
-        style={{
-          position: "absolute",
-          width: ORB,
-          height: ORB,
-          transform: [
-            {
-              /* 0 -> 1 -> 0, so the swell returns without a seam. */
-              scale: breathe.interpolate({
-                inputRange: [0, 0.5, 1],
-                outputRange: [OVERFILL, OVERFILL + 0.12, OVERFILL],
-              }),
-            },
-          ],
-        }}
-      >
-        <Animated.Image
-          source={FIELD}
-          style={{
-            position: "absolute",
-            width: ORB,
-            height: ORB,
-            transform: [{ rotate: spinTo(spin, 360) }],
-          }}
-        />
-      </Animated.View>
-
-      {/*
-        A second speckle, drifting across the first.
-
-        The baked grain turns with the image, so near the middle it barely
-        moves: a circle of radius zero is a point. This slides the whole
-        way across instead, which gives the centre something to do, and
-        running it against the rotation keeps the two from ever agreeing.
-
-        Pure per-pixel noise tiles seamlessly on its own -- there is no
-        structure in it to line up -- so the drift only has to cover one
-        tile per lap for the wrap to be invisible.
-      */}
-      <Animated.Image
-        source={GRAIN}
-        resizeMode="repeat"
-        style={{
-          position: "absolute",
-          width: ORB,
-          height: ORB,
-          opacity: 0.3,
-          transform: [
-            { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, GRAIN_TILE] }) },
-            { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -GRAIN_TILE] }) },
-          ],
-        }}
-      />
-
-      <Svg width={ORB} height={ORB} style={{ position: "absolute" }} pointerEvents="none">
-        <Defs>
-          <RadialGradient id="orbFeather" cx="50%" cy="50%" r="50%">
-            {/* These stops are mirrored in mkorb.js, which fades the burst
-                particles on the same curve. Change both or neither. */}
-            <Stop offset="0.66" stopColor={colors.bg} stopOpacity={0} />
-            <Stop offset="0.87" stopColor={colors.bg} stopOpacity={0.5} />
-            <Stop offset="1" stopColor={colors.bg} stopOpacity={1} />
-          </RadialGradient>
-        </Defs>
-        {/*
-          A square filled with a radial gradient, not a circle: everything
-          past the inscribed circle, the four corners included, takes the
-          last stop and so is solid page colour.
-        */}
-        <Rect width={ORB} height={ORB} fill="url(#orbFeather)" />
-      </Svg>
-    </>
+    <Animated.View
+      style={{
+        position: "absolute",
+        width: ORB,
+        height: ORB,
+        transform: [
+          {
+            /* 0 -> 1 -> 0, so the swell returns without a seam. */
+            scale: breathe.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [1, 1.035, 1],
+            }),
+          },
+        ],
+      }}
+    >
+      {[
+        { src: CLOUD_A, spin: spinA, dir: 1, to: 1.9, op: 1 },
+        { src: CLOUD_B, spin: spinB, dir: -1, to: 2.4, op: 0.85 },
+      ].map((layer, i) => (
+        /*
+          Nested, one Animated.Value per node. Two values in one
+          transform array is legal on the native driver, but
+          react-native-web compiles a node transform into a SINGLE web
+          animation and the second one to start claims it, silently
+          freezing the first. Composition has to come from nesting.
+        */
+        <Animated.View
+          key={i}
+          style={[
+            { position: "absolute", width: ORB, height: ORB },
+            scatter(layer.to),
+            burst
+              ? {
+                  opacity: burst.interpolate({
+                    inputRange: [0, 0.75],
+                    outputRange: [layer.op, 0],
+                    extrapolate: "clamp",
+                  }),
+                }
+              : { opacity: layer.op },
+          ]}
+        >
+          <Animated.Image
+            source={layer.src}
+            style={{
+              position: "absolute",
+              width: ORB,
+              height: ORB,
+              transform: [{ rotate: spinTo(layer.spin, 360 * layer.dir) }],
+            }}
+          />
+        </Animated.View>
+      ))}
+    </Animated.View>
   );
 }
 

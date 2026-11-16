@@ -38,7 +38,7 @@ second thing, is how an instrument turns into a game.
 */
 import { useCallback, useRef } from "react";
 import { Animated, Easing, Pressable, Text, View } from "react-native";
-import { Dust, GrainOrb, ORB, ORB_BOX } from "./grain";
+import { GrainOrb, ORB, ORB_BOX } from "./grain";
 import {
   CADENCE_SHORT,
   DEFAULT_CADENCE,
@@ -230,26 +230,27 @@ export function CheckinHero({
             height: ORB,
             alignItems: "center",
             justifyContent: "center",
-            overflow: "hidden",
             transform: [{ scale: pressed ? 0.985 : 1 }],
           })}
         >
-          <GrainOrb />
+          <GrainOrb burst={burst} />
 
           {/*
-            Sat on the orb rather than punched through it. The old button
-            was a white disc with a hairline, which read as a control
-            dropped on top of a picture. This one is the colour of what is
-            behind it, only darker, so it belongs to the thing it sits on.
+            Solid, and the app's own teal.
+
+            It was a translucent dark pill, which worked when the orb was
+            a dark mass it could sink into. The orb is a pale cloud on a
+            pale page now, so a translucent control has nothing to sit
+            against and reads as a smudge. This is signalInk, the same
+            fill every other primary action in the app uses.
           */}
           <Animated.View
             style={{
               paddingHorizontal: 24,
               paddingVertical: 13,
               borderRadius: 999,
-              backgroundColor: "rgba(10,38,41,0.46)",
-              borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.22)",
+              backgroundColor: colors.signalInk,
+
               /* Goes with the particles rather than sitting there as they leave. */
               opacity: burst.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }),
             }}
@@ -261,11 +262,12 @@ export function CheckinHero({
         </Pressable>
 
         {/*
-          On top of the orb and outside its clip. Pointer events are off, so
-          the 236pt target underneath is unaffected by the layer covering
-          it.
+          There is no separate particle layer any more. There used to be
+          three plates of dust thrown over the top of a solid orb, because
+          a solid orb has nothing of its own to scatter. The orb IS
+          particles now, so the burst scales the cloud itself and what
+          flies apart is the thing you were looking at.
         */}
-        <Dust size={ORB} burst={burst} />
       </View>
     </View>
   );
