@@ -1,58 +1,61 @@
 /*
-The grain, and the particles made of it.
+The orb, and the dust the check-in flow sits on.
 
-Two files and a particle system, shared by the orb on the Progress screen
-and by the check-in flow that orb opens.
+  checkin-cloud-a.png   19000 dots on a sphere surface
+  checkin-cloud-b.png   11000 more, in a thicker shell
+  checkin-word.png      "Check in" as a point cloud
+  checkin-dust-tile.png a seamless tile of the same dots, for the flow
 
-  checkin-field.png   a generated colour field, box-downsampled to 256px
-  checkin-grain.png   a 128px tile of neutral noise
+THE ORB IS A POINT CLOUD, which is the one thing that took all day to
+arrive at. Earlier versions were a solid mass with something applied over
+it: a colour field with a noise tile on top, then particle plates on top
+of that, then a generated grainy gradient. All of them were wrong in the
+same way. The reference has no mass at all -- the background shows
+through everywhere and the form exists only in where the dots are.
 
-They are separate on purpose. Grain baked into a 1024px render is averaged
-into a smooth blur the moment that image is drawn at 236 points, so the
-colour comes from the file and the texture is laid on top at display
-resolution, where a speck stays a speck at any size.
-
-The static tile is the floor, not the effect. On its own it is a texture
-printed on a still image, and a printed texture does not read as animation
-no matter how slowly the colour behind it turns. The movement comes from
-the particles: a hundred-odd dots drifting on their own small closed paths
-over the colour, and flung outward when the orb is pressed.
+DENSITY AT THE RIM IS THE WHOLE EFFECT, and it is geometry rather than
+styling. Points spread evenly over a sphere SURFACE project to a disc
+whose density goes as 1/sqrt(1 - r^2), because near the silhouette the
+surface is almost end-on to the viewer and a lot of it lands in very
+little screen area. Fading the rim, which is the instinct, destroys the
+one cue that makes it read as a sphere. See mkcloud.js for the placement.
 
 THE RULES, each of which cost something to learn:
 
-  One animated value per node. Driving two Animated.Values through a single
-  transform array is legal on the native driver and silently freezes one of
-  them on react-native-web, which compiles a node's transform into one Web
-  Animation: the second loop to start claims it. A particle needs both a
-  drift and a burst, so it is two nested nodes with one value each, never
-  one node with two.
+  One animated value per node. Driving two Animated.Values through a
+  single transform array is legal on the native driver and silently
+  freezes one of them on react-native-web, which compiles a node's
+  transform into one Web Animation: the second animation to start claims
+  it. Composition comes from nesting, never from stacking values on one
+  node.
 
-  One value, many nodes, is fine and is how this stays cheap. Every
-  particle reads the same drift clock and the same burst value; what makes
-  them independent is the interpolation, not the value. A hundred
-  Animated.Values would be a hundred animations to keep in step.
+  One value, many nodes, is fine and is how this stays cheap. What makes
+  two layers independent is the interpolation, not the value.
 
-  A drift path has to close. The clock runs 0 to 1 and repeats, so a path
-  whose last point is not its first jumps on every lap. These are circles
-  sampled at eight points, which start and end at the same phase.
+  Do not animate particles individually. An earlier version gave every
+  particle its own pair of Animated.Views: 680 animated nodes, measured at
+  1.2fps against 61 with them gone. A multi-point interpolation on a
+  transform does not take the native path on react-native-web, so every
+  node was restyled from JavaScript on every frame. The particles are
+  baked into plates and the plates are what move.
 
-  The burst has to escape its container. The orb clips to a circle, so the
-  particle layer is a sibling of that circle inside a larger unclipped box,
-  not a child of it. Clipped particles do not scatter; they vanish at the
-  rim.
+  The burst has to escape. The orb's box is larger than the orb and does
+  not clip, so the cloud can scale past where the sphere ended. A clipped
+  particle does not scatter, it vanishes at the rim.
+
+  Scope every measurement to the node you changed. Two readings in this
+  file's history were wrong rather than the code: one read a parked node
+  from a still-mounted tab, the other read react-native-web's own wrapper
+  div instead of the animated element inside it.
 */
-import { useEffect, useMemo, useRef } from "react";
-import { Animated, Easing, Image, View, useWindowDimensions } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, View, useWindowDimensions } from "react-native";
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
 import { colors } from "../theme";
 
-export const FIELD = require("../../assets/checkin-field.png");
-export const GRAIN = require("../../assets/checkin-grain.png");
 export const CHECK_WORD = require("../../assets/checkin-word.png");
 export const CLOUD_A = require("../../assets/checkin-cloud-a.png");
 export const CLOUD_B = require("../../assets/checkin-cloud-b.png");
-/* The noise tile is 128px square; the drift covers exactly one per lap. */
-const GRAIN_TILE = 128;
 
 export const ORB = 236;
 
@@ -60,8 +63,6 @@ export const ORB = 236;
 export const OUT = 70;
 export const ORB_BOX = ORB + OUT * 2;
 
-/* Past root-two (1.414), so a corner can never reach the visible circle. */
-const OVERFILL = 1.46;
 
 /** A value that runs 0 to 1 forever. One of these per animated node. */
 export function useLoop(duration: number, easing: (t: number) => number = Easing.linear) {
@@ -83,27 +84,9 @@ export const spinTo = (v: Animated.Value, deg: number) =>
 
 /* ------------------------------------------------------------- particles */
 
-const DUST = [
-  require("../../assets/checkin-dust-a.png"),
-  require("../../assets/checkin-dust-b.png"),
-  require("../../assets/checkin-dust-c.png"),
-];
 const DUST_TILE = require("../../assets/checkin-dust-tile.png");
 const TILE = 512;
 
-/*
-  Turn rates in ms per revolution, alternating sign, none of them a
-  multiple of another so the layers never line back up.
-
-  Three plates of the same material at falling opacity, rather than three
-  equal ones: stacked at full strength they sum to a haze. The one in
-  front carries the dust you read, the two behind it carry the movement.
-*/
-const DRIFT = [
-  { ms: 23000, dir: 1, burst: 1.95, op: 0.78 },
-  { ms: 31000, dir: -1, burst: 2.35, op: 0.6 },
-  { ms: 41000, dir: 1, burst: 1.65, op: 0.42 },
-];
 
 /*
   A swarm, in three layers.
@@ -124,49 +107,6 @@ const DRIFT = [
   to how far out it already was.
 
   Six animated nodes instead of six hundred and eighty.
-*/
-export function Dust({
-  size,
-  burst,
-}: {
-  size: number;
-  /** 0 at rest, 1 fully scattered. Omit for a field that only drifts. */
-  burst?: Animated.Value;
-}) {
-  return (
-    /*
-      Centred on its parent rather than pinned to its corner, because the
-      burst scales from the middle and the middle has to be the orb's. The
-      sheet is the size of the thing at rest; the box around it is bigger,
-      and unclipped, which is what lets the scatter leave.
-    */
-    <View
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "50%",
-        width: size,
-        height: size,
-        marginLeft: -size / 2,
-        marginTop: -size / 2,
-      }}
-      pointerEvents="none"
-    >
-      {DRIFT.map((layer, i) => (
-        <DustLayer
-          key={i}
-          source={DUST[i]}
-          size={size}
-          ms={layer.ms}
-          dir={layer.dir}
-          to={layer.burst}
-          op={layer.op}
-          burst={burst}
-        />
-      ))}
-    </View>
-  );
-}
 
 /*
   The same dust across a whole page, which is a different problem.
@@ -206,58 +146,6 @@ export function DustField() {
   );
 }
 
-function DustLayer({
-  source,
-  size,
-  ms,
-  dir,
-  to,
-  op,
-  burst,
-}: {
-  source: number;
-  size: number;
-  ms: number;
-  dir: number;
-  to: number;
-  op: number;
-  burst?: Animated.Value;
-}) {
-  const spin = useLoop(ms);
-
-  /*
-    Outer node carries the burst, inner node the drift. One animated value
-    per node: two values sharing a node's transform array is legal on the
-    native driver and silently freezes one of them on react-native-web,
-    which compiles a node's transform into a single Web Animation.
-  */
-  return (
-    <Animated.View
-      style={{
-        position: "absolute",
-        width: size,
-        height: size,
-        opacity: burst
-          ? burst.interpolate({ inputRange: [0, 0.25, 1], outputRange: [1, 0.8, 0] })
-          : 1,
-        transform: burst
-          ? [{ scale: burst.interpolate({ inputRange: [0, 1], outputRange: [1, to] }) }]
-          : [],
-      }}
-    >
-      <Animated.Image
-        source={source}
-        style={{
-          position: "absolute",
-          width: size,
-          height: size,
-          opacity: op,
-          transform: [{ rotate: spinTo(spin, 360 * dir) }],
-        }}
-      />
-    </Animated.View>
-  );
-}
 
 /* ------------------------------------------------------------------- orb */
 
