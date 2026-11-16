@@ -6,6 +6,8 @@ import { mondayOfThisWeek, todayDow, weekDates } from "../lib/schedule";
 import { formatDose } from "../lib/dose";
 import { useInjectionLogs, useStackItems } from "../lib/queries";
 import { AsyncBlock, Panel } from "../components/primitives";
+import { ProtocolMatrix } from "../components/ProtocolMatrix";
+import { buildMatrix } from "../lib/lanes";
 import { TourTarget } from "../components/tour";
 import { colors, font, panel, type, space } from "../theme";
 
@@ -109,6 +111,22 @@ export function ScheduleScreen() {
   */
   const [gridW, setGridW] = useState(0);
   const cellW = gridW > 0 ? (gridW - NAME_COL) / 7 : 0;
+
+  /*
+    Three weeks, under this week, on the tab whose subject is the schedule.
+
+    It was on Today, where it was the second-largest graphic on a screen
+    about one day — and it was the same encoding as the grid above, at a
+    different window length, on a different tab. Two charts of the same thing
+    in two places is one chart too many; the one with the longer window
+    belongs next to the shorter one, where the comparison is free.
+
+    Three weeks, not four. The window is set by how big a cell can be and
+    still be a cell: 28 columns across a phone is 10px each, which renders as
+    a texture rather than as marks you can count. See the geometry note in
+    ProtocolMatrix.
+  */
+  const matrix = useMemo(() => buildMatrix(rows, allLogs ?? [], 21), [rows, allLogs]);
 
   return (
     <ScrollView
@@ -278,6 +296,14 @@ export function ScheduleScreen() {
         <LegendItem state="scheduled" label="Upcoming" />
         <LegendItem state="none" label="Off day" />
       </View>
+
+      {matrix.lanes.length > 0 && (
+        <View style={{ marginTop: space.xxl }}>
+          <Panel pad={space.lg}>
+            <ProtocolMatrix matrix={matrix} />
+          </Panel>
+        </View>
+      )}
     </ScrollView>
   );
 }

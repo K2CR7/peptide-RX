@@ -1,5 +1,17 @@
 /*
-A small gauge, not a hero.
+The dose gauge.
+
+Back at hero size, 128px with the ratio printed inside it, which is what the
+Today screen asks for and what the tour already calls it. What it is NOT is
+the thing described below, and the difference is worth keeping written down:
+no colour ramp on the arc, no one-word verdict under the figure, and the
+number in the middle is a count of doses rather than a score out of a
+hundred. The arc is how far round the day has got; the reading is the pair
+of integers, and it is legible without the arc.
+
+The two bugs noted below were found while this was demoted to 56px beside
+the adherence ratio. They are fixed here, which is why the component
+survived the demotion instead of being redrawn when the ring came back.
 
 This used to be a 190px ring with a 52px numeral inside it and a one-word
 verdict underneath — which is, structurally, a wearable's "recovery score":

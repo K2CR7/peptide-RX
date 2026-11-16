@@ -5,17 +5,16 @@ import { TodayHero } from "../components/TodayHero";
 import { ChevronRight, GearIcon, MarkLogged, SparkIcon } from "../components/icons";
 import { AssistantSheet } from "../components/AssistantSheet";
 import { SettingsSheet } from "../components/SettingsSheet";
-import { StreakCard } from "../components/StreakCard";
+import { StreakHeader } from "../components/StreakCard";
 import { InjectionSitePicker } from "../components/InjectionSitePicker";
-import { getNextSite, getRouteKey, siteHistory, siteLabel } from "../lib/injectionSites";
+import { SiteMap } from "../components/SiteMap";
+import { ROUTE_SITES, getNextSite, getRouteKey, siteHistory } from "../lib/injectionSites";
 import { doseParts, speakDose } from "../lib/dose";
-import { ProtocolMatrix } from "../components/ProtocolMatrix";
-import { buildMatrix } from "../lib/lanes";
 import { type StackItem, useAppOpens, useInjectionLogs, useLogInjection, useStackItems } from "../lib/queries";
 import { type CycleState, cycleState, describeCycle, describeRemaining } from "../lib/cycle";
 import { computeAdherence } from "../lib/adherence";
 import { computeStreak } from "../lib/streak";
-import { todayDow } from "../lib/schedule";
+import { mondayOfThisWeek, todayDow } from "../lib/schedule";
 import { useAuthStore } from "../store/authStore";
 import { AsyncBlock, ErrorText, Panel, SectionLabel } from "../components/primitives";
 import { TourTarget } from "../components/tour";
@@ -23,15 +22,6 @@ import { colors, font, panel, radii, space, type } from "../theme";
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function relativeDay(iso: string): string {
-  const then = new Date(iso);
-  const now = new Date();
-  if (isSameDay(then, now)) return "Today";
-  const days = Math.round((now.setHours(0, 0, 0, 0) - new Date(iso).setHours(0, 0, 0, 0)) / 86400000);
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
 }
 
 export function HomeScreen() {
@@ -91,20 +81,53 @@ export function HomeScreen() {
     return Math.max(1, Math.floor((Date.now() - earliest) / (24 * 3600 * 1000)) + 1);
   }, [items]);
 
-  // Rotation is the product's core differentiator, so the readout carries it:
-  // where the last few injections landed, and which site is up next.
+  /*
+    Rotation is the product's core differentiator, so the readout carries it:
+    where this week's injections landed on the body, and which site is next.
+
+    The window is Monday to now, which is the same week the Week tab draws.
+    A rolling seven days would be defensible and is worse here, because it
+    puts a boundary in the middle of the grid the user just looked at: a dose
+    could be inside this panel's window and outside that one's.
+
+    The site LIST comes from the first injectable item's route rather than
+    from the union of every route in the stack. A stack running one SubQ and
+    one IM peptide genuinely has two rotations over two different site sets,
+    and overlaying them would draw abdominal sites and glutes on one figure
+    as though they were one cycle. One route, drawn correctly, beats two
+    merged into a diagram that is true of neither.
+  */
   const rotation = useMemo(() => {
     const injectable = (items ?? []).filter((i) => {
       const key = getRouteKey(i.route);
       return key !== "Oral" && key !== "Nasal spray";
     });
     if (injectable.length === 0) return null;
+
     const routeKey = getRouteKey(injectable[0].route);
+    const sites = ROUTE_SITES[routeKey];
+    if (sites.length === 0) return null;
+
     const injectableIds = new Set(injectable.map((i) => i.id));
-    const logs = (allLogs ?? []).filter((l) => injectableIds.has(l.stackItemId));
-    const recent = [...logs].sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime());
-    const next = getNextSite(routeKey, siteHistory([...recent].reverse()));
-    return { next, recent: recent.slice(0, 3) };
+    const logs = (allLogs ?? [])
+      .filter((l) => injectableIds.has(l.stackItemId))
+      .sort((a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime());
+
+    // getNextSite reads the tail of the history, so it has to arrive oldest
+    // first. Handed the reverse it recommends the site just used.
+    const next = getNextSite(routeKey, siteHistory(logs));
+
+    const weekStart = mondayOfThisWeek().setHours(0, 0, 0, 0);
+    const usedThisWeek: Record<string, number> = {};
+    let count = 0;
+    logs.forEach((log) => {
+      if (!log.site) return;
+      if (new Date(log.takenAt).getTime() < weekStart) return;
+      usedThisWeek[log.site] = (usedThisWeek[log.site] ?? 0) + 1;
+      count += 1;
+    });
+
+    return { sites, next, usedThisWeek, count };
   }, [items, allLogs]);
 
   // Opening the app is what a rest day is counted from, so this fires on
@@ -114,15 +137,6 @@ export function HomeScreen() {
   const streak = useMemo(
     () => computeStreak(items ?? [], allLogs ?? [], openDays ?? []),
     [items, allLogs, openDays],
-  );
-
-  const matrix = useMemo(
-    // Three weeks, not four. The window is set by how big a cell can be
-    // and still be a cell: 28 columns across a phone is 10px each, which
-    // renders as a texture rather than as marks you can count. See the
-    // geometry note in ProtocolMatrix.
-    () => buildMatrix(items ?? [], allLogs ?? [], 21),
-    [items, allLogs],
   );
 
   const adherence = useMemo(
@@ -174,7 +188,25 @@ export function HomeScreen() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: insets.top + 20, paddingBottom: 32, gap: 20 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={type.title}>Today</Text>
+            {/*
+              The corner carries the streak, not the word "Today".
+
+              A tab title restating the tab you just tapped is the one thing
+              on a screen guaranteed to tell the reader nothing, and it was
+              sitting in the position that costs the most to spend: first
+              thing, top left, where the eye lands before it has decided
+              where to look. The run of days goes there instead and the date
+              drops to the line underneath, which is where a date belongs.
+
+              With an empty stack the streak is 0, and "0 days on protocol"
+              as the first thing in a new account reads as a scolding before
+              anything has been asked of the user. That case keeps the title.
+            */}
+            {(items?.length ?? 0) > 0 ? (
+              <StreakHeader streak={streak} settled={allLogs !== undefined && openDays !== undefined} />
+            ) : (
+              <Text style={type.title}>Today</Text>
+            )}
             <Text style={[type.meta, { marginTop: 4 }]}>{dateStamp} · Day {dayCount}</Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
@@ -228,20 +260,13 @@ export function HomeScreen() {
         </TourTarget>
 
         {/*
-          In a panel, like everything else that holds data.
-
-          This sat directly on the page ground on the theory that occupying
-          the ground made it the heaviest thing on screen. It did the
-          opposite: with no edge to sit inside, three rows of small outlined
-          cells read as texture drifting under the header rather than as a
-          chart. Weight comes from containment and cell size, not from the
-          absence of a border.
+          The three-week matrix used to sit here, between the ring and the
+          dose list. It has moved to the Week tab, which is the screen whose
+          whole subject is the schedule drawn as a grid — the two were the
+          same graphic at two window lengths on two tabs, and the longer one
+          was pushing the thing you came to this screen to do below the fold.
+          Today is for today.
         */}
-        {matrix.lanes.length > 0 && (
-          <Panel pad={space.lg}>
-            <ProtocolMatrix matrix={matrix} />
-          </Panel>
-        )}
 
         <View style={{ gap: space.md }}>
           <SectionLabel>Due today</SectionLabel>
@@ -364,13 +389,6 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/* Days on protocol, in place of the old consistency percentage.
-            A percentage reports on the past; a run of days is something
-            you would rather not break. Same data, pointed forward. */}
-        {(items?.length ?? 0) > 0 && (
-          <StreakCard streak={streak} settled={allLogs !== undefined && openDays !== undefined} />
-        )}
-
         {cycles.length > 0 && (
           <View style={{ gap: 12 }}>
             <Text style={type.label}>Cycles</Text>
@@ -431,30 +449,16 @@ export function HomeScreen() {
           </View>
         )}
 
-        {rotation?.next && (
-          <View style={{ gap: 12 }}>
-            <Text style={type.label}>Site rotation</Text>
-            <View style={[panel, { padding: 16 }]}>
-              <Text style={type.meta}>Next site</Text>
-              <Text style={[type.heading, { color: colors.signalInk, marginTop: 3 }]}>
-                {rotation.next.label}
-              </Text>
-
-              {rotation.recent.length > 0 && (
-                <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.hairline, paddingTop: 12, gap: 8 }}>
-                  {rotation.recent.filter((l) => l.site).map((log) => (
-                    <View key={log.id} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.ink3 }} />
-                        <Text style={type.bodySm}>{siteLabel(log.site!)}</Text>
-                      </View>
-                      <Text style={type.meta}>{relativeDay(log.takenAt)}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
+        {rotation && (
+          <Panel pad={space.lg}>
+            <SiteMap
+              sites={rotation.sites}
+              usedThisWeek={rotation.usedThisWeek}
+              nextId={rotation.next?.id ?? null}
+              nextLabel={rotation.next?.label ?? null}
+              count={rotation.count}
+            />
+          </Panel>
         )}
       </ScrollView>
 
