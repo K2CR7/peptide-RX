@@ -69,7 +69,14 @@ State is always **a drawn mark plus colour**, never hue alone — see the
 
 ## Type
 
-Barlow for the UI voice, Barlow Semi-Condensed for instrument numerals.
+Barlow throughout, at **two weights only: 400 Regular and 500 Medium.**
+No condensed cut, and no 600 or 700 anywhere in the app — `font.semibold` and
+`font.bold` are role names that both resolve to Medium. Emphasis is carried by
+size, colour and tracking instead. Instrument Serif stays as the display voice
+at 24px and up, and is the only non-Barlow face.
+
+Numerals are Barlow set tabular (`tnum`), so columns line up and a counting
+readout does not jitter.
 
 **The ramp is nine steps: 11 / 13 / 15 / 17 / 20 / 24 / 32 / 38 / 52.** No
 half-points, no per-screen nudging. The jumps are deliberate so a role is

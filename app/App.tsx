@@ -1,13 +1,4 @@
-import {
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  IBMPlexSans_700Bold,
-} from "@expo-google-fonts/ibm-plex-sans";
-import {
-  IBMPlexSansCondensed_300Light,
-  IBMPlexSansCondensed_500Medium,
-} from "@expo-google-fonts/ibm-plex-sans-condensed";
+import { Barlow_400Regular, Barlow_500Medium } from "@expo-google-fonts/barlow";
 import { InstrumentSerif_400Regular } from "@expo-google-fonts/instrument-serif";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -121,12 +112,8 @@ function WebPhoneFrame({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    IBMPlexSans_400Regular,
-    IBMPlexSans_500Medium,
-    IBMPlexSans_600SemiBold,
-    IBMPlexSans_700Bold,
-    IBMPlexSansCondensed_300Light,
-    IBMPlexSansCondensed_500Medium,
+    Barlow_400Regular,
+    Barlow_500Medium,
     InstrumentSerif_400Regular,
   });
 

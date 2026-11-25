@@ -175,38 +175,61 @@ export const colors = {
 } as const;
 
 /*
-IBM Plex Sans, with IBM Plex Sans Condensed for the instrument numerals.
+Barlow, at two weights: 400 Regular and 500 Medium. One family, one cut.
 
-Drawn for IBM's own technical documentation, which is the reason to pick it
-here: it carries engineering credibility from what it was made for rather
-than from resembling something clinical. Low stroke contrast, so it holds its
-weight at the 11px tracked labels and 13px metadata this app is mostly made
-of — the specific thing Cormorant could not do. Slightly warmer than a pure
-grotesque, with real character in the a and g, so it reads precise without
-reading cold.
+A low-contrast grotesk drawn from the lettering on Californian public
+infrastructure — road signs, transit, municipal plates — which is the reason
+it earns this surface. That origin makes it a face designed to be read fast
+and at a glance by someone who is not concentrating, which is exactly the
+posture of a person logging a dose. Even stroke weight, so it holds at the
+11px tracked labels and 13px metadata this app is mostly made of, and a tall
+x-height that keeps 13px readable.
 
-The condensed cut matters more than it looks. Doses share a row with a
-peptide name on a 430px screen, and "1,250 mcg" set at full width pushes that
-row. Condensed numerals keep the column tight and the figures tabular.
+TWO WEIGHTS, NOT FOUR. The keys below are role names, not weight
+declarations: `semibold` and `bold` both resolve to Barlow Medium, and no
+600 or 700 is loaded anywhere in the app. Emphasis here is carried by size,
+colour and tracking, which the nine-step ramp and the ink scale already do;
+a third weight would be a second and weaker way to say the same hierarchy.
+The role keys are kept because roughly a hundred call sites ask for
+`font.bold`, and none of them had to churn to make the above true.
 
-Previously Cormorant Garamond — a high-contrast display serif whose
-hairlines disappeared at small sizes and which had no condensed cut at all.
-Before that, Barlow_400/500/600/700 with BarlowSemiCondensed_300Light/_500Medium.
+NO CONDENSED CUT. The numeral roles are Barlow at those same two weights.
+Barlow Semi Condensed drove the instrument readouts and no longer does, so a
+long figure like "1,250 mcg" sets at full width and takes more of its row
+than it used to — worth watching on the dose rows at 430px, which is where
+the condensed cut was earning its place. The figures are still tabular:
+Barlow carries `tnum`, which TABULAR below switches on, so columns line up
+and a counting readout does not jitter sideways.
+
+Previously IBM Plex Sans with IBM Plex Sans Condensed, and before that
+Cormorant Garamond. Barlow at 400/500/600/700 with BarlowSemiCondensed
+300/500 was the set before all of them.
 */
 export const font = {
-  regular: "IBMPlexSans_400Regular",
-  medium: "IBMPlexSans_500Medium",
-  semibold: "IBMPlexSans_600SemiBold",
-  bold: "IBMPlexSans_700Bold",
-  numeral: "IBMPlexSansCondensed_300Light",
-  numeralMedium: "IBMPlexSansCondensed_500Medium",
+  regular: "Barlow_400Regular",
+  medium: "Barlow_500Medium",
+
+  /*
+    Emphasis roles. Both are Barlow Medium — see TWO WEIGHTS above. They stay
+    as separate keys so the call sites keep saying what they mean rather than
+    what they weigh, and so a heavier cut can be reintroduced in one place.
+  */
+  semibold: "Barlow_500Medium",
+  bold: "Barlow_500Medium",
+
+  /*
+    The instrument numerals. No separate cut any more: a figure is Barlow at
+    the same two weights as the prose around it, set tabular by TABULAR.
+  */
+  numeral: "Barlow_400Regular",
+  numeralMedium: "Barlow_500Medium",
   /*
     The display voice, and the only serif in the app.
 
     Everything was one sans at six weights, which leaves a screen no way to
     say "this is the question" except by making the sans bigger. A second
-    voice does it in one move, and a high-contrast serif against IBM Plex's
-    even, engineered sans is a contrast of kind rather than of degree.
+    voice does it in one move, and a high-contrast serif against Barlow's
+    even, signage-grade sans is a contrast of kind rather than of degree.
 
     Display sizes only. Instrument Serif has a single weight and a hairline
     thin stroke, so below about 24px it goes grey and loses legibility. There
@@ -236,7 +259,7 @@ than the same face would on white; that compensation lives here, once.
   sideways as it ticks. Tabular figures share one advance width, which is why
   every instrument, spreadsheet and ledger uses them.
 
-  This is not on by default in any font, including IBM Plex. The comment above
+  This is not on by default in any font, including Barlow. The comment above
   claimed the numerals were "tabular" for a month while nothing switched the
   feature on, which is the kind of thing only a column of 111 above 999 shows.
 */
